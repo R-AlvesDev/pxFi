@@ -13,6 +13,6 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
     List<Transaction> findByAccountId(String accountId);
     boolean existsByTransactionIdAndAccountId(String transactionId, String accountId);
 
-    @Query("{ 'accountId': ?0, 'bookingDate': ?1, 'transactionAmount.amount': ?2, 'remittanceInformationUnstructured': ?3 }")
-    boolean existsDuplicate(String accountId, String bookingDate, String amount, String remittance);
+    @Query(value = "{ 'accountId': ?0, 'bookingDate': ?1, 'transactionAmount.amount': ?2, 'remittanceInformationUnstructured': ?3 }", exists = true)
+    Boolean existsDuplicate(String accountId, String bookingDate, String amount, String remittance); // <-- Changed to Boolean
 }

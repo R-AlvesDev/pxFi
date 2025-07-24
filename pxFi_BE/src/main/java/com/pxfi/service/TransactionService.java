@@ -56,7 +56,9 @@ public class TransactionService {
             String remittance = tx.getRemittanceInformationUnstructured();
 
             if (amount != null && date != null && remittance != null) {
-                return !transactionRepository.existsDuplicate(accountId, date, amount, remittance);
+                // Safely handle the Boolean return type
+                Boolean exists = transactionRepository.existsDuplicate(accountId, date, amount, remittance);
+                return !Boolean.TRUE.equals(exists);
             } else {
                 // If any of the fallback fields are null, assume it's a new transaction
                 return true;
