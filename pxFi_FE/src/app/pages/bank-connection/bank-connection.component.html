@@ -1,0 +1,27 @@
+<h2>Connect Your Bank Account</h2>
+
+<label for="country">Select your country:</label>
+<select [formControl]="countryControl" id="country" [disabled]="loadingBanks">
+  <option value="">-- Select Country --</option>
+  <option *ngFor="let c of countries" [value]="c.code">{{ c.name }}</option>
+</select>
+
+<div *ngIf="loadingBanks" style="margin-top: 1rem;">
+  Loading banks...
+</div>
+
+<div *ngIf="banks.length > 0" style="margin-top:1rem;">
+  <label for="bank">Select your bank:</label>
+  <select [formControl]="bankControl" id="bank" [disabled]="loadingConnection || loadingBanks">
+    <option value="">-- Select Bank --</option>
+    <option *ngFor="let bank of banks" [value]="bank.id">{{ bank.name }}</option>
+  </select>
+</div>
+
+<button (click)="connect()" 
+        [disabled]="!bankControl.value || loadingConnection" 
+        style="margin-top:1rem;">
+  {{ loadingConnection ? 'Connecting...' : 'Connect to Bank' }}
+</button>
+
+<p *ngIf="error" style="color:red;">{{ error }}</p>

@@ -1,0 +1,11 @@
+nav a {
+  text-decoration: none;
+  padding: 0.5rem;
+  color: #007bff;
+  cursor: pointer;
+}
+
+nav a.active {
+  font-weight: bold;
+  text-decoration: underline;
+}

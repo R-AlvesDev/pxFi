@@ -1,0 +1,104 @@
+package com.pxfi.model;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+
+@Document(collection = "transactions")
+public class Transaction {
+    @Id
+    private String id;
+
+    private String transactionId;
+    private String debtorName;
+    private DebtorAccount debtorAccount; 
+    private TransactionAmount transactionAmount;
+    private String bookingDate;
+    private String valueDate;
+    private String remittanceInformationUnstructured;
+    private String bankTransactionCode;
+    
+    @Field("accountId")
+    private String accountId;
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    public String getDebtorName() {
+        return debtorName;
+    }
+
+    public void setDebtorName(String debtorName) {
+        this.debtorName = debtorName;
+    }
+
+    public DebtorAccount getDebtorAccount() {
+        return debtorAccount;
+    }
+
+    public void setDebtorAccount(DebtorAccount debtorAccount) {
+        this.debtorAccount = debtorAccount;
+    }
+
+    public TransactionAmount getTransactionAmount() {
+        return transactionAmount;
+    }
+
+    public void setTransactionAmount(TransactionAmount transactionAmount) {
+        this.transactionAmount = transactionAmount;
+    }
+
+    public String getBookingDate() {
+        return bookingDate;
+    }
+
+    public void setBookingDate(String bookingDate) {
+        this.bookingDate = bookingDate;
+    }
+
+    public String getValueDate() {
+        return valueDate;
+    }
+
+    public void setValueDate(String valueDate) {
+        this.valueDate = valueDate;
+    }
+
+    public String getRemittanceInformationUnstructured() {
+        return remittanceInformationUnstructured;
+    }
+
+    public void setRemittanceInformationUnstructured(String remittanceInformationUnstructured) {
+        this.remittanceInformationUnstructured = remittanceInformationUnstructured;
+    }
+
+    public String getBankTransactionCode() {
+        return bankTransactionCode;
+    }
+
+    public void setBankTransactionCode(String bankTransactionCode) {
+        this.bankTransactionCode = bankTransactionCode;
+    }
+
+    public String getId() {
+        return this.id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getAccountId() {
+        return this.accountId;
+    }
+
+    public void setAccountId(String accountId) {
+        this.accountId = accountId;
+    }
+
+}

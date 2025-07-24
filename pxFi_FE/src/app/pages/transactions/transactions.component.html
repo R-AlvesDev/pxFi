@@ -1,0 +1,60 @@
+<div class="container mt-4">
+
+  <!-- Action buttons -->
+  <div class="d-flex justify-content-between mb-3">
+    <button class="btn btn-primary" (click)="refreshTransactions()" [disabled]="loading">
+      {{ loading ? 'Loading...' : 'Refresh Transactions' }}
+    </button>
+    <button class="btn btn-outline-danger" (click)="logout()">Logout</button>
+  </div>
+
+  <!-- Loading and Error States -->
+  <div *ngIf="loading" class="alert alert-info text-center">
+    Loading transactions...
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger text-center">
+    {{ error }}
+  </div>
+
+  <!-- Transactions Table -->
+  <table *ngIf="!loading && !error && transactions.length > 0" class="table table-striped table-bordered table-hover mt-3">
+    <thead class="table-dark">
+      <tr>
+        <th scope="col">ID</th>
+        <th scope="col">Debtor Name</th>
+        <th scope="col">Debtor Account</th>
+        <th scope="col">Amount</th>
+        <th scope="col">Booking Date</th>
+        <th scope="col">Value Date</th>
+        <th scope="col">Remittance Info</th>
+        <th scope="col">Transaction Code</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let tx of transactions">
+        <td>{{ tx.transactionId || 'N/A' }}</td>
+        <td>{{ tx.debtorName || 'N/A' }}</td>
+        <td>{{ tx.debtorAccount?.iban || 'N/A' }}</td>
+        <td>
+          <span
+            [class.text-success]="+tx.transactionAmount.amount > 0"
+            [class.text-danger]="+tx.transactionAmount.amount < 0"
+          >
+            {{ tx.transactionAmount.amount | number:'1.2-2' }} {{ tx.transactionAmount.currency }}
+          </span>
+        </td>
+        <td>{{ tx.bookingDate | date:'shortDate' }}</td>
+        <td>{{ tx.valueDate | date:'shortDate' }}</td>
+        <td>{{ tx.remittanceInformationUnstructured || 'N/A' }}</td>
+        <td>{{ tx.bankTransactionCode || 'N/A' }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- No transactions fallback -->
+  <div *ngIf="!loading && !error && transactions?.length === 0" class="alert alert-secondary text-center">
+    No transactions found.
+  </div>
+
+</div>
