@@ -36,9 +36,31 @@ export class TransactionsComponent implements OnInit {
       const accountId = params.get('accountId');
       if (accountId) {
         this.selectedAccountId = accountId;
-        // 🚫 Do not auto-load transactions
+        this.loadCachedTransactions(); // ✅ Load from Mongo on init
       } else {
         this.error = 'No account selected.';
+      }
+    });
+  }
+
+  loadCachedTransactions(): void {
+    if (!this.selectedAccountId || !this.accessToken) {
+      this.error = 'Missing account ID or access token.';
+      return;
+    }
+
+    this.loading = true;
+    this.transactions = [];
+    this.error = null;
+
+    this.api.getAccountTransactions(this.accessToken, this.selectedAccountId).subscribe({
+      next: (res) => {
+        this.transactions = res;
+        this.loading = false;
+      },
+      error: (err) => {
+        this.error = 'Failed to load cached transactions: ' + err.message;
+        this.loading = false;
       }
     });
   }
@@ -73,6 +95,6 @@ export class TransactionsComponent implements OnInit {
   logout(): void {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('requisitionId');
-    this.router.navigate(['/connect']); // or wherever your login page is
+    this.router.navigate(['/connect']); 
   }
 }

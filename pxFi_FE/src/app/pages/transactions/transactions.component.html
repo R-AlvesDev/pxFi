@@ -21,7 +21,8 @@
   <table *ngIf="!loading && !error && transactions.length > 0" class="table table-striped table-bordered table-hover mt-3">
     <thead class="table-dark">
       <tr>
-        <th scope="col">ID</th>
+        <th scope="col">#</th> <!-- Index -->
+        <th scope="col">Transaction ID</th>
         <th scope="col">Debtor Name</th>
         <th scope="col">Debtor Account</th>
         <th scope="col">Amount</th>
@@ -32,7 +33,8 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let tx of transactions">
+      <tr *ngFor="let tx of transactions; let i = index">
+        <td>{{ i + 1 }}</td> <!-- Auto-increment ID -->
         <td>{{ tx.transactionId || 'N/A' }}</td>
         <td>{{ tx.debtorName || 'N/A' }}</td>
         <td>{{ tx.debtorAccount?.iban || 'N/A' }}</td>
