@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService, Transaction as ApiTransaction } from '../../services/api.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AccountStateService } from '../../services/account-state.service';
 
 // Extend the Transaction interface for UI state
 interface Transaction extends ApiTransaction {
@@ -26,7 +27,8 @@ export class TransactionsComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private api: ApiService
+    private api: ApiService,
+    private accountState: AccountStateService
   ) {}
 
   ngOnInit(): void {
@@ -40,9 +42,11 @@ export class TransactionsComponent implements OnInit {
       const accountId = params.get('accountId');
       if (accountId) {
         this.selectedAccountId = accountId;
-        this.loadCachedTransactions(); // Load from Mongo on init
+        this.accountState.setCurrentAccountId(accountId);
+        this.loadCachedTransactions();
       } else {
         this.error = 'No account selected.';
+        this.accountState.setCurrentAccountId(null); 
       }
     });
   }

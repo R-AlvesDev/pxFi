@@ -10,9 +10,10 @@ import com.pxfi.model.Transaction;
 
 @Repository
 public interface TransactionRepository extends MongoRepository<Transaction, String> {
-    List<Transaction> findByAccountId(String accountId);
+    List<Transaction> findByAccountIdOrderByBookingDateDesc(String accountId);
+
     boolean existsByTransactionIdAndAccountId(String transactionId, String accountId);
 
     @Query(value = "{ 'accountId': ?0, 'bookingDate': ?1, 'transactionAmount.amount': ?2, 'remittanceInformationUnstructured': ?3 }", exists = true)
-    Boolean existsDuplicate(String accountId, String bookingDate, String amount, String remittance); // <-- Changed to Boolean
+    Boolean existsDuplicate(String accountId, String bookingDate, String amount, String remittance);
 }

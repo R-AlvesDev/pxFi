@@ -3,12 +3,24 @@ import { HomeComponent } from './pages/home/home.component';
 import { BankConnectionComponent } from './pages/bank-connection/bank-connection.component';
 import { CallbackComponent } from './pages/callback/callback.component';
 import { TransactionsComponent } from './pages/transactions/transactions.component';
+import { MainLayoutComponent } from './layouts/main-layout/main-layout.component'; // Import new layout
 
 export const routes: Routes = [
-  { path: '', component: HomeComponent },
-  { path: 'connect', component: BankConnectionComponent },
-  { path: 'callback', component: CallbackComponent },
-  { path: 'transactions/:accountId', component: TransactionsComponent },
-  { path: '**', redirectTo: '' }
-];
+  // Routes that will use the main layout with the navbar
+  {
+    path: '',
+    component: MainLayoutComponent,
+    children: [
+      { path: '', component: HomeComponent, title: 'pxFi - Home' },
+      { path: 'transactions/:accountId', component: TransactionsComponent, title: 'pxFi - Transactions' },
+      // Future routes like 'statistics' and 'settings' will go here
+    ]
+  },
 
+  // Standalone routes without the main layout
+  { path: 'connect', component: BankConnectionComponent, title: 'pxFi - Connect' },
+  { path: 'callback', component: CallbackComponent, title: 'pxFi - Callback' },
+
+  // Wildcard route to redirect to home
+  { path: '**', redirectTo: '', pathMatch: 'full' }
+];

@@ -67,7 +67,8 @@ public class TransactionService {
     }
 
     public List<Transaction> getTransactionsByAccountId(String accountId) {
-        List<Transaction> results = transactionRepository.findByAccountId(accountId);
+        // Call the new method to get sorted results
+        List<Transaction> results = transactionRepository.findByAccountIdOrderByBookingDateDesc(accountId);
         System.out.println("Found " + results.size() + " transactions for accountId: " + accountId);
         return results;
     }
