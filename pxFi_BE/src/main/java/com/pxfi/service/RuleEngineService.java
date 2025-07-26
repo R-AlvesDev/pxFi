@@ -11,8 +11,7 @@ import com.pxfi.model.Transaction;
 @Service
 public class RuleEngineService {
 
-    public void applyRules(Transaction transaction, List<CategorizationRule> rules) {
-
+    public boolean applyRules(Transaction transaction, List<CategorizationRule> rules) {
         for (CategorizationRule rule : rules) {
             boolean matches = false;
             switch (rule.getFieldToMatch()) {
@@ -25,36 +24,33 @@ public class RuleEngineService {
             }
 
             if (matches) {
-                System.out.println("MATCH FOUND: Rule " + rule.getId() + " matched transaction with remittance: '" + transaction.getRemittanceInformationUnstructured() + "'");
                 transaction.setCategoryId(rule.getCategoryId());
                 transaction.setSubCategoryId(rule.getSubCategoryId());
-                // Stop after the first rule matches to avoid conflicting rules.
-                return;
+                return true;
             }
         }
+        return false;
     }
 
     private boolean checkRemittanceInfo(Transaction transaction, CategorizationRule rule) {
         String info = transaction.getRemittanceInformationUnstructured();
         String value = rule.getValueToMatch();
+        if (info == null || value == null) return false;
 
-        // More robust check for null or empty strings
-        if (info == null || info.trim().isEmpty() || value == null || value.trim().isEmpty()) {
-            return false;
-        }
-
-        String trimmedInfo = info.trim();
-        String trimmedValue = value.trim();
+        // --- THE FIX: Normalize whitespace in both strings ---
+        String normalizedInfo = info.trim().replaceAll("\\s+", " ");
+        String normalizedValue = value.trim().replaceAll("\\s+", " ");
+        // --- END FIX ---
 
         switch (rule.getOperator()) {
             case CONTAINS:
-                return trimmedInfo.toLowerCase().contains(trimmedValue.toLowerCase());
+                return normalizedInfo.toLowerCase().contains(normalizedValue.toLowerCase());
             case EQUALS:
-                return trimmedInfo.equalsIgnoreCase(trimmedValue);
+                return normalizedInfo.equalsIgnoreCase(normalizedValue);
             case STARTS_WITH:
-                return trimmedInfo.toLowerCase().startsWith(trimmedValue.toLowerCase());
+                return normalizedInfo.toLowerCase().startsWith(normalizedValue.toLowerCase());
             case ENDS_WITH:
-                return trimmedInfo.toLowerCase().endsWith(trimmedValue.toLowerCase());
+                return normalizedInfo.toLowerCase().endsWith(normalizedValue.toLowerCase());
             default:
                 return false;
         }
@@ -79,7 +75,6 @@ public class RuleEngineService {
                     return false;
             }
         } catch (NumberFormatException e) {
-            // If rule value is not a number, it can't match amount rules
             return false;
         }
     }
