@@ -21,6 +21,7 @@ import com.pxfi.model.RequisitionDetailsResponse;
 import com.pxfi.model.RequisitionResponse;
 import com.pxfi.model.Transaction;
 import com.pxfi.model.TransactionsResponse;
+import com.pxfi.model.UpdateCategoryRequest;
 import com.pxfi.service.GoCardlessService;
 import com.pxfi.service.TransactionService;
 
@@ -145,5 +146,18 @@ public class GoCardlessController {
     @GetMapping("/debug/all-transactions")
     public ResponseEntity<List<Transaction>> getAllTransactions() {
         return ResponseEntity.ok(transactionService.getAllTransactions());
+    }
+
+    @PostMapping("/transactions/{id}/category")
+    public ResponseEntity<Transaction> updateTransactionCategory(
+            @PathVariable String id,
+            @RequestBody UpdateCategoryRequest request) {
+        Transaction updatedTransaction = transactionService.updateTransactionCategory(
+            id, request.getCategoryId(), request.getSubCategoryId()
+        );
+        if (updatedTransaction != null) {
+            return ResponseEntity.ok(updatedTransaction);
+        }
+        return ResponseEntity.notFound().build();
     }
 }

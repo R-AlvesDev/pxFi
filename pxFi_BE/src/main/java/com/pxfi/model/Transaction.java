@@ -11,15 +11,57 @@ public class Transaction {
 
     private String transactionId;
     private String debtorName;
-    private DebtorAccount debtorAccount; 
+    private DebtorAccount debtorAccount;
     private TransactionAmount transactionAmount;
     private String bookingDate;
     private String valueDate;
     private String remittanceInformationUnstructured;
     private String bankTransactionCode;
     
+    // New fields for categorization
+    private String categoryId;
+    private String subCategoryId;
+    private String categoryName;
+    private String subCategoryName;
+
     @Field("accountId")
     private String accountId;
+
+    // Getters and Setters for new fields
+    public String getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(String categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public String getSubCategoryId() {
+        return subCategoryId;
+    }
+
+    public void setSubCategoryId(String subCategoryId) {
+        this.subCategoryId = subCategoryId;
+    }
+    
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
+    public String getSubCategoryName() {
+        return subCategoryName;
+    }
+
+    public void setSubCategoryName(String subCategoryName) {
+        this.subCategoryName = subCategoryName;
+    }
+
+
+    // --- Existing getters and setters below ---
 
     public String getTransactionId() {
         return transactionId;
@@ -100,5 +142,4 @@ public class Transaction {
     public void setAccountId(String accountId) {
         this.accountId = accountId;
     }
-
 }

@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ApiService, Transaction as ApiTransaction } from '../../services/api.service';
+import { ApiService, Transaction as ApiTransaction, Category } from '../../services/api.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountStateService } from '../../services/account-state.service';
+import { CategoryService } from '../../services/category.service';
 
 // Extend the Transaction interface for UI state
 interface Transaction extends ApiTransaction {
@@ -23,12 +24,14 @@ export class TransactionsComponent implements OnInit {
   error: string | null = null;
   loading = false;
   accessToken: string | null = null;
+  mainCategories: Category[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private api: ApiService,
-    private accountState: AccountStateService
+    private accountState: AccountStateService,
+    public categoryService: CategoryService
   ) {}
 
   ngOnInit(): void {
@@ -37,6 +40,10 @@ export class TransactionsComponent implements OnInit {
       this.error = 'Access token missing. Please reconnect your bank.';
       return;
     }
+
+    this.categoryService.categories$.subscribe(categories => {
+      this.mainCategories = this.categoryService.getMainCategories();
+    });
 
     this.route.paramMap.subscribe(params => {
       const accountId = params.get('accountId');
@@ -88,9 +95,26 @@ export class TransactionsComponent implements OnInit {
     });
   }
 
-  logout(): void {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('requisitionId');
-    this.router.navigate(['/connect']);
+  onCategoryChange(transaction: Transaction, newCategoryId: string): void {
+    // When a main category is selected, clear the subcategory
+    this.updateCategory(transaction, newCategoryId, null);
   }
+
+  onSubCategoryChange(transaction: Transaction, newSubCategoryId: string): void {
+    this.updateCategory(transaction, transaction.categoryId!, newSubCategoryId);
+  }
+
+  private updateCategory(transaction: Transaction, categoryId: string, subCategoryId: string | null): void {
+    this.api.updateTransactionCategory(transaction.id, categoryId, subCategoryId).subscribe({
+      next: updatedTx => {
+        // Update the transaction in the local array to reflect the change immediately
+        const index = this.transactions.findIndex(t => t.id === updatedTx.id);
+        if (index !== -1) {
+          this.transactions[index] = { ...this.transactions[index], ...updatedTx };
+        }
+      },
+      error: err => console.error('Failed to update category', err)
+    });
+  }
+  
 }

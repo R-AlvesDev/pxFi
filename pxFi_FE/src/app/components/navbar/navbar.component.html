@@ -13,6 +13,11 @@
           <a class="nav-link" [routerLink]="['/transactions', accountId]" routerLinkActive="active">Transactions</a>
         </li>
       </ul>
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item" *ngIf="isLoggedIn$ | async">
+          <button class="btn btn-outline-light" (click)="logout()">Logout</button>
+        </li>
+      </ul>
     </div>
   </div>
 </nav>

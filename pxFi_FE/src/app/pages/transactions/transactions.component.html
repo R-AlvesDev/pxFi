@@ -6,7 +6,6 @@
         <span *ngIf="loading" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
         {{ loading ? ' Loading...' : 'Refresh' }}
       </button>
-      <button class="btn btn-outline-danger" (click)="logout()">Logout</button>
     </div>
   </div>
 
@@ -30,6 +29,7 @@
               <th scope="col">#</th>
               <th scope="col">Date</th>
               <th scope="col">Description</th>
+              <th scope="col" style="width: 25%;">Category</th>
               <th scope="col" class="text-end">Amount</th>
             </tr>
           </thead>
@@ -42,15 +42,30 @@
                   <div>{{ tx.debtorName || 'N/A' }}</div>
                   <small class="text-muted">{{ tx.remittanceInformationUnstructured || 'No remittance info' }}</small>
                 </td>
+                <td>
+                  <select class="form-select form-select-sm mb-1" [(ngModel)]="tx.categoryId" 
+                          (ngModelChange)="onCategoryChange(tx, $event)" (click)="$event.stopPropagation()">
+                    <option [ngValue]="null">Select Category</option>
+                    <option *ngFor="let cat of mainCategories" [value]="cat.id">{{cat.name}}</option>
+                  </select>
+                  
+                  <select *ngIf="tx.categoryId" class="form-select form-select-sm" 
+                          [(ngModel)]="tx.subCategoryId" (ngModelChange)="onSubCategoryChange(tx, $event)" (click)="$event.stopPropagation()">
+                    <option [ngValue]="null">Select Subcategory</option>
+                    <option *ngFor="let subCat of categoryService.getSubCategories(tx.categoryId!)" [value]="subCat.id">
+                      {{subCat.name}}
+                    </option>
+                  </select>
+                </td>
                 <td class="text-end">
                   <span [class.text-success]="+tx.transactionAmount.amount > 0"
-                    [class.text-danger]="+tx.transactionAmount.amount < 0">
+                        [class.text-danger]="+tx.transactionAmount.amount < 0">
                     {{ tx.transactionAmount.amount | currency:tx.transactionAmount.currency }}
                   </span>
                 </td>
               </tr>
               <tr *ngIf="tx.expanded">
-                <td colspan="4" class="p-3 bg-light">
+                <td colspan="5" class="p-3 bg-light">
                   <div class="row">
                     <div class="col-md-6">
                       <strong>Transaction ID:</strong> {{ tx.transactionId || 'N/A' }} <br>

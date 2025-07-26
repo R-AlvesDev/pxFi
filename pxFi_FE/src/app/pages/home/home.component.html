@@ -1,2 +1,13 @@
-<h1>Welcome to pxFi</h1>
-<p>Manage your bank connections and view account data with ease.</p>
+<div class="container py-5">
+  <div *ngIf="!(isLoggedIn$ | async)" class="text-center">
+    <h1 class="display-4">Welcome to pxFi</h1>
+    <p class="lead text-muted">Your personal finance intelligence tool.</p>
+    <hr class="my-4">
+    <p>Connect your bank account to get started.</p>
+    <a class="btn btn-primary btn-lg" routerLink="/connect">Connect Bank</a>
+  </div>
+
+  <div *ngIf="isLoggedIn$ | async">
+    <app-bank-connection></app-bank-connection>
+  </div>
+</div>

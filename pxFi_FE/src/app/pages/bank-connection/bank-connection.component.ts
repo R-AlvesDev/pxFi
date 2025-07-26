@@ -3,6 +3,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ApiService, RequisitionResponse } from '../../services/api.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../services/auth/auth.service';
 
 @Component({
   selector: 'app-bank-connection',
@@ -31,7 +32,7 @@ export class BankConnectionComponent implements OnInit {
 
   accessToken: string | null = null;
 
-  constructor(private api: ApiService, private router: Router) {}
+  constructor(private api: ApiService, private router: Router, private authService: AuthService) {}
 
   ngOnInit() {
     this.api.getAccessToken().subscribe({
@@ -87,6 +88,8 @@ export class BankConnectionComponent implements OnInit {
               localStorage.setItem('requisitionId', requisitionResponse.id);
               localStorage.setItem('accessToken', this.accessToken!);
 
+              this.authService.updateLoginState();
+              
               // Redirect to bank authentication link
               window.location.href = requisitionResponse.link;
             } else {

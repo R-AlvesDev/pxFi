@@ -49,14 +49,19 @@ export interface TransactionAmount {
 }
 
 export interface Transaction {
+  id: string; // This is the MongoDB ID
   transactionId: string;
   debtorName: string;
   debtorAccount: DebtorAccount;
   transactionAmount: TransactionAmount;
-  bookingDate: string;    // e.g. ISO date string
+  bookingDate: string;
   valueDate: string;
   remittanceInformationUnstructured: string;
   bankTransactionCode: string;
+  categoryId?: string;
+  subCategoryId?: string;
+  categoryName?: string;
+  subCategoryName?: string;
 }
 
 export interface TransactionsResponse {
@@ -64,6 +69,12 @@ export interface TransactionsResponse {
     booked: Transaction[];
     pending: Transaction[];
   };
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  parentId: string | null;
 }
 
 @Injectable({
@@ -134,4 +145,13 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/callback`, { params });
   }
 
+  getCategories(): Observable<Category[]> {
+    return this.http.get<Category[]>(`${this.baseUrl}/categories`);
+  }
+
+  updateTransactionCategory(transactionId: string, categoryId: string, subCategoryId: string | null): Observable<Transaction> {
+    const payload = { categoryId, subCategoryId };
+    return this.http.post<Transaction>(`${this.baseUrl}/transactions/${transactionId}/category`, payload);
+  }
+  
 }
