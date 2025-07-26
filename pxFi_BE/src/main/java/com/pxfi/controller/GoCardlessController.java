@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.pxfi.model.CategorizeSimilarRequest;
 import com.pxfi.model.EndUserAgreementRequest;
 import com.pxfi.model.EndUserAgreementResponse;
 import com.pxfi.model.RequisitionDetailsResponse;
@@ -160,4 +161,15 @@ public class GoCardlessController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    @PostMapping("/transactions/categorize-similar")
+    public ResponseEntity<List<Transaction>> categorizeSimilarTransactions(@RequestBody CategorizeSimilarRequest request) {
+        List<Transaction> updatedTransactions = transactionService.categorizeSimilarTransactions(
+            request.getRemittanceInfo(),
+            request.getCategoryId(),
+            request.getSubCategoryId()
+        );
+        return ResponseEntity.ok(updatedTransactions);
+    }
+    
 }

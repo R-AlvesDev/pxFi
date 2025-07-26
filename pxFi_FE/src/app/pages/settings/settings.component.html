@@ -1,0 +1,96 @@
+<div class="container py-4">
+  <h2 class="mb-4">Settings</h2>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header"><h5 class="mb-0">Manage Categories</h5></div>
+        <div class="card-body">
+          <form (ngSubmit)="addCategory()" class="mb-4 p-3 border rounded bg-light">
+            <h6 class="mb-3">Add New Category</h6>
+            <div class="mb-2">
+              <label for="newCategoryName" class="form-label">Name</label>
+              <input type="text" class="form-control" [(ngModel)]="newCategoryName" name="newCategoryName" required>
+            </div>
+            <div class="mb-3">
+              <label for="newCategoryParent" class="form-label">Parent (Optional)</label>
+              <select class="form-select" [(ngModel)]="newCategoryParentId" name="newCategoryParentId">
+                <option [ngValue]="null">-- Main Category --</option>
+                <option *ngFor="let cat of mainCategories" [value]="cat.id">{{ cat.name }}</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Add Category</button>
+          </form>
+
+          <ul class="list-group">
+            <ng-container *ngFor="let category of mainCategories">
+              <li class="list-group-item d-flex justify-content-between align-items-center" (click)="toggleCategory(category.id)" style="cursor: pointer;">
+                <strong>{{ category.name }}</strong>
+                <button class="btn btn-outline-danger btn-sm" (click)="$event.stopPropagation(); deleteCategory(category.id)">Delete</button>
+              </li>
+              <ng-container *ngIf="expandedCategoryIds.has(category.id)">
+                <li *ngFor="let sub of categoryService.getSubCategories(category.id)" class="list-group-item d-flex justify-content-between align-items-center ps-5">
+                  <span>- {{ sub.name }}</span>
+                  <button class="btn btn-outline-danger btn-sm" (click)="$event.stopPropagation(); deleteCategory(sub.id)">Delete</button>
+                </li>
+              </ng-container>
+            </ng-container>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header"><h5 class="mb-0">Manage Automation Rules</h5></div>
+        <div class="card-body">
+          <form (ngSubmit)="createRule()" class="mb-4 p-3 border rounded bg-light">
+            <h6 class="mb-3">Add New Rule</h6>
+            <div class="input-group mb-2">
+              <span class="input-group-text">IF</span>
+              <select class="form-select" [(ngModel)]="newRule.fieldToMatch" name="fieldToMatch">
+                <option *ngFor="let field of ruleFields" [value]="field">{{ field }}</option>
+              </select>
+              <select class="form-select" [(ngModel)]="newRule.operator" name="operator">
+                <option *ngFor="let op of ruleOperators" [value]="op">{{ op }}</option>
+              </select>
+              <input type="text" class="form-control" placeholder="Value..." [(ngModel)]="newRule.valueToMatch" name="valueToMatch">
+            </div>
+            <div class="input-group">
+              <span class="input-group-text">THEN</span>
+              <select class="form-select" [(ngModel)]="newRule.categoryId" name="categoryId">
+                <option [ngValue]="undefined">Select Category</option>
+                <option *ngFor="let cat of mainCategories" [value]="cat.id">{{ cat.name }}</option>
+              </select>
+              <select *ngIf="newRule.categoryId" class="form-select" [(ngModel)]="newRule.subCategoryId" name="subCategoryId">
+                 <option [ngValue]="null">No Subcategory</option>
+                 <option *ngFor="let sub of categoryService.getSubCategories(newRule.categoryId!)" [value]="sub.id">{{ sub.name }}</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mt-3">Add Rule</button>
+          </form>
+
+          <hr>
+          <div class="d-grid">
+            <button class="btn btn-secondary" (click)="applyAllRules()" [disabled]="isApplyingRules">
+              <span *ngIf="isApplyingRules" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+              {{ isApplyingRules ? 'Applying...' : 'Apply All Rules to Existing Transactions' }}
+            </button>
+          </div>
+          <hr>
+
+          <ul class="list-group">
+            <li *ngFor="let rule of rules$ | async" class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <small class="text-muted">IF {{ rule.fieldToMatch }} {{ rule.operator }} "{{ rule.valueToMatch }}"</small><br>
+                <strong>THEN ➞ {{ getCategoryName(rule.categoryId) }} <span *ngIf="rule.subCategoryId">/ {{ getCategoryName(rule.subCategoryId) }}</span></strong>
+              </div>
+              <button class="btn btn-outline-danger btn-sm" (click)="deleteRule(rule.id)">Delete</button>
+            </li>
+          </ul>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

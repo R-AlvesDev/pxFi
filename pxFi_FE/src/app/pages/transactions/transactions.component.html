@@ -39,23 +39,28 @@
                 <td>{{ i + 1 }}</td>
                 <td>{{ tx.bookingDate | date:'mediumDate' }}</td>
                 <td>
-                  <div>{{ tx.debtorName || 'N/A' }}</div>
-                  <small class="text-muted">{{ tx.remittanceInformationUnstructured || 'No remittance info' }}</small>
+                  <!--<div>{{ tx.debtorName || 'N/A' }}</div>-->
+                  <div>{{ tx.remittanceInformationUnstructured || 'No remittance info' }}</div>
                 </td>
                 <td>
                   <select class="form-select form-select-sm mb-1" [(ngModel)]="tx.categoryId" 
-                          (ngModelChange)="onCategoryChange(tx, $event)" (click)="$event.stopPropagation()">
+                          (ngModelChange)="onCategorySelectionChange(tx)" (click)="$event.stopPropagation()">
                     <option [ngValue]="null">Select Category</option>
                     <option *ngFor="let cat of mainCategories" [value]="cat.id">{{cat.name}}</option>
                   </select>
                   
                   <select *ngIf="tx.categoryId" class="form-select form-select-sm" 
-                          [(ngModel)]="tx.subCategoryId" (ngModelChange)="onSubCategoryChange(tx, $event)" (click)="$event.stopPropagation()">
+                          [(ngModel)]="tx.subCategoryId" (ngModelChange)="onSubCategorySelectionChange(tx)" (click)="$event.stopPropagation()">
                     <option [ngValue]="null">Select Subcategory</option>
                     <option *ngFor="let subCat of categoryService.getSubCategories(tx.categoryId!)" [value]="subCat.id">
                       {{subCat.name}}
                     </option>
                   </select>
+
+                  <button *ngIf="tx.categoryDirty" class="btn btn-success btn-sm mt-1 w-100" 
+                          (click)="$event.stopPropagation(); saveCategory(tx)">
+                    Save
+                  </button>
                 </td>
                 <td class="text-end">
                   <span [class.text-success]="+tx.transactionAmount.amount > 0"
