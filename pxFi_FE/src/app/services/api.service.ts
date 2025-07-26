@@ -59,7 +59,7 @@ export interface Transaction {
   remittanceInformationUnstructured: string;
   bankTransactionCode: string;
   categoryId?: string;
-  subCategoryId?: string;
+  subCategoryId?: string | null;
   categoryName?: string;
   subCategoryName?: string;
 }
@@ -75,6 +75,29 @@ export interface Category {
   id: string;
   name: string;
   parentId: string | null;
+}
+
+export enum RuleField {
+  REMITTANCE_INFO = 'REMITTANCE_INFO',
+  AMOUNT = 'AMOUNT'
+}
+
+export enum RuleOperator {
+  CONTAINS = 'CONTAINS',
+  EQUALS = 'EQUALS',
+  STARTS_WITH = 'STARTS_WITH',
+  ENDS_WITH = 'ENDS_WITH',
+  GREATER_THAN = 'GREATER_THAN',
+  LESS_THAN = 'LESS_THAN'
+}
+
+export interface CategorizationRule {
+  id: string;
+  fieldToMatch: RuleField;
+  operator: RuleOperator;
+  valueToMatch: string;
+  categoryId: string;
+  subCategoryId: string | null;
 }
 
 @Injectable({
@@ -153,5 +176,38 @@ export class ApiService {
     const payload = { categoryId, subCategoryId };
     return this.http.post<Transaction>(`${this.baseUrl}/transactions/${transactionId}/category`, payload);
   }
-  
+
+  categorizeSimilarTransactions(remittanceInfo: string, categoryId: string, subCategoryId: string | null): Observable<Transaction[]> {
+    const payload = { remittanceInfo, categoryId, subCategoryId };
+    return this.http.post<Transaction[]>(`${this.baseUrl}/transactions/categorize-similar`, payload);
+  }
+
+  createCategory(category: { name: string, parentId: string | null }): Observable<Category> {
+    return this.http.post<Category>(`${this.baseUrl}/categories`, category);
+  }
+
+  updateCategory(id: string, category: { name: string, parentId: string | null }): Observable<Category> {
+    return this.http.put<Category>(`${this.baseUrl}/categories/${id}`, category);
+  }
+
+  deleteCategory(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/categories/${id}`);
+  }
+
+  getRules(): Observable<CategorizationRule[]> {
+    return this.http.get<CategorizationRule[]>(`${this.baseUrl}/rules`);
+  }
+
+  createRule(rule: Partial<CategorizationRule>): Observable<CategorizationRule> {
+    return this.http.post<CategorizationRule>(`${this.baseUrl}/rules`, rule);
+  }
+
+  applyAllRules(): Observable<{ updatedCount: number }> {
+    return this.http.post<{ updatedCount: number }>(`${this.baseUrl}/rules/apply-all`, {});
+  }
+
+  deleteRule(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/rules/${id}`);
+  }
+
 }

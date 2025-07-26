@@ -3,6 +3,7 @@ package com.pxfi.service;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -73,4 +74,27 @@ public class CategoryService {
         uncategorized.setName("Uncategorized");
         categoryRepository.save(uncategorized);
     }
+
+    public Category createCategory(Category category) {
+        return categoryRepository.save(category);
+    }
+
+    public Optional<Category> updateCategory(String id, Category categoryDetails) {
+        return categoryRepository.findById(id).map(category -> {
+            category.setName(categoryDetails.getName());
+            category.setParentId(categoryDetails.getParentId());
+            return categoryRepository.save(category);
+        });
+    }
+
+    public void deleteCategory(String id) {
+        // Check if the category is a parent to any subcategories
+        if (categoryRepository.existsByParentId(id)) {
+            // If it is, throw an exception to prevent deletion
+            throw new IllegalStateException("Cannot delete a category that has subcategories.");
+        }
+        
+        categoryRepository.deleteById(id);
+    }
+    
 }
