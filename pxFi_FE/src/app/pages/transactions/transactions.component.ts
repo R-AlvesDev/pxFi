@@ -6,9 +6,9 @@ import { FormsModule } from '@angular/forms';
 import { AccountStateService } from '../../services/account-state.service';
 import { CategoryService } from '../../services/category.service';
 
-// Extend the Transaction interface for UI state
 interface Transaction extends ApiTransaction {
   expanded?: boolean;
+  categoryDirty?: boolean;
 }
 
 @Component({
@@ -41,7 +41,7 @@ export class TransactionsComponent implements OnInit {
       return;
     }
 
-    this.categoryService.categories$.subscribe(categories => {
+    this.categoryService.categories$.subscribe(() => {
       this.mainCategories = this.categoryService.getMainCategories();
     });
 
@@ -53,20 +53,18 @@ export class TransactionsComponent implements OnInit {
         this.loadCachedTransactions();
       } else {
         this.error = 'No account selected.';
-        this.accountState.setCurrentAccountId(null); 
+        this.accountState.setCurrentAccountId(null);
       }
     });
   }
 
-  // This function loads what's already in our database
   loadCachedTransactions(): void {
     if (!this.selectedAccountId || !this.accessToken) return;
-
     this.loading = true;
     this.error = null;
     this.api.getAccountTransactions(this.accessToken, this.selectedAccountId).subscribe({
       next: (res) => {
-        this.transactions = res.map(tx => ({ ...tx, expanded: false }));
+        this.transactions = res.map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
         this.loading = false;
       },
       error: (err) => {
@@ -76,16 +74,13 @@ export class TransactionsComponent implements OnInit {
     });
   }
 
-  // This function calls the API to get new data and update the database
   refreshTransactions(): void {
     if (!this.selectedAccountId || !this.accessToken) return;
-
     this.loading = true;
     this.error = null;
-    // Use the dedicated 'refresh' endpoint in the API service
     this.api.refreshTransactions(this.accessToken, this.selectedAccountId).subscribe({
       next: (res) => {
-        this.transactions = res.map(tx => ({ ...tx, expanded: false }));
+        this.transactions = res.map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
         this.loading = false;
       },
       error: (err) => {
@@ -95,26 +90,75 @@ export class TransactionsComponent implements OnInit {
     });
   }
 
-  onCategoryChange(transaction: Transaction, newCategoryId: string): void {
-    // When a main category is selected, clear the subcategory
-    this.updateCategory(transaction, newCategoryId, null);
+  onCategorySelectionChange(transaction: Transaction): void {
+    transaction.subCategoryId = null; // Reset subcategory
+    transaction.categoryDirty = true;
   }
 
-  onSubCategoryChange(transaction: Transaction, newSubCategoryId: string): void {
-    this.updateCategory(transaction, transaction.categoryId!, newSubCategoryId);
+  onSubCategorySelectionChange(transaction: Transaction): void {
+    transaction.categoryDirty = true;
   }
 
-  private updateCategory(transaction: Transaction, categoryId: string, subCategoryId: string | null): void {
-    this.api.updateTransactionCategory(transaction.id, categoryId, subCategoryId).subscribe({
+  saveCategory(transaction: Transaction): void {
+    if (!transaction.categoryId) {
+      console.error("Cannot save without a main category.");
+      return;
+    }
+
+    // Find the original transaction state to check its previous category status
+    const originalTransaction = this.transactions.find(t => t.id === transaction.id);
+    const wasAlreadyCategorized = !!originalTransaction?.categoryId;
+
+    this.api.updateTransactionCategory(transaction.id, transaction.categoryId, transaction.subCategoryId || null).subscribe({
       next: updatedTx => {
-        // Update the transaction in the local array to reflect the change immediately
         const index = this.transactions.findIndex(t => t.id === updatedTx.id);
         if (index !== -1) {
-          this.transactions[index] = { ...this.transactions[index], ...updatedTx };
+          const wasExpanded = this.transactions[index].expanded;
+          this.transactions[index] = { ...updatedTx, expanded: wasExpanded, categoryDirty: false };
         }
+        this.promptToCategorizeSimilar(updatedTx, wasAlreadyCategorized);
       },
       error: err => console.error('Failed to update category', err)
     });
   }
-  
+
+  private promptToCategorizeSimilar(updatedTx: Transaction, wasAlreadyCategorized: boolean): void {
+    const remittanceInfo = updatedTx.remittanceInformationUnstructured;
+    if (!remittanceInfo) return;
+
+    let similarCount = 0;
+    let isSubcategoryUpdate = wasAlreadyCategorized && !!updatedTx.subCategoryId;
+
+    if (isSubcategoryUpdate) {
+      // Find transactions with same main category but missing a subcategory
+      similarCount = this.transactions.filter(t =>
+        t.id !== updatedTx.id &&
+        t.remittanceInformationUnstructured === remittanceInfo &&
+        t.categoryId === updatedTx.categoryId &&
+        !t.subCategoryId
+      ).length;
+    } else {
+      // Find completely uncategorized transactions
+      similarCount = this.transactions.filter(t =>
+        t.id !== updatedTx.id &&
+        t.remittanceInformationUnstructured === remittanceInfo &&
+        !t.categoryId
+      ).length;
+    }
+
+    if (similarCount > 0) {
+      const message = isSubcategoryUpdate
+        ? `Found ${similarCount} other transaction(s) with the category "${updatedTx.categoryName}" but no subcategory. Apply the "${updatedTx.subCategoryName}" subcategory to them all?`
+        : `Found ${similarCount} other uncategorized transaction(s) with the same description. Apply this category to them all?`;
+
+      const userConfirmed = confirm(message);
+
+      if (userConfirmed) {
+        this.api.categorizeSimilarTransactions(remittanceInfo, updatedTx.categoryId!, updatedTx.subCategoryId || null).subscribe({
+          next: () => this.loadCachedTransactions(),
+          error: (err) => console.error('Failed to categorize similar transactions', err)
+        });
+      }
+    }
+  }
 }

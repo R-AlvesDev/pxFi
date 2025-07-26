@@ -13,6 +13,10 @@ import com.pxfi.model.Transaction;
 public interface TransactionRepository extends MongoRepository<Transaction, String> {
     List<Transaction> findByAccountIdOrderByBookingDateDesc(String accountId);
 
+    List<Transaction> findByRemittanceInformationUnstructuredAndCategoryIdIsNull(String remittanceInfo);
+
+    List<Transaction> findByRemittanceInformationUnstructuredAndCategoryIdAndSubCategoryIdIsNull(String remittanceInfo, String categoryId);
+
     boolean existsByTransactionIdAndAccountId(String transactionId, String accountId);
 
     @Query(value = "{ 'accountId': ?0, 'bookingDate': ?1, 'transactionAmount.amount': ?2, 'remittanceInformationUnstructured': ?3 }", exists = true)

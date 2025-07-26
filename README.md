@@ -12,7 +12,7 @@ This allows for powerful features like year-over-year spending comparisons, long
 
 ---
 
-## Current Status (v0.1)
+## Current Status (v0.2)
 
 The project is currently in its initial development phase. The foundational structure is in place, and the core functionality of connecting to a bank and retrieving transactions is working.
 
@@ -23,7 +23,9 @@ The project is currently in its initial development phase. The foundational stru
 * **Open Banking Integration**: Connects to bank accounts via the GoCardless API to securely fetch account and transaction data.
 * **Persistent Storage**: Successfully saves all retrieved transactions into a MongoDB database, ensuring data is not lost after the 90-day API window closes.
 * **Transaction View**: A clean user interface that displays a list of transactions. Each transaction can be expanded to show more detailed information, keeping the main view uncluttered.
+* **Categorization**: Each transaction can be categorized, as well as having subcategories for better detailing. If detected, the user will be prompted for auto-completion of similar transactions.
 * **On-Demand Refresh**: Users can load their transaction history instantly from the local database and manually trigger a refresh from the bank's API to fetch new transactions, respecting API rate limits.
+* **Custom Categories & Rule Creation**: Users can create their own Categories and Subcategories as well custom Rules to automate the categorization of transactions.
 
 ---
 

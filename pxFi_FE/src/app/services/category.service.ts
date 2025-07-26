@@ -27,4 +27,31 @@ export class CategoryService {
   getSubCategories(parentId: string): Category[] {
     return this.categories.getValue().filter(c => c.parentId === parentId);
   }
+
+  refreshCategories(): void {
+    this.loadCategories().subscribe();
+  }
+
+  createCategory(name: string, parentId: string | null = null): Observable<Category> {
+    return this.api.createCategory({ name, parentId }).pipe(
+      tap(() => this.refreshCategories()) // Refresh the list after creating
+    );
+  }
+
+  updateCategory(id: string, name: string, parentId: string | null = null): Observable<Category> {
+    return this.api.updateCategory(id, { name, parentId }).pipe(
+      tap(() => this.refreshCategories()) // Refresh after updating
+    );
+  }
+
+  deleteCategory(id: string): Observable<void> {
+    return this.api.deleteCategory(id).pipe(
+      tap(() => this.refreshCategories()) // Refresh after deleting
+    );
+  }
+
+  getCategoryName(id: string): string {
+    const category = this.categories.getValue().find(c => c.id === id);
+    return category ? category.name : 'N/A';
+  }
 }
