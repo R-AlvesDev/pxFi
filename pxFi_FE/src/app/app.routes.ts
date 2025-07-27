@@ -5,6 +5,7 @@ import { CallbackComponent } from './pages/callback/callback.component';
 import { TransactionsComponent } from './pages/transactions/transactions.component';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component'; // Import new layout
 import { SettingsComponent } from './pages/settings/settings.component';
+import { StatisticsComponent } from './pages/statistics/statistics.component';
 
 export const routes: Routes = [
   // Routes that will use the main layout with the navbar
@@ -14,7 +15,8 @@ export const routes: Routes = [
     children: [
       { path: '', component: HomeComponent, title: 'pxFi - Home' },
       { path: 'transactions/:accountId', component: TransactionsComponent, title: 'pxFi - Transactions' },
-      { path: 'settings', component: SettingsComponent, title: 'pxFi - Settings' } // <-- Add this new route
+      { path: 'statistics', component: StatisticsComponent, title: 'pxFi - Statistics' },
+      { path: 'settings', component: SettingsComponent, title: 'pxFi - Settings' }
     ]
   },
 

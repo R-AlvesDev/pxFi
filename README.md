@@ -12,7 +12,7 @@ This allows for powerful features like year-over-year spending comparisons, long
 
 ---
 
-## Current Status (v0.2)
+## Current Status (v0.3)
 
 The project is currently in its initial development phase. The foundational structure is in place, and the core functionality of connecting to a bank and retrieving transactions is working.
 

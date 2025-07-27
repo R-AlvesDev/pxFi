@@ -24,7 +24,7 @@ This document outlines the features and implementation plan for the first fully 
 
 ### Feature: Automated Categorization
 * [ ] **As a user, I want** the system to automatically categorize new transactions based on a predefined set of keywords (e.g., "UBER" is always "Transportation").
-* [ ] **As a user, I want to** create my own custom rules (e.g., "if the description contains 'Pingo Doce', categorize it as 'Food > Groceries'") to automate my personal tracking.
+* [X] **As a user, I want to** create my own custom rules (e.g., "if the description contains 'Pingo Doce', categorize it as 'Food > Groceries'") to automate my personal tracking.
 
 ### Feature: Statistics & Reporting
 * [ ] **As a user, I want to** navigate to a dedicated "Statistics" page.

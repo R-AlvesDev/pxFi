@@ -100,6 +100,17 @@ export interface CategorizationRule {
   subCategoryId: string | null;
 }
 
+export interface CategorySpending {
+  categoryName: string;
+  total: number;
+}
+
+export interface StatisticsResponse {
+  totalIncome: number;
+  totalExpenses: number;
+  expensesByCategory: CategorySpending[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -208,6 +219,11 @@ export class ApiService {
 
   deleteRule(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/rules/${id}`);
+  }
+
+  getMonthlyStatistics(year: number, month: number): Observable<StatisticsResponse> {
+    const params = { year: year.toString(), month: month.toString() };
+    return this.http.get<StatisticsResponse>(`${this.baseUrl}/statistics/monthly`, { params });
   }
 
 }

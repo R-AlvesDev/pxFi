@@ -1,0 +1,77 @@
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+    <h2 class="mb-0">Monthly Statistics</h2>
+    <div class="d-flex gap-2">
+      <select class="form-select" [(ngModel)]="currentMonth" (ngModelChange)="loadStatistics()">
+        <option *ngFor="let month of months" [value]="month.value">{{ month.name }}</option>
+      </select>
+      <select class="form-select" [(ngModel)]="currentYear" (ngModelChange)="loadStatistics()">
+        <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center p-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2">Loading statistics...</p>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <div *ngIf="stats && !loading">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="card text-center h-100 bg-success-subtle border-success">
+          <div class="card-body">
+            <h6 class="card-subtitle mb-2 text-muted">Total Income</h6>
+            <p class="card-text fs-2 fw-bold">{{ stats.totalIncome | currency:'EUR' }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-center h-100 bg-danger-subtle border-danger">
+          <div class="card-body">
+            <h6 class="card-subtitle mb-2 text-muted">Total Expenses</h6>
+            <p class="card-text fs-2 fw-bold">{{ stats.totalExpenses | currency:'EUR' }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-center h-100" [ngClass]="(stats.totalIncome - stats.totalExpenses >= 0) ? 'bg-primary-subtle border-primary' : 'bg-warning-subtle border-warning'">
+          <div class="card-body">
+            <h6 class="card-subtitle mb-2 text-muted">Net Balance</h6>
+            <p class="card-text fs-2 fw-bold">{{ (stats.totalIncome - stats.totalExpenses) | currency:'EUR' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-7">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title">Expenses by Category</h5>
+            <div style="height: 350px;">
+              <canvas baseChart
+                [data]="doughnutChartData"
+                [type]="doughnutChartType"
+                [options]="doughnutChartOptions">
+              </canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title">Breakdown</h5>
+            <ul class="list-group list-group-flush">
+              <li *ngFor="let item of stats.expensesByCategory" class="list-group-item d-flex justify-content-between align-items-center">
+                {{ item.categoryName || 'Uncategorized' }}
+                <span class="badge bg-primary rounded-pill">{{ item.total | currency:'EUR' }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
