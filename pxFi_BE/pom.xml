@@ -8,11 +8,10 @@
 		<version>3.5.3</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.example</groupId>
-	<artifactId>demo</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>pxFi</name>
-	<description>Demo project for Spring Boot</description>
+    <groupId>com.pxfi</groupId>
+    <artifactId>pxFi</artifactId> <version>0.0.1-SNAPSHOT</version>
+    <name>pxFi</name>
+    <description>pxFi Backend</description>
 	<url/>
 	<licenses>
 		<license/>
