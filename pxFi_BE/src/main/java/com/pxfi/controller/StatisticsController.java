@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pxfi.model.StatisticsResponse;
+import com.pxfi.model.YearlyStatisticsResponse;
 import com.pxfi.service.StatisticsService;
 
 @RestController
@@ -24,6 +25,12 @@ public class StatisticsController {
             @RequestParam int year,
             @RequestParam int month) {
         StatisticsResponse stats = statisticsService.getMonthlyStatistics(year, month);
+        return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/yearly")
+    public ResponseEntity<YearlyStatisticsResponse> getYearlyStatistics(@RequestParam int year) {
+        YearlyStatisticsResponse stats = statisticsService.getYearlyStatistics(year);
         return ResponseEntity.ok(stats);
     }
 }

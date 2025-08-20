@@ -1,1 +1,10 @@
 .account-picker { margin-bottom: 1rem; }
+
+tr.ignored {
+    opacity: 0.5;
+    background-color: #f8f9fa; /* A light gray background */
+    
+    &:hover {
+      opacity: 1; /* Bring back full opacity on hover */
+    }
+  }

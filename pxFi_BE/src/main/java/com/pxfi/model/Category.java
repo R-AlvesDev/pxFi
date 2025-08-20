@@ -12,6 +12,8 @@ public class Category {
 
     private String parentId; 
 
+    private boolean isAssetTransfer = false; 
+
     // Getters and Setters
     public String getId() {
         return id;
@@ -35,5 +37,13 @@ public class Category {
 
     public void setParentId(String parentId) {
         this.parentId = parentId;
+    }
+
+    public boolean isAssetTransfer() {
+        return isAssetTransfer;
+    }
+
+    public void setAssetTransfer(boolean isAssetTransfer) {
+        this.isAssetTransfer = isAssetTransfer;
     }
 }

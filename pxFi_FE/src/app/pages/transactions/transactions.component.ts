@@ -26,6 +26,14 @@ export class TransactionsComponent implements OnInit {
   accessToken: string | null = null;
   mainCategories: Category[] = [];
 
+  isLinkingMode = false;
+  selectedExpenseId: string | null = null;
+  selectedIncomeId: string | null = null;
+
+  currentPage: number = 1;
+  itemsPerPage: number = 10;
+  itemsPerPageOptions: number[] = [10, 25, 50, 100];
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -91,7 +99,7 @@ export class TransactionsComponent implements OnInit {
   }
 
   onCategorySelectionChange(transaction: Transaction): void {
-    transaction.subCategoryId = null; // Reset subcategory
+    transaction.subCategoryId = null;
     transaction.categoryDirty = true;
   }
 
@@ -104,8 +112,7 @@ export class TransactionsComponent implements OnInit {
       console.error("Cannot save without a main category.");
       return;
     }
-
-    // Find the original transaction state to check its previous category status
+    
     const originalTransaction = this.transactions.find(t => t.id === transaction.id);
     const wasAlreadyCategorized = !!originalTransaction?.categoryId;
 
@@ -130,7 +137,6 @@ export class TransactionsComponent implements OnInit {
     let isSubcategoryUpdate = wasAlreadyCategorized && !!updatedTx.subCategoryId;
 
     if (isSubcategoryUpdate) {
-      // Find transactions with same main category but missing a subcategory
       similarCount = this.transactions.filter(t =>
         t.id !== updatedTx.id &&
         t.remittanceInformationUnstructured === remittanceInfo &&
@@ -138,7 +144,6 @@ export class TransactionsComponent implements OnInit {
         !t.subCategoryId
       ).length;
     } else {
-      // Find completely uncategorized transactions
       similarCount = this.transactions.filter(t =>
         t.id !== updatedTx.id &&
         t.remittanceInformationUnstructured === remittanceInfo &&
@@ -160,5 +165,99 @@ export class TransactionsComponent implements OnInit {
         });
       }
     }
+  }
+
+  toggleIgnore(transaction: Transaction): void {
+    this.api.toggleTransactionIgnore(transaction.id).subscribe({
+      next: updatedTx => {
+        const index = this.transactions.findIndex(t => t.id === updatedTx.id);
+        if (index !== -1) {
+          const wasExpanded = this.transactions[index].expanded;
+          this.transactions[index] = { ...updatedTx, expanded: wasExpanded };
+        }
+      },
+      error: err => console.error('Failed to toggle ignore status', err)
+    });
+  }
+
+  toggleLinkingMode(): void {
+    this.isLinkingMode = !this.isLinkingMode;
+    this.selectedExpenseId = null;
+    this.selectedIncomeId = null;
+  }
+
+  selectTransactionForLink(transaction: Transaction): void {
+    if (!this.isLinkingMode) return;
+    const amount = +transaction.transactionAmount.amount;
+    if (amount < 0) {
+      this.selectedExpenseId = this.selectedExpenseId === transaction.id ? null : transaction.id;
+    } else if (amount > 0) {
+      this.selectedIncomeId = this.selectedIncomeId === transaction.id ? null : transaction.id;
+    }
+  }
+
+  linkSelectedTransactions(): void {
+    if (!this.selectedExpenseId || !this.selectedIncomeId) return;
+    this.api.linkTransactions(this.selectedExpenseId, this.selectedIncomeId).subscribe({
+      next: () => {
+        this.isLinkingMode = false;
+        this.selectedExpenseId = null;
+        this.selectedIncomeId = null;
+        this.loadCachedTransactions();
+      },
+      error: (err) => {
+        console.error('Failed to link transactions', err);
+        alert('An error occurred while linking transactions.');
+      }
+    });
+  }
+
+  get paginatedTransactions(): Transaction[] {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    return this.transactions.slice(startIndex, endIndex);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.transactions.length / this.itemsPerPage);
+  }
+
+  get pages(): (number | string)[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const delta = 2;
+    const range = [];
+    range.push(1);
+    if (current > delta + 2) {
+      range.push('...');
+    }
+    for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
+      range.push(i);
+    }
+    if (current < total - delta - 1) {
+      range.push('...');
+    }
+    if (total > 1) {
+      range.push(total);
+    }
+    return range;
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  onItemsPerPageChange(): void {
+    this.currentPage = 1;
+  }
+
+  /**
+   * A type guard to check if a value is a number.
+   * This is used in the template to satisfy the TypeScript compiler.
+   */
+  isNumber(value: any): value is number {
+    return typeof value === 'number';
   }
 }
