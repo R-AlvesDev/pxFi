@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.pxfi.model.CategorizeSimilarRequest;
 import com.pxfi.model.EndUserAgreementRequest;
 import com.pxfi.model.EndUserAgreementResponse;
+import com.pxfi.model.LinkTransactionsRequest;
 import com.pxfi.model.RequisitionDetailsResponse;
 import com.pxfi.model.RequisitionResponse;
 import com.pxfi.model.Transaction;
@@ -172,4 +173,20 @@ public class GoCardlessController {
         return ResponseEntity.ok(updatedTransactions);
     }
     
+    @PostMapping("/transactions/{id}/toggle-ignore")
+    public ResponseEntity<Transaction> toggleIgnore(@PathVariable String id) {
+        return transactionService.toggleTransactionIgnoreStatus(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }    
+
+    @PostMapping("/transactions/link")
+    public ResponseEntity<Void> linkTransactions(@RequestBody LinkTransactionsRequest request) {
+        try {
+            transactionService.linkTransactions(request.getExpenseId(), request.getIncomeId());
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

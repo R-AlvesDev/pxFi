@@ -22,15 +22,29 @@
             <button type="submit" class="btn btn-primary w-100">Add Category</button>
           </form>
 
+          <h6 class="mt-4 border-bottom pb-2 mb-3">Existing Categories</h6>
+          <p class="text-muted small">Check the box next to any category to mark it as an "Asset Transfer". Transactions in these categories (e.g., Savings, Investments) will be excluded from your total expenses.</p>
           <ul class="list-group">
             <ng-container *ngFor="let category of mainCategories">
-              <li class="list-group-item d-flex justify-content-between align-items-center" (click)="toggleCategory(category.id)" style="cursor: pointer;">
-                <strong>{{ category.name }}</strong>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" [(ngModel)]="category.isAssetTransfer" 
+                         (ngModelChange)="onAssetTransferChange(category)" [id]="'cat-check-' + category.id">
+                  <label class="form-check-label" [for]="'cat-check-' + category.id" (click)="toggleCategory(category.id)" style="cursor: pointer;">
+                    <strong>{{ category.name }}</strong>
+                  </label>
+                </div>
                 <button class="btn btn-outline-danger btn-sm" (click)="$event.stopPropagation(); deleteCategory(category.id)">Delete</button>
               </li>
               <ng-container *ngIf="expandedCategoryIds.has(category.id)">
                 <li *ngFor="let sub of categoryService.getSubCategories(category.id)" class="list-group-item d-flex justify-content-between align-items-center ps-5">
-                  <span>- {{ sub.name }}</span>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" [(ngModel)]="sub.isAssetTransfer"
+                           (ngModelChange)="onAssetTransferChange(sub)" [id]="'cat-check-' + sub.id">
+                    <label class="form-check-label" [for]="'cat-check-' + sub.id">
+                      {{ sub.name }}
+                    </label>
+                  </div>
                   <button class="btn btn-outline-danger btn-sm" (click)="$event.stopPropagation(); deleteCategory(sub.id)">Delete</button>
                 </li>
               </ng-container>

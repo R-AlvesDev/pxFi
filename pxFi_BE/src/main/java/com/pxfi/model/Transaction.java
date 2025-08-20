@@ -17,17 +17,25 @@ public class Transaction {
     private String valueDate;
     private String remittanceInformationUnstructured;
     private String bankTransactionCode;
-    
-    // New fields for categorization
+    private boolean ignored = false; 
     private String categoryId;
     private String subCategoryId;
     private String categoryName;
     private String subCategoryName;
 
+    private String linkedTransactionId;
+
     @Field("accountId")
     private String accountId;
 
-    // Getters and Setters for new fields
+    public String getLinkedTransactionId() {
+        return linkedTransactionId;
+    }
+
+    public void setLinkedTransactionId(String linkedTransactionId) {
+        this.linkedTransactionId = linkedTransactionId;
+    }
+
     public String getCategoryId() {
         return categoryId;
     }
@@ -141,5 +149,13 @@ public class Transaction {
 
     public void setAccountId(String accountId) {
         this.accountId = accountId;
+    }
+
+    public boolean isIgnored() {
+        return ignored;
+    }
+
+    public void setIgnored(boolean ignored) {
+        this.ignored = ignored;
     }
 }

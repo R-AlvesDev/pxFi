@@ -107,4 +107,12 @@ export class SettingsComponent implements OnInit {
     }
   }
 
+  onAssetTransferChange(category: Category): void {
+    // The checkbox's [(ngModel)] handles the state change, so we just need to save it.
+    this.categoryService.updateCategory(category.id, category.name, category.parentId).subscribe({
+      next: () => console.log(`Category ${category.name} updated.`),
+      error: err => console.error('Failed to update category', err)
+    });
+  }
+  
 }

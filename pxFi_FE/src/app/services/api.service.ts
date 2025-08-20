@@ -62,6 +62,8 @@ export interface Transaction {
   subCategoryId?: string | null;
   categoryName?: string;
   subCategoryName?: string;
+  ignored: boolean;
+  linkedTransactionId?: string | null;
 }
 
 export interface TransactionsResponse {
@@ -75,6 +77,7 @@ export interface Category {
   id: string;
   name: string;
   parentId: string | null;
+  isAssetTransfer: boolean;
 }
 
 export enum RuleField {
@@ -109,6 +112,20 @@ export interface StatisticsResponse {
   totalIncome: number;
   totalExpenses: number;
   expensesByCategory: CategorySpending[];
+}
+
+export interface MonthlyBreakdown {
+  month: number;
+  income: number;
+  expenses: number;
+}
+
+export interface YearlyStatisticsResponse {
+  totalIncome: number;
+  totalExpenses: number;
+  averageMonthlyIncome: number;
+  averageMonthlyExpenses: number;
+  monthlyBreakdowns: MonthlyBreakdown[];
 }
 
 @Injectable({
@@ -174,6 +191,10 @@ export class ApiService {
     });
   }
 
+  toggleTransactionIgnore(transactionId: string): Observable<Transaction> {
+    return this.http.post<Transaction>(`${this.baseUrl}/transactions/${transactionId}/toggle-ignore`, {});
+  }
+
   handleCallback(ref: string): Observable<any> {
     const params = new HttpParams().set('ref', ref);
     return this.http.get(`${this.baseUrl}/callback`, { params });
@@ -226,4 +247,13 @@ export class ApiService {
     return this.http.get<StatisticsResponse>(`${this.baseUrl}/statistics/monthly`, { params });
   }
 
+  getYearlyStatistics(year: number): Observable<YearlyStatisticsResponse> {
+    const params = { year: year.toString() };
+    return this.http.get<YearlyStatisticsResponse>(`${this.baseUrl}/statistics/yearly`, { params });
+  }
+  
+  linkTransactions(expenseId: string, incomeId: string): Observable<void> {
+    const payload = { expenseId, incomeId };
+    return this.http.post<void>(`${this.baseUrl}/transactions/link`, payload);
+  }
 }

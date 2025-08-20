@@ -9,6 +9,7 @@ import com.pxfi.repository.CategorizationRuleRepository;
 import com.pxfi.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -197,5 +198,29 @@ public class TransactionService {
         }
         
         return transactionsToUpdate;
+    }
+
+    public Optional<Transaction> toggleTransactionIgnoreStatus(String transactionId) {
+        return transactionRepository.findById(transactionId)
+                .map(transaction -> {
+                    transaction.setIgnored(!transaction.isIgnored());
+                    return transactionRepository.save(transaction);
+                });
+    }
+
+    @Transactional // Ensures both saves happen together or not at all
+    public void linkTransactions(String expenseId, String incomeId) {
+        // Find both transactions from the database
+        Transaction expenseTx = transactionRepository.findById(expenseId)
+                .orElseThrow(() -> new IllegalArgumentException("Expense transaction not found"));
+        Transaction incomeTx = transactionRepository.findById(incomeId)
+                .orElseThrow(() -> new IllegalArgumentException("Income transaction not found"));
+
+        // Link them to each other
+        expenseTx.setLinkedTransactionId(incomeTx.getId());
+        incomeTx.setLinkedTransactionId(expenseTx.getId());
+
+        // Save both updated transactions back to the database
+        transactionRepository.saveAll(List.of(expenseTx, incomeTx));
     }
 }

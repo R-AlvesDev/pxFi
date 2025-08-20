@@ -2,11 +2,18 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Transactions</h2>
     <div>
-      <button class="btn btn-primary me-2" (click)="refreshTransactions()" [disabled]="loading">
+      <button class="btn btn-outline-info me-2" (click)="toggleLinkingMode()" [class.active]="isLinkingMode">
+        <i class="fas fa-link"></i> {{ isLinkingMode ? 'Cancel Split' : 'Split Bill' }}
+      </button>
+      <button class="btn btn-primary" (click)="refreshTransactions()" [disabled]="loading">
         <span *ngIf="loading" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
         {{ loading ? ' Loading...' : 'Refresh' }}
       </button>
     </div>
+  </div>
+
+  <div *ngIf="isLinkingMode" class="alert alert-info">
+    Select one expense (red) and one income (green) transaction to link them as a split bill.
   </div>
 
   <div class="card">
@@ -31,15 +38,22 @@
               <th scope="col">Description</th>
               <th scope="col" style="width: 25%;">Category</th>
               <th scope="col" class="text-end">Amount</th>
+              <th scope="col" class="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <ng-container *ngFor="let tx of transactions; let i = index">
-              <tr (click)="tx.expanded = !tx.expanded" style="cursor: pointer;">
-                <td>{{ i + 1 }}</td>
+            <ng-container *ngFor="let tx of paginatedTransactions; let i = index">
+              <tr [class.ignored]="tx.ignored"
+                  [class.table-info]="isLinkingMode && (selectedExpenseId === tx.id || selectedIncomeId === tx.id)"
+                  [style.cursor]="isLinkingMode ? 'pointer' : 'default'"
+                  (click)="isLinkingMode ? selectTransactionForLink(tx) : (tx.expanded = !tx.expanded)">
+                
+                <td>
+                  {{ i + 1 + ((currentPage - 1) * itemsPerPage) }}
+                  <i *ngIf="tx.linkedTransactionId" class="fas fa-link text-muted ms-2" title="Linked Transaction"></i>
+                </td>
                 <td>{{ tx.bookingDate | date:'mediumDate' }}</td>
                 <td>
-                  <!--<div>{{ tx.debtorName || 'N/A' }}</div>-->
                   <div>{{ tx.remittanceInformationUnstructured || 'No remittance info' }}</div>
                 </td>
                 <td>
@@ -68,9 +82,18 @@
                     {{ tx.transactionAmount.amount | currency:tx.transactionAmount.currency }}
                   </span>
                 </td>
+                <td class="text-center align-middle">
+                  <button class="btn btn-sm"
+                          [class.btn-outline-secondary]="!tx.ignored"
+                          [class.btn-secondary]="tx.ignored"
+                          (click)="$event.stopPropagation(); toggleIgnore(tx)"
+                          [title]="tx.ignored ? 'Unignore this transaction' : 'Ignore this transaction'">
+                    <i class="fas" [class.fa-eye-slash]="tx.ignored" [class.fa-eye]="!tx.ignored"></i>
+                  </button>
+                </td>
               </tr>
               <tr *ngIf="tx.expanded">
-                <td colspan="5" class="p-3 bg-light">
+                <td colspan="6" class="p-3 bg-light">
                   <div class="row">
                     <div class="col-md-6">
                       <strong>Transaction ID:</strong> {{ tx.transactionId || 'N/A' }} <br>
@@ -88,9 +111,51 @@
         </table>
       </div>
 
-      <div *ngIf="!loading && !error && transactions?.length === 0" class="alert alert-secondary text-center">
+      <div *ngIf="totalPages > 1" class="d-flex justify-content-between align-items-center mt-3">
+        <div class="d-flex align-items-center">
+          <label for="itemsPerPage" class="form-label me-2 mb-0">Rows:</label>
+          <select id="itemsPerPage" class="form-select form-select-sm" style="width: auto;" 
+                  [(ngModel)]="itemsPerPage" (ngModelChange)="onItemsPerPageChange()">
+            <option *ngFor="let option of itemsPerPageOptions" [value]="option">{{ option }}</option>
+          </select>
+        </div>
+        <nav aria-label="Transaction pagination">
+          <ul class="pagination mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <a class="page-link" href="#" (click)="goToPage(1); false">&laquo;</a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <a class="page-link" href="#" (click)="goToPage(currentPage - 1); false">&lsaquo;</a>
+            </li>
+            
+            <ng-container *ngFor="let page of pages">
+              <li *ngIf="page !== '...'" class="page-item" [class.active]="page === currentPage">
+                <a class="page-link" href="#" (click)="goToPage(page); false">{{ page }}</a>
+              </li>
+              <li *ngIf="page === '...'" class="page-item disabled">
+                <span class="page-link">...</span>
+              </li>
+            </ng-container>
+
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <a class="page-link" href="#" (click)="goToPage(currentPage + 1); false">&rsaquo;</a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <a class="page-link" href="#" (click)="goToPage(totalPages); false">&raquo;</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <div *ngIf="!loading && !error && transactions.length === 0" class="alert alert-secondary text-center">
         No transactions found for this account.
       </div>
     </div>
+  </div>
+
+  <div *ngIf="isLinkingMode && selectedExpenseId && selectedIncomeId" class="position-fixed bottom-0 start-50 translate-middle-x p-3">
+    <button class="btn btn-lg btn-success shadow-lg" (click)="linkSelectedTransactions()">
+      <i class="fas fa-check"></i> Link Transactions
+    </button>
   </div>
 </div>
