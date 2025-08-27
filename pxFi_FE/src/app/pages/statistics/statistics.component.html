@@ -25,7 +25,9 @@
       <div class="col-md-4"><div class="card text-center h-100 bg-success-subtle border-success"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Total Income</h6><p class="card-text fs-2 fw-bold">{{ monthlyStats.totalIncome | currency:'EUR' }}</p></div></div></div>
       <div class="col-md-4"><div class="card text-center h-100 bg-danger-subtle border-danger"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Total Expenses</h6><p class="card-text fs-2 fw-bold">{{ monthlyStats.totalExpenses | currency:'EUR' }}</p></div></div></div>
       <div class="col-md-4"><div class="card text-center h-100" [ngClass]="(monthlyStats.totalIncome - monthlyStats.totalExpenses >= 0) ? 'bg-primary-subtle border-primary' : 'bg-warning-subtle border-warning'"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Net Balance</h6><p class="card-text fs-2 fw-bold">{{ (monthlyStats.totalIncome - monthlyStats.totalExpenses) | currency:'EUR' }}</p></div></div></div>
-      <div class="col-md-7"><div class="card h-100"><div class="card-body"><h5 class="card-title">Expenses by Category</h5><div style="height: 350px;"><canvas baseChart [data]="doughnutChartData" [type]="doughnutChartType" [options]="doughnutChartOptions"></canvas></div></div></div></div>
+      <div class="col-md-7"><div class="card h-100"><div class="card-body"><h5 class="card-title">Expenses by Category</h5><div *ngIf="showChart" style="height: 350px;">
+        <canvas baseChart [data]="doughnutChartData" [type]="doughnutChartType" [options]="doughnutChartOptions"></canvas>
+      </div></div></div></div>
       <div class="col-md-5"><div class="card h-100"><div class="card-body"><h5 class="card-title">Breakdown</h5><ul class="list-group list-group-flush"><li *ngFor="let item of monthlyStats.expensesByCategory" class="list-group-item d-flex justify-content-between align-items-center">{{ item.categoryName || 'Uncategorized' }} <span class="badge bg-primary rounded-pill">{{ item.total | currency:'EUR' }}</span></li></ul></div></div></div>
     </div>
   </div>

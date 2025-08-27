@@ -1,15 +1,5 @@
 package com.pxfi.service;
 
-import com.pxfi.model.Category;
-import com.pxfi.model.CategorySpending;
-import com.pxfi.model.MonthlyBreakdown;
-import com.pxfi.model.StatisticsResponse;
-import com.pxfi.model.Transaction;
-import com.pxfi.model.YearlyStatisticsResponse;
-import com.pxfi.repository.CategoryRepository;
-import com.pxfi.repository.TransactionRepository;
-import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -20,6 +10,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
+import com.pxfi.model.Category;
+import com.pxfi.model.CategorySpending;
+import com.pxfi.model.MonthlyBreakdown;
+import com.pxfi.model.StatisticsResponse;
+import com.pxfi.model.Transaction;
+import com.pxfi.model.YearlyStatisticsResponse;
+import com.pxfi.repository.CategoryRepository;
+import com.pxfi.repository.TransactionRepository;
 
 @Service
 public class StatisticsService {
