@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -43,8 +44,11 @@ public class StatisticsService {
         BigDecimal totalIncome = BigDecimal.ZERO;
         BigDecimal totalExpenses = BigDecimal.ZERO;
         Set<String> processedIds = new HashSet<>();
+        
+        // This map will store spending totals per category ID
+        Map<String, BigDecimal> spendingPerCategory = new HashMap<>();
 
-        // --- NEW: Process linked transactions first ---
+        // --- Process linked transactions first ---
         for (Transaction tx : transactions) {
             if (tx.getLinkedTransactionId() != null && !processedIds.contains(tx.getId())) {
                 Transaction linkedTx = transactions.stream()
@@ -56,6 +60,11 @@ public class StatisticsService {
                     BigDecimal amount2 = new BigDecimal(linkedTx.getTransactionAmount().getAmount());
                     BigDecimal netExpense = amount1.add(amount2).abs();
                     totalExpenses = totalExpenses.add(netExpense);
+
+                    // Add this net expense to its category
+                    if (tx.getCategoryId() != null) {
+                        spendingPerCategory.merge(tx.getCategoryId(), netExpense, BigDecimal::add);
+                    }
 
                     processedIds.add(tx.getId());
                     processedIds.add(linkedTx.getId());
@@ -74,13 +83,32 @@ public class StatisticsService {
                 totalIncome = totalIncome.add(amount);
             } else {
                 Category category = categoryMap.get(tx.getCategoryId());
+                // Only count as an expense if it's not an asset transfer
                 if (category == null || !category.isAssetTransfer()) {
-                    totalExpenses = totalExpenses.add(amount.abs());
+                    BigDecimal expenseAmount = amount.abs();
+                    totalExpenses = totalExpenses.add(expenseAmount);
+
+                    // Add this expense to its category
+                    if (tx.getCategoryId() != null) {
+                        spendingPerCategory.merge(tx.getCategoryId(), expenseAmount, BigDecimal::add);
+                    }
                 }
             }
         }
 
-        List<CategorySpending> expensesByCategory = transactionRepository.findSpendingByCategory(startDate, endDate);
+        // --- old repository call ---
+        // List<CategorySpending> expensesByCategory = transactionRepository.findSpendingByCategory(startDate, endDate);
+
+        // --- BUILD the list from map ---
+        List<CategorySpending> expensesByCategory = spendingPerCategory.entrySet().stream()
+            .map(entry -> {
+                String categoryId = entry.getKey();
+                Category category = categoryMap.get(categoryId);
+                String categoryName = (category != null) ? category.getName() : "Uncategorized";
+                return new CategorySpending(categoryName, entry.getValue());
+            })
+            .collect(Collectors.toList());
+
         return new StatisticsResponse(totalIncome, totalExpenses, expensesByCategory);
     }
 
