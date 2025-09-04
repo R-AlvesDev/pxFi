@@ -64,4 +64,7 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
     List<Transaction> findByRemittanceInformationUnstructuredAndCategoryIdAndSubCategoryIdIsNull(
         String remittanceInfo, String categoryId
     );
+
+    List<Transaction> findByAccountIdAndBookingDateBetweenOrderByBookingDateDesc(String accountId, String startDate, String endDate);
+
 }

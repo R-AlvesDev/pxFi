@@ -52,6 +52,7 @@ export interface Transaction {
   id: string; // This is the MongoDB ID
   transactionId: string;
   debtorName: string;
+  internalTransactionId: string;
   debtorAccount: DebtorAccount;
   transactionAmount: TransactionAmount;
   bookingDate: string;
@@ -179,11 +180,18 @@ export class ApiService {
     });
   }
 
-  getAccountTransactions(accessToken: string, accountId: string): Observable<Transaction[]> {
+  getAccountTransactions(accessToken: string, accountId: string, startDate?: string, endDate?: string): Observable<Transaction[]> {
+    let params = new HttpParams();
+    if (startDate && endDate) {
+      params = params.set('startDate', startDate);
+      params = params.set('endDate', endDate);
+    }
+
     return this.http.get<Transaction[]>(`${this.baseUrl}/accounts/${accountId}/transactions`, {
-      headers: this.createAuthHeaders(accessToken)
+      headers: this.createAuthHeaders(accessToken),
+      params: params
     });
-  }
+}
 
   refreshTransactions(accessToken: string, accountId: string): Observable<Transaction[]> {
     return this.http.post<Transaction[]>(`${this.baseUrl}/accounts/${accountId}/transactions/refresh`, {}, {

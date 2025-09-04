@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -98,32 +99,17 @@ public class GoCardlessController {
 
     @GetMapping("/accounts/{accountId}/transactions")
     public ResponseEntity<List<Transaction>> getAccountTransactions(
-            @RequestHeader("Authorization") String authorization,
-            @PathVariable String accountId) throws Exception {
-
-        List<Transaction> cachedTransactions = transactionService.getTransactionsByAccountId(accountId);
-        System.out.println("Found " + cachedTransactions.size() + " transactions in Mongo for accountId " + accountId);
-
-        if (cachedTransactions != null && !cachedTransactions.isEmpty()) {
-            return ResponseEntity.ok(cachedTransactions);
-        }
-
-        // If cache empty, fetch from API and save
-        String accessToken = extractToken(authorization);
-        TransactionsResponse apiResponse = goCardlessService.getAccountTransactions(accessToken, accountId);
-        transactionService.saveTransactions(accountId, apiResponse);
-
-        // Return just the booked + pending as a single list
-        List<Transaction> allTxs = new ArrayList<>();
-        if (apiResponse.getTransactions() != null) {
-            if (apiResponse.getTransactions().getBooked() != null) {
-                allTxs.addAll(apiResponse.getTransactions().getBooked());
-            }
-            if (apiResponse.getTransactions().getPending() != null) {
-                allTxs.addAll(apiResponse.getTransactions().getPending());
-            }
-        }
-        return ResponseEntity.ok(allTxs);
+            @PathVariable String accountId,
+            @RequestParam Optional<String> startDate,
+            @RequestParam Optional<String> endDate) {
+    
+        List<Transaction> cachedTransactions = transactionService.getTransactionsByAccountId(
+            accountId, 
+            startDate.orElse(null), 
+            endDate.orElse(null)
+        );
+        
+        return ResponseEntity.ok(cachedTransactions);
     }
 
     @PostMapping("/accounts/{accountId}/transactions/refresh")
@@ -142,7 +128,7 @@ public class GoCardlessController {
 
     @GetMapping("/debug/transactions/{accountId}")
     public List<Transaction> debugFetch(@PathVariable String accountId) {
-        return transactionService.getTransactionsByAccountId(accountId);
+        return transactionService.getTransactionsByAccountId(accountId, null, null);
     }
 
     @GetMapping("/debug/all-transactions")

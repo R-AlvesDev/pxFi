@@ -72,10 +72,17 @@ public class TransactionService {
         }
     }
 
-    public List<Transaction> getTransactionsByAccountId(String accountId) {
+    public List<Transaction> getTransactionsByAccountId(String accountId, String startDate, String endDate) {
+        if (startDate != null && endDate != null && !startDate.isEmpty() && !endDate.isEmpty()) {
+            return transactionRepository.findByAccountIdAndBookingDateBetweenOrderByBookingDateDesc(accountId, startDate, endDate);
+        }
         return transactionRepository.findByAccountIdOrderByBookingDateDesc(accountId);
     }
 
+    public List<Transaction> getTransactionsByAccountId(String accountId) {
+        return this.getTransactionsByAccountId(accountId, null, null);
+    }
+    
     public List<Transaction> getAllTransactions() {
         return transactionRepository.findAll();
     }
