@@ -34,6 +34,8 @@ export class TransactionsComponent implements OnInit {
   currentPage: number = 1;
   itemsPerPage: number = 10;
   itemsPerPageOptions: number[] = [10, 25, 50, 100];
+  startDate: string = '';
+  endDate: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -41,7 +43,7 @@ export class TransactionsComponent implements OnInit {
     private api: ApiService,
     private accountState: AccountStateService,
     public categoryService: CategoryService,
-    private notificationService: NotificationService // 2. Inject the service
+    private notificationService: NotificationService 
   ) {}
 
   ngOnInit(): void {
@@ -70,14 +72,15 @@ export class TransactionsComponent implements OnInit {
     if (!this.selectedAccountId || !this.accessToken) return;
     this.loading = true;
     this.error = null;
-    this.api.getAccountTransactions(this.accessToken, this.selectedAccountId).subscribe({
+
+    this.api.getAccountTransactions(this.accessToken, this.selectedAccountId, this.startDate, this.endDate).subscribe({
       next: (res) => {
         this.transactions = res.map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
         this.applyFilters();
         this.loading = false;
       },
       error: (err) => {
-        this.error = 'Failed to load cached transactions: ' + err.message;
+        this.error = 'Failed to load transactions: ' + err.message;
         this.loading = false;
         this.notificationService.show('Failed to load transactions.', 'error');
       }
@@ -299,5 +302,24 @@ export class TransactionsComponent implements OnInit {
   
   isNumber(value: any): value is number {
     return typeof value === 'number';
+  }
+
+  applyDateFilter(): void {
+    if (this.startDate && this.endDate && this.startDate > this.endDate) {
+      this.notificationService.show('Start date cannot be after end date.', 'error');
+      return;
+    }
+    if (this.startDate && this.endDate) {
+      this.loadCachedTransactions();
+    }
+  }
+
+  clearDateFilter(): void {
+    if (this.startDate || this.endDate) {
+      this.startDate = '';
+      this.endDate = '';
+      this.loadCachedTransactions();
+      this.notificationService.show('Date filter cleared.', 'info');
+    }
   }
 }
