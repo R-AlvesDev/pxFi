@@ -5,6 +5,7 @@ import { CategoryService } from '../../services/category.service';
 import { RuleService } from '../../services/rule.service';
 import { Category, CategorizationRule, RuleField, RuleOperator } from '../../services/api.service';
 import { Observable } from 'rxjs';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-settings',
@@ -33,7 +34,8 @@ export class SettingsComponent implements OnInit {
 
   constructor(
     public categoryService: CategoryService,
-    public ruleService: RuleService
+    public ruleService: RuleService,
+    private notificationService: NotificationService // Inject NotificationService
   ) {
     this.categories$ = this.categoryService.categories$;
     this.rules$ = this.ruleService.rules$;
@@ -56,42 +58,53 @@ export class SettingsComponent implements OnInit {
 
   addCategory(): void {
     if (!this.newCategoryName.trim()) return;
-    this.categoryService.createCategory(this.newCategoryName, this.newCategoryParentId).subscribe(() => {
-      this.newCategoryName = '';
-      this.newCategoryParentId = null;
+    this.categoryService.createCategory(this.newCategoryName, this.newCategoryParentId).subscribe({
+        next: () => {
+            this.notificationService.show('Category added successfully!', 'success');
+            this.newCategoryName = '';
+            this.newCategoryParentId = null;
+        },
+        error: (err) => this.notificationService.show('Error adding category: ' + err.message, 'error')
     });
   }
 
   deleteCategory(id: string): void {
-    if (confirm('Are you sure you want to delete this category?')) {
-      this.categoryService.deleteCategory(id).subscribe();
+    if (confirm('Are you sure you want to delete this category? This cannot be undone.')) {
+      this.categoryService.deleteCategory(id).subscribe({
+          next: () => this.notificationService.show('Category deleted.', 'success'),
+          error: (err) => this.notificationService.show('Error deleting category: ' + err.message, 'error')
+      });
     }
   }
 
   // --- Rule Methods ---
   createRule(): void {
     if (!this.newRule.valueToMatch || !this.newRule.categoryId) {
-      alert('Please fill out all rule fields.');
+      this.notificationService.show('Please fill out all rule fields.', 'error');
       return;
     }
-    this.ruleService.createRule(this.newRule).subscribe(() => {
-      this.newRule = {
-        fieldToMatch: RuleField.REMITTANCE_INFO,
-        operator: RuleOperator.CONTAINS
-      };
+    this.ruleService.createRule(this.newRule).subscribe({
+        next: () => {
+            this.notificationService.show('Rule created successfully!', 'success');
+            this.newRule = {
+                fieldToMatch: RuleField.REMITTANCE_INFO,
+                operator: RuleOperator.CONTAINS
+            };
+        },
+        error: (err) => this.notificationService.show('Error creating rule: ' + err.message, 'error')
     });
   }
 
   applyAllRules(): void {
     this.isApplyingRules = true;
+    this.notificationService.show('Applying rules to all transactions...', 'info', 10000); // Longer timeout
     this.ruleService.applyAllRules().subscribe({
       next: (response) => {
-        alert(`${response.updatedCount} transaction(s) were updated by your rules.`);
+        this.notificationService.show(`Successfully updated ${response.updatedCount} transaction(s)!`, 'success');
         this.isApplyingRules = false;
       },
       error: (err) => {
-        console.error('Failed to apply rules', err);
-        alert('An error occurred while applying rules.');
+        this.notificationService.show('Failed to apply rules: ' + err.message, 'error');
         this.isApplyingRules = false;
       }
     });
@@ -103,15 +116,17 @@ export class SettingsComponent implements OnInit {
 
   deleteRule(id: string): void {
     if (confirm('Are you sure you want to delete this rule?')) {
-      this.ruleService.deleteRule(id).subscribe();
+      this.ruleService.deleteRule(id).subscribe({
+          next: () => this.notificationService.show('Rule deleted.', 'success'),
+          error: (err) => this.notificationService.show('Error deleting rule: ' + err.message, 'error')
+      });
     }
   }
 
   onAssetTransferChange(category: Category): void {
     this.categoryService.updateCategory(category).subscribe({
-      next: () => console.log(`Category ${category.name} updated.`),
-      error: err => console.error('Failed to update category', err)
+      next: () => this.notificationService.show(`'${category.name}' asset transfer status updated.`, 'success'),
+      error: err => this.notificationService.show('Failed to update category: ' + err.message, 'error')
     });
   }
-  
 }
