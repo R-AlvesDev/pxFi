@@ -6,47 +6,46 @@
 
 ## Core Concept
 
-The primary goal of pxFi is to overcome the typical 90-day data limit imposed by most banking APIs. By fetching transactions and persisting them in a dedicated MongoDB database, the application builds a long-term, comprehensive history of your financial life.
+The primary goal of pxFi is to help users track personal finances directly from their bank account, overcoming the typical 90-day data limit imposed by most banking APIs. By fetching transactions and persisting them in a dedicated MongoDB database using a stable `internalTransactionId`, the application builds a long-term, comprehensive, and reliable history of your financial life.
 
 This allows for powerful features like year-over-year spending comparisons, long-term savings tracking, and a complete, searchable archive of all your transactions.
 
 ---
 
-## Current Status (v0.3)
+## Current Status (Stable Pre-v1.0)
 
-The project is currently in its initial development phase. The foundational structure is in place, and the core functionality of connecting to a bank and retrieving transactions is working.
+The project has a solid and stable foundation. The core functionality is in place and working reliably after significant debugging and refinement of the data handling logic.
 
 **Key Features Implemented:**
-* **Full-Stack Architecture**: A decoupled frontend and backend.
-    * **Frontend (`pxFi_FE`)**: An Angular application that provides the user interface for connecting to banks and viewing transactions.
-    * **Backend (`pxFi_BE`)**: A Java Spring Boot application that handles business logic, securely communicates with the open banking API, and manages the database.
-* **Open Banking Integration**: Connects to bank accounts via the GoCardless API to securely fetch account and transaction data.
-* **Persistent Storage**: Successfully saves all retrieved transactions into a MongoDB database, ensuring data is not lost after the 90-day API window closes.
-* **Transaction View**: A clean user interface that displays a list of transactions. Each transaction can be expanded to show more detailed information, keeping the main view uncluttered.
-* **Categorization**: Each transaction can be categorized, as well as having subcategories for better detailing. If detected, the user will be prompted for auto-completion of similar transactions.
-* **On-Demand Refresh**: Users can load their transaction history instantly from the local database and manually trigger a refresh from the bank's API to fetch new transactions, respecting API rate limits.
-* **Custom Categories & Rule Creation**: Users can create their own Categories and Subcategories as well custom Rules to automate the categorization of transactions.
+* **Full-Stack Architecture**: A decoupled frontend (Angular) and backend (Java Spring Boot).
+* **Reliable Open Banking Integration**: Connects to bank accounts via the GoCardless API and correctly deduplicates incoming data.
+* **Persistent & Clean Storage**: Successfully saves all retrieved transactions into a MongoDB database, ensuring data integrity.
+* **Transaction Management**: A clean UI to view, filter, and manage transactions, including features for manual categorization, ignoring transactions, and linking split bills.
+* **Categorization System**: A full CRUD system for custom categories/subcategories.
+* **Automation Engine**: A functional rules engine to automate categorization based on user-defined criteria.
+* **Statistics Dashboard**: A dedicated page for visualizing monthly and yearly income vs. expenses, with correct handling for "Asset Transfers".
 
 ---
 
-## The Vision (Roadmap to v1.0)
+## The Vision: Roadmap to Version 1.0
 
-The goal is to evolve pxFi into a smart, intuitive, and highly automated personal finance dashboard. The following user stories outline the roadmap to the first major version.
+The goal is to evolve pxFi into a polished, secure, and highly intuitive personal finance dashboard. The following roadmap outlines the key steps to reach the first major version.
 
-### Feature: Advanced Categorization
-* Provide a default set of common financial categories and subcategories.
-* Allow users to create, edit, and delete their own custom categories (e.g., "Food") and subcategories (e.g., "Groceries", "Restaurants").
-* When a user categorizes one transaction, the app will find similar uncategorized transactions and offer to categorize them all in one batch.
+### 1. Focus on User Experience (UX) and Polishing
+The immediate priority is to improve the user feedback loop and make the application feel more seamless and responsive.
+* **Global Notifications**: Implement a system to provide clear success and error messages for all background actions (e.g., "Rules applied successfully!").
+* **Date Range Filtering**: Add date pickers to the transactions page to allow users to view their financial history within specific periods.
+* **Refine UI Feedback**: Enhance loading states and provide clearer confirmation for actions like applying rules or saving changes.
 
-### Feature: Automated Categorization
-* Implement a keyword-based system to automatically assign categories to new transactions (e.g., a description containing "UBER" is automatically assigned to "Transportation").
-* Develop a custom rules engine where users can define their own logic for how transactions should be categorized.
+### 2. Build the Main Dashboard
+Transform the landing page into a useful, at-a-glance summary of the user's financial health.
+* Create a central dashboard component that displays key metrics like current balances, recent spending trends, and top expense categories for the current month.
 
-### Feature: Statistics & Reporting
-* Create a dedicated dashboard page for financial insights.
-* Allow users to filter their financial data by a specific month or an entire year.
-* Display a high-level summary of total income vs. total expenses for the selected period.
-* Provide a visual breakdown (charts and graphs) of spending by category to help users understand where their money is going.
+### 3. Implement Security: User Accounts (Critical Path)
+This is the most critical feature required for a v1.0 release, ensuring data privacy and security.
+* **Backend**: Integrate Spring Security to add a full user authentication and authorization layer. This includes creating User models and JWT-based login/registration endpoints.
+* **Data Scoping**: Modify all data-related services (`TransactionService`, `CategoryService`, etc.) to be user-aware, ensuring a user can only ever access their own financial data.
+* **Frontend**: Build Login/Register pages and implement route guards to protect authenticated sections of the application.
 
 ---
 

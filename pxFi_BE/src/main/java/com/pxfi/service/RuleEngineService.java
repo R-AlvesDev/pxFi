@@ -37,10 +37,8 @@ public class RuleEngineService {
         String value = rule.getValueToMatch();
         if (info == null || value == null) return false;
 
-        // --- THE FIX: Normalize whitespace in both strings ---
         String normalizedInfo = info.trim().replaceAll("\\s+", " ");
         String normalizedValue = value.trim().replaceAll("\\s+", " ");
-        // --- END FIX ---
 
         switch (rule.getOperator()) {
             case CONTAINS:

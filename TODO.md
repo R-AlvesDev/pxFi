@@ -1,33 +1,52 @@
-# pxFi - Project TO-DO & Roadmap (v1.0)
+# pxFi - Roadmap to Version 1.0
 
-This document outlines the features and implementation plan for the first fully working version of the pxFi personal finance tracker.
-
----
-
-## Suggested Order of Implementation
-
-1.  **Build the Category Management System**: Create the backend models and API endpoints for managing categories and subcategories, then build the corresponding UI.
-2.  **Enhance Transaction View for Manual Categorization**: Update the transaction table to allow assigning categories to individual transactions.
-3.  **Implement "Categorize Similar" Feature**: Add the logic to find and categorize similar transactions in a batch.
-4.  **Build the Statistics Page**: Develop the backend endpoints and frontend components for financial reporting and visualization.
-5.  **Implement Full Automation (Rules Engine)**: Create the system for defining and applying custom, automatic categorization rules.
+This document outlines the features and implementation plan for the first fully working and polished version of the pxFi personal finance tracker.
 
 ---
 
-## User Stories
+## Tier 1: Polish & User Experience (Next Steps)
 
-### Feature: Categories & Subcategories
-* [X] **As a user, I want to** see a default list of common financial categories and subcategories so I can start organizing my transactions immediately.
-* [X] **As a user, I want to** create, edit, and delete my own custom categories and subcategories to perfectly match my spending habits.
-* [X] **As a user, I want to** manually assign a category and subcategory to any transaction from the transactions list.
-* [X] **As a user, when I categorize a transaction, I want** the app to find other uncategorized transactions with a similar description and ask if I want to apply the same category to all of them.
+* [ ] **Feature: Global Notifications**
+    * [ ] Create a simple notification service in Angular (e.g., a toast component).
+    * [ ] Integrate the service to show success/error messages for major actions (saving categories, applying rules, linking transactions).
 
-### Feature: Automated Categorization
-* [ ] **As a user, I want** the system to automatically categorize new transactions based on a predefined set of keywords (e.g., "UBER" is always "Transportation").
-* [X] **As a user, I want to** create my own custom rules (e.g., "if the description contains 'Pingo Doce', categorize it as 'Food > Groceries'") to automate my personal tracking.
+* [ ] **Feature: Date Range Filtering**
+    * [ ] Add "Start Date" and "End Date" input fields to the `transactions.component.html`.
+    * [ ] Update the backend `TransactionService` to accept optional date parameters.
+    * [ ] Wire up the frontend to refetch and filter transactions based on the selected date range.
 
-### Feature: Statistics & Reporting
-* [ ] **As a user, I want to** navigate to a dedicated "Statistics" page.
-* [ ] **As a user, on the Statistics page, I want to** be able to filter the data by a specific month or an entire year.
-* [ ] **As a user, for any selected period, I want to** see a clear, high-level summary of my total income versus my total expenses.
-* [ ] **As a user, for any selected period, I want to** see a visual breakdown of my expenses by category (e.g., in a chart or list) to understand where my money goes.
+* [ ] **Task: Refine UI Feedback**
+    * [ ] When "Apply All Rules" is clicked, show a persistent success message on completion with the number of transactions updated.
+    * [ ] Add confirmation dialogs for critical delete operations (e.g., deleting a category with transactions).
+
+## Tier 2: Core Feature Expansion
+
+* [ ] **Feature: Main Dashboard**
+    * [ ] **Backend**: Create a new API endpoint (`/api/dashboard/summary`).
+    * [ ] **Backend**: Implement the service logic to calculate key metrics (e.g., net balance this month, top 5 spending categories, recent transactions).
+    * [ ] **Frontend**: Design and build a new `DashboardComponent` to replace the current home page for logged-in users.
+    * [ ] **Frontend**: Display summary data using cards and simple charts.
+
+* [ ] **Feature: Enhance Rules Engine**
+    * [ ] Add a rule condition for transaction `amount` (e.g., "if amount is greater than 100").
+    * [ ] Add a "Test Rule" button that shows a preview of which existing transactions a new rule would apply to before saving it.
+
+## Tier 3: Security & Finalization (Essential for v1.0)
+
+* [ ] **Feature: User Authentication & Authorization**
+    * [ ] **Backend**: Integrate Spring Security and create `User` models and repositories.
+    * [ ] **Backend**: Build secure registration and JWT-based login endpoints.
+    * [ ] **Backend**: **Crucially**, update all service methods (`getTransactionsByAccountId`, `getAllCategories`, etc.) to be scoped to the authenticated user.
+    * [ ] **Frontend**: Create `Login` and `Register` components and pages.
+    * [ ] **Frontend**: Update `AuthService` to handle JWTs.
+    * [ ] **Frontend**: Implement an `HttpInterceptor` to automatically attach the JWT to all API requests.
+    * [ ] **Frontend**: Implement route guards to protect all data-sensitive pages.
+
+---
+### **Completed Features (Pre-v1.0)**
+
+* [X] **Core Engine**: Bank connection, data sync, and persistent storage.
+* [X] **Data Integrity**: Robust deduplication using `internalTransactionId`.
+* [X] **Transaction Management**: View, categorize, filter by category, ignore, and link transactions.
+* [X] **Statistics**: Functional monthly and yearly statistics with correct "Asset Transfer" logic.
+* [X] **Settings**: Full CRUD for categories and a working rules engine.
