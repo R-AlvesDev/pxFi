@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountStateService } from '../../services/account-state.service';
 import { CategoryService } from '../../services/category.service';
+import { NotificationService } from '../../services/notification.service'; // 1. Import NotificationService
 
 interface Transaction extends ApiTransaction {
   expanded?: boolean;
@@ -26,14 +27,10 @@ export class TransactionsComponent implements OnInit {
   loading = false;
   accessToken: string | null = null;
   mainCategories: Category[] = [];
-
   selectedCategoryFilter: string = 'all';
-
-
   isLinkingMode = false;
   selectedExpenseId: string | null = null;
   selectedIncomeId: string | null = null;
-
   currentPage: number = 1;
   itemsPerPage: number = 10;
   itemsPerPageOptions: number[] = [10, 25, 50, 100];
@@ -43,7 +40,8 @@ export class TransactionsComponent implements OnInit {
     private router: Router,
     private api: ApiService,
     private accountState: AccountStateService,
-    public categoryService: CategoryService
+    public categoryService: CategoryService,
+    private notificationService: NotificationService // 2. Inject the service
   ) {}
 
   ngOnInit(): void {
@@ -52,11 +50,9 @@ export class TransactionsComponent implements OnInit {
       this.error = 'Access token missing. Please reconnect your bank.';
       return;
     }
-
     this.categoryService.categories$.subscribe(() => {
       this.mainCategories = this.categoryService.getMainCategories();
     });
-
     this.route.paramMap.subscribe(params => {
       const accountId = params.get('accountId');
       if (accountId) {
@@ -83,6 +79,7 @@ export class TransactionsComponent implements OnInit {
       error: (err) => {
         this.error = 'Failed to load cached transactions: ' + err.message;
         this.loading = false;
+        this.notificationService.show('Failed to load transactions.', 'error');
       }
     });
   }
@@ -91,21 +88,24 @@ export class TransactionsComponent implements OnInit {
     if (!this.selectedAccountId || !this.accessToken) return;
     this.loading = true;
     this.error = null;
+    this.notificationService.show('Refreshing transactions from the bank...', 'info');
     this.api.refreshTransactions(this.accessToken, this.selectedAccountId).subscribe({
       next: (res) => {
         this.transactions = res.map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
         this.applyFilters();
         this.loading = false;
+        this.notificationService.show('Transactions refreshed successfully!', 'success');
       },
       error: (err) => {
         this.error = 'Failed to refresh transactions: ' + err.message;
         this.loading = false;
+        this.notificationService.show('Failed to refresh transactions.', 'error');
       }
     });
   }
 
   applyFilters(): void {
-    this.currentPage = 1; // Reset to first page whenever filters change
+    this.currentPage = 1;
     if (this.selectedCategoryFilter === 'all') {
       this.filteredTransactions = [...this.transactions];
     } else if (this.selectedCategoryFilter === 'uncategorized') {
@@ -126,7 +126,7 @@ export class TransactionsComponent implements OnInit {
 
   saveCategory(transaction: Transaction): void {
     if (!transaction.categoryId) {
-      console.error("Cannot save without a main category.");
+      this.notificationService.show('Please select a main category first.', 'error');
       return;
     }
     
@@ -141,22 +141,26 @@ export class TransactionsComponent implements OnInit {
           this.transactions[index] = { ...updatedTx, expanded: wasExpanded, categoryDirty: false };
           this.applyFilters();
         }
+        this.notificationService.show('Category saved!', 'success'); // 3. Add success notification
         this.promptToCategorizeSimilar(updatedTx, wasAlreadyCategorized);
       },
-      error: err => console.error('Failed to update category', err)
+      error: err => {
+        console.error('Failed to update category', err);
+        this.notificationService.show('Failed to save category.', 'error'); // 4. Add error notification
+      }
     });
   }
 
   private promptToCategorizeSimilar(updatedTx: Transaction, wasAlreadyCategorized: boolean): void {
     const remittanceInfo = updatedTx.remittanceInformationUnstructured;
     if (!remittanceInfo) return;
-  
+
     const normalizedRemittanceInfo = remittanceInfo.trim().replace(/\s+/g, ' ');
-  
+
     let similarCount = 0;
     const isAddingSubcategory = wasAlreadyCategorized && !!updatedTx.subCategoryId;
     const isNewCategorization = !wasAlreadyCategorized && !!updatedTx.categoryId;
-  
+
     if (isAddingSubcategory) {
       similarCount = this.transactions.filter(t => {
         const currentRemittance = t.remittanceInformationUnstructured?.trim().replace(/\s+/g, ' ') || '';
@@ -173,17 +177,22 @@ export class TransactionsComponent implements OnInit {
                !t.categoryId;
       }).length;
     }
-  
+
     if (similarCount > 0) {
       const message = isAddingSubcategory
         ? `Found ${similarCount} other transaction(s) with the category "${updatedTx.categoryName}" but no subcategory. Apply the "${updatedTx.subCategoryName}" subcategory to them all?`
         : `Found ${similarCount} other uncategorized transaction(s) with the same description. Apply this category to them all?`;
-  
+
       if (confirm(message)) {
-        // Pass the original remittance info to the API
         this.api.categorizeSimilarTransactions(remittanceInfo, updatedTx.categoryId!, updatedTx.subCategoryId || null).subscribe({
-          next: () => this.loadCachedTransactions(),
-          error: (err) => console.error('Failed to categorize similar transactions', err)
+          next: () => {
+            this.notificationService.show(`Applied category to ${similarCount} similar transaction(s).`, 'success');
+            this.loadCachedTransactions();
+          },
+          error: (err) => {
+            console.error('Failed to categorize similar transactions', err);
+            this.notificationService.show('Failed to categorize similar transactions.', 'error');
+          }
         });
       }
     }
@@ -196,9 +205,14 @@ export class TransactionsComponent implements OnInit {
         if (index !== -1) {
           const wasExpanded = this.transactions[index].expanded;
           this.transactions[index] = { ...updatedTx, expanded: wasExpanded };
+          this.applyFilters();
         }
+        this.notificationService.show(`Transaction ignore status updated.`, 'success');
       },
-      error: err => console.error('Failed to toggle ignore status', err)
+      error: err => {
+        console.error('Failed to toggle ignore status', err);
+        this.notificationService.show('Failed to update ignore status.', 'error');
+      }
     });
   }
 
@@ -206,6 +220,11 @@ export class TransactionsComponent implements OnInit {
     this.isLinkingMode = !this.isLinkingMode;
     this.selectedExpenseId = null;
     this.selectedIncomeId = null;
+    if (!this.isLinkingMode) {
+      this.notificationService.show('Split bill mode cancelled.', 'info');
+    } else {
+      this.notificationService.show('Split bill mode activated. Select one income and one expense.', 'info');
+    }
   }
 
   selectTransactionForLink(transaction: Transaction): void {
@@ -219,21 +238,25 @@ export class TransactionsComponent implements OnInit {
   }
 
   linkSelectedTransactions(): void {
-    if (!this.selectedExpenseId || !this.selectedIncomeId) return;
+    if (!this.selectedExpenseId || !this.selectedIncomeId) {
+      this.notificationService.show('You must select one income and one expense to link.', 'error');
+      return;
+    }
     this.api.linkTransactions(this.selectedExpenseId, this.selectedIncomeId).subscribe({
       next: () => {
         this.isLinkingMode = false;
         this.selectedExpenseId = null;
         this.selectedIncomeId = null;
+        this.notificationService.show('Transactions linked successfully!', 'success'); // 5. Add success notification
         this.loadCachedTransactions();
       },
       error: (err) => {
         console.error('Failed to link transactions', err);
-        alert('An error occurred while linking transactions.');
+        this.notificationService.show('An error occurred while linking.', 'error'); // 6. Add error notification
       }
     });
   }
-
+  
   get paginatedTransactions(): Transaction[] {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     return this.filteredTransactions.slice(startIndex, startIndex + this.itemsPerPage);
@@ -242,7 +265,7 @@ export class TransactionsComponent implements OnInit {
   get totalPages(): number {
     return Math.ceil(this.filteredTransactions.length / this.itemsPerPage);
   }
-
+  
   get pages(): (number | string)[] {
     const total = this.totalPages;
     const current = this.currentPage;
@@ -273,11 +296,7 @@ export class TransactionsComponent implements OnInit {
   onItemsPerPageChange(): void {
     this.currentPage = 1;
   }
-
-  /**
-   * A type guard to check if a value is a number.
-   * This is used in the template to satisfy the TypeScript compiler.
-   */
+  
   isNumber(value: any): value is number {
     return typeof value === 'number';
   }
