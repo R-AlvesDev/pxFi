@@ -21,10 +21,14 @@ interface Transaction extends ApiTransaction {
 export class TransactionsComponent implements OnInit {
   selectedAccountId: string | null = null;
   transactions: Transaction[] = [];
+  filteredTransactions: Transaction[] = [];
   error: string | null = null;
   loading = false;
   accessToken: string | null = null;
   mainCategories: Category[] = [];
+
+  selectedCategoryFilter: string = 'all';
+
 
   isLinkingMode = false;
   selectedExpenseId: string | null = null;
@@ -73,6 +77,7 @@ export class TransactionsComponent implements OnInit {
     this.api.getAccountTransactions(this.accessToken, this.selectedAccountId).subscribe({
       next: (res) => {
         this.transactions = res.map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
+        this.applyFilters();
         this.loading = false;
       },
       error: (err) => {
@@ -89,6 +94,7 @@ export class TransactionsComponent implements OnInit {
     this.api.refreshTransactions(this.accessToken, this.selectedAccountId).subscribe({
       next: (res) => {
         this.transactions = res.map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
+        this.applyFilters();
         this.loading = false;
       },
       error: (err) => {
@@ -96,6 +102,17 @@ export class TransactionsComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  applyFilters(): void {
+    this.currentPage = 1; // Reset to first page whenever filters change
+    if (this.selectedCategoryFilter === 'all') {
+      this.filteredTransactions = [...this.transactions];
+    } else if (this.selectedCategoryFilter === 'uncategorized') {
+      this.filteredTransactions = this.transactions.filter(tx => !tx.categoryId);
+    } else {
+      this.filteredTransactions = this.transactions.filter(tx => tx.categoryId === this.selectedCategoryFilter);
+    }
   }
 
   onCategorySelectionChange(transaction: Transaction): void {
@@ -122,6 +139,7 @@ export class TransactionsComponent implements OnInit {
         if (index !== -1) {
           const wasExpanded = this.transactions[index].expanded;
           this.transactions[index] = { ...updatedTx, expanded: wasExpanded, categoryDirty: false };
+          this.applyFilters();
         }
         this.promptToCategorizeSimilar(updatedTx, wasAlreadyCategorized);
       },
@@ -132,33 +150,37 @@ export class TransactionsComponent implements OnInit {
   private promptToCategorizeSimilar(updatedTx: Transaction, wasAlreadyCategorized: boolean): void {
     const remittanceInfo = updatedTx.remittanceInformationUnstructured;
     if (!remittanceInfo) return;
-
+  
+    const normalizedRemittanceInfo = remittanceInfo.trim().replace(/\s+/g, ' ');
+  
     let similarCount = 0;
-    let isSubcategoryUpdate = wasAlreadyCategorized && !!updatedTx.subCategoryId;
-
-    if (isSubcategoryUpdate) {
-      similarCount = this.transactions.filter(t =>
-        t.id !== updatedTx.id &&
-        t.remittanceInformationUnstructured === remittanceInfo &&
-        t.categoryId === updatedTx.categoryId &&
-        !t.subCategoryId
-      ).length;
-    } else {
-      similarCount = this.transactions.filter(t =>
-        t.id !== updatedTx.id &&
-        t.remittanceInformationUnstructured === remittanceInfo &&
-        !t.categoryId
-      ).length;
+    const isAddingSubcategory = wasAlreadyCategorized && !!updatedTx.subCategoryId;
+    const isNewCategorization = !wasAlreadyCategorized && !!updatedTx.categoryId;
+  
+    if (isAddingSubcategory) {
+      similarCount = this.transactions.filter(t => {
+        const currentRemittance = t.remittanceInformationUnstructured?.trim().replace(/\s+/g, ' ') || '';
+        return t.id !== updatedTx.id &&
+               currentRemittance === normalizedRemittanceInfo &&
+               t.categoryId === updatedTx.categoryId &&
+               !t.subCategoryId;
+      }).length;
+    } else if (isNewCategorization) {
+      similarCount = this.transactions.filter(t => {
+        const currentRemittance = t.remittanceInformationUnstructured?.trim().replace(/\s+/g, ' ') || '';
+        return t.id !== updatedTx.id &&
+               currentRemittance === normalizedRemittanceInfo &&
+               !t.categoryId;
+      }).length;
     }
-
+  
     if (similarCount > 0) {
-      const message = isSubcategoryUpdate
+      const message = isAddingSubcategory
         ? `Found ${similarCount} other transaction(s) with the category "${updatedTx.categoryName}" but no subcategory. Apply the "${updatedTx.subCategoryName}" subcategory to them all?`
         : `Found ${similarCount} other uncategorized transaction(s) with the same description. Apply this category to them all?`;
-
-      const userConfirmed = confirm(message);
-
-      if (userConfirmed) {
+  
+      if (confirm(message)) {
+        // Pass the original remittance info to the API
         this.api.categorizeSimilarTransactions(remittanceInfo, updatedTx.categoryId!, updatedTx.subCategoryId || null).subscribe({
           next: () => this.loadCachedTransactions(),
           error: (err) => console.error('Failed to categorize similar transactions', err)
@@ -214,12 +236,11 @@ export class TransactionsComponent implements OnInit {
 
   get paginatedTransactions(): Transaction[] {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
-    return this.transactions.slice(startIndex, endIndex);
+    return this.filteredTransactions.slice(startIndex, startIndex + this.itemsPerPage);
   }
 
   get totalPages(): number {
-    return Math.ceil(this.transactions.length / this.itemsPerPage);
+    return Math.ceil(this.filteredTransactions.length / this.itemsPerPage);
   }
 
   get pages(): (number | string)[] {
