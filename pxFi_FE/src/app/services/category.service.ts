@@ -38,8 +38,8 @@ export class CategoryService {
     );
   }
 
-  updateCategory(id: string, name: string, parentId: string | null = null): Observable<Category> {
-    return this.api.updateCategory(id, { name, parentId }).pipe(
+  updateCategory(category: Category): Observable<Category> {
+    return this.api.updateCategory(category.id, category).pipe(
       tap(() => this.refreshCategories()) // Refresh after updating
     );
   }

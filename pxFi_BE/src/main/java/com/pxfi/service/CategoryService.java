@@ -63,9 +63,14 @@ public class CategoryService {
 
             for (String subName : subNames.split(",")) {
                 Category sub = new Category();
-                // Use the new helper method for correct capitalization
-                sub.setName(toTitleCase(subName.replace('-', ' ')));
+                String formattedSubName = toTitleCase(subName.replace('-', ' '));
+                sub.setName(formattedSubName);
                 sub.setParentId(parent.getId());
+
+                if ("Savings Investments".equalsIgnoreCase(formattedSubName)) {
+                    sub.setAssetTransfer(true);
+                }
+
                 categoryRepository.save(sub);
             }
         });
@@ -83,6 +88,7 @@ public class CategoryService {
         return categoryRepository.findById(id).map(category -> {
             category.setName(categoryDetails.getName());
             category.setParentId(categoryDetails.getParentId());
+            category.setAssetTransfer(categoryDetails.isAssetTransfer());
             return categoryRepository.save(category);
         });
     }
