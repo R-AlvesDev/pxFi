@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class TransactionService {
@@ -32,101 +33,43 @@ public class TransactionService {
     private RuleEngineService ruleEngineService;
 
     public void saveTransactions(String accountId, TransactionsResponse transactionsResponse) {
-        if (transactionsResponse.getTransactions() == null) return;
+        if (transactionsResponse.getTransactions() == null || transactionsResponse.getTransactions().getBooked() == null) {
+            return;
+        }
 
-        // Fetch all categorization rules once to use for all transactions in this batch
         List<CategorizationRule> allRules = ruleRepository.findAll();
 
-        List<Transaction> transactionsToInsert = new ArrayList<>();
-        List<Transaction> transactionsToUpdate = new ArrayList<>();
-        Set<String> processedInThisBatch = new HashSet<>();
+        List<Transaction> incomingTxs = transactionsResponse.getTransactions().getBooked().stream()
+            .filter(t -> t.getInternalTransactionId() != null && !t.getInternalTransactionId().isEmpty())
+            .collect(Collectors.toList());
 
-        List<Transaction> combinedTransactions = new ArrayList<>();
-        if (transactionsResponse.getTransactions().getBooked() != null) {
-            combinedTransactions.addAll(transactionsResponse.getTransactions().getBooked());
-        }
-        if (transactionsResponse.getTransactions().getPending() != null) {
-            combinedTransactions.addAll(transactionsResponse.getTransactions().getPending());
+        if (incomingTxs.isEmpty()) {
+            return;
         }
 
-        for (Transaction incomingTx : combinedTransactions) {
-            incomingTx.setAccountId(accountId);
+        Set<String> existingInternalIds = transactionRepository.findAll().stream()
+            .filter(t -> t.getInternalTransactionId() != null)
+            .map(Transaction::getInternalTransactionId)
+            .collect(Collectors.toSet());
 
-            // --- APPLY RULES ENGINE ---
-            ruleEngineService.applyRules(incomingTx, allRules);
-            if (incomingTx.getCategoryId() != null) {
-                // If a rule applied a category, fetch and set the category names
-                categoryRepository.findById(incomingTx.getCategoryId()).ifPresent(cat -> incomingTx.setCategoryName(cat.getName()));
-                if (incomingTx.getSubCategoryId() != null) {
-                    categoryRepository.findById(incomingTx.getSubCategoryId()).ifPresent(subCat -> incomingTx.setSubCategoryName(subCat.getName()));
-                }
-            }
-
-            String uniqueKey = generateUniqueKeyForTransaction(incomingTx);
-
-            if (processedInThisBatch.contains(uniqueKey)) {
-                continue; // Duplicate within this batch
-            }
-
-            if (incomingTx.getTransactionId() != null) {
-                // If the incoming transaction has an ID, check for existence
-                if (transactionRepository.existsByTransactionIdAndAccountId(incomingTx.getTransactionId(), accountId)) {
-                    continue; // Already exists by ID, do nothing.
-                }
-
-                // Check if an ID-less version exists that we can update
-                Optional<Transaction> potentialDuplicate = transactionRepository.findPotentialDuplicate(
-                        accountId,
-                        incomingTx.getBookingDate(),
-                        incomingTx.getTransactionAmount().getAmount(),
-                        incomingTx.getRemittanceInformationUnstructured()
-                );
-
-                if (potentialDuplicate.isPresent()) {
-                    // It's an update. Enrich the existing record.
-                    Transaction existingTx = potentialDuplicate.get();
-                    existingTx.setTransactionId(incomingTx.getTransactionId());
-                    // Also apply category if a rule matched
-                    existingTx.setCategoryId(incomingTx.getCategoryId());
-                    existingTx.setCategoryName(incomingTx.getCategoryName());
-                    existingTx.setSubCategoryId(incomingTx.getSubCategoryId());
-                    existingTx.setSubCategoryName(incomingTx.getSubCategoryName());
-                    transactionsToUpdate.add(existingTx);
-                } else {
-                    // It's a genuinely new transaction
-                    transactionsToInsert.add(incomingTx);
-                }
-            } else {
-                // If the incoming transaction has NO ID, check for duplicates based on content
-                if (transactionRepository.existsDuplicate(
-                        accountId,
-                        incomingTx.getBookingDate(),
-                        incomingTx.getTransactionAmount().getAmount(),
-                        incomingTx.getRemittanceInformationUnstructured())) {
-                    continue; // Duplicate already in DB
-                }
-                transactionsToInsert.add(incomingTx);
-            }
-
-            processedInThisBatch.add(uniqueKey);
-        }
+        List<Transaction> transactionsToInsert = incomingTxs.stream()
+            .filter(incoming -> !existingInternalIds.contains(incoming.getInternalTransactionId()))
+            .collect(Collectors.toList());
 
         if (!transactionsToInsert.isEmpty()) {
+            transactionsToInsert.forEach(tx -> {
+                tx.setAccountId(accountId);
+                ruleEngineService.applyRules(tx, allRules);
+                if (tx.getCategoryId() != null) {
+                    categoryRepository.findById(tx.getCategoryId()).ifPresent(cat -> tx.setCategoryName(cat.getName()));
+                    if (tx.getSubCategoryId() != null) {
+                        categoryRepository.findById(tx.getSubCategoryId()).ifPresent(subCat -> tx.setSubCategoryName(subCat.getName()));
+                    }
+                }
+            });
+            
             transactionRepository.saveAll(transactionsToInsert);
         }
-        if (!transactionsToUpdate.isEmpty()) {
-            transactionRepository.saveAll(transactionsToUpdate);
-        }
-    }
-
-    private String generateUniqueKeyForTransaction(Transaction tx) {
-        if (tx.getTransactionId() != null) {
-            return tx.getTransactionId();
-        }
-        return String.join("|",
-                tx.getBookingDate(),
-                tx.getTransactionAmount() != null ? tx.getTransactionAmount().getAmount() : "0.00",
-                tx.getRemittanceInformationUnstructured() != null ? tx.getRemittanceInformationUnstructured() : "");
     }
 
     public List<Transaction> getTransactionsByAccountId(String accountId) {

@@ -218,9 +218,9 @@ export class ApiService {
     return this.http.post<Category>(`${this.baseUrl}/categories`, category);
   }
 
-  updateCategory(id: string, category: { name: string, parentId: string | null }): Observable<Category> {
+  updateCategory(id: string, category: Partial<Category>): Observable<Category> {
     return this.http.put<Category>(`${this.baseUrl}/categories/${id}`, category);
-  }
+}
 
   deleteCategory(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/categories/${id}`);

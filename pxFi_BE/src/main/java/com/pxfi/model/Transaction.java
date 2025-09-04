@@ -10,6 +10,7 @@ public class Transaction {
     private String id;
 
     private String transactionId;
+    private String internalTransactionId;
     private String debtorName;
     private DebtorAccount debtorAccount;
     private TransactionAmount transactionAmount;
@@ -158,4 +159,13 @@ public class Transaction {
     public void setIgnored(boolean ignored) {
         this.ignored = ignored;
     }
+
+    public String getInternalTransactionId() {
+        return internalTransactionId;
+    }
+
+    public void setInternalTransactionId(String internalTransactionId) {
+        this.internalTransactionId = internalTransactionId;
+    }
+
 }

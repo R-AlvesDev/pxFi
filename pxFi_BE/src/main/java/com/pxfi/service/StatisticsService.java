@@ -44,11 +44,8 @@ public class StatisticsService {
         BigDecimal totalIncome = BigDecimal.ZERO;
         BigDecimal totalExpenses = BigDecimal.ZERO;
         Set<String> processedIds = new HashSet<>();
-        
-        // This map will store spending totals per category ID
         Map<String, BigDecimal> spendingPerCategory = new HashMap<>();
 
-        // --- Process linked transactions first ---
         for (Transaction tx : transactions) {
             if (tx.getLinkedTransactionId() != null && !processedIds.contains(tx.getId())) {
                 Transaction linkedTx = transactions.stream()
@@ -61,7 +58,6 @@ public class StatisticsService {
                     BigDecimal netExpense = amount1.add(amount2).abs();
                     totalExpenses = totalExpenses.add(netExpense);
 
-                    // Add this net expense to its category
                     if (tx.getCategoryId() != null) {
                         spendingPerCategory.merge(tx.getCategoryId(), netExpense, BigDecimal::add);
                     }
@@ -72,23 +68,25 @@ public class StatisticsService {
             }
         }
 
-        // --- Process remaining transactions ---
         for (Transaction tx : transactions) {
             if (processedIds.contains(tx.getId()) || tx.isIgnored()) {
-                continue; // Skip already processed or ignored transactions
+                continue;
             }
 
             BigDecimal amount = new BigDecimal(tx.getTransactionAmount().getAmount());
             if (amount.compareTo(BigDecimal.ZERO) > 0) {
                 totalIncome = totalIncome.add(amount);
             } else {
-                Category category = categoryMap.get(tx.getCategoryId());
-                // Only count as an expense if it's not an asset transfer
-                if (category == null || !category.isAssetTransfer()) {
+                Category categoryToCheck = null;
+                if (tx.getSubCategoryId() != null) {
+                    categoryToCheck = categoryMap.get(tx.getSubCategoryId());
+                } else if (tx.getCategoryId() != null) {
+                    categoryToCheck = categoryMap.get(tx.getCategoryId());
+                }
+
+                if (categoryToCheck == null || !categoryToCheck.isAssetTransfer()) {
                     BigDecimal expenseAmount = amount.abs();
                     totalExpenses = totalExpenses.add(expenseAmount);
-
-                    // Add this expense to its category
                     if (tx.getCategoryId() != null) {
                         spendingPerCategory.merge(tx.getCategoryId(), expenseAmount, BigDecimal::add);
                     }
@@ -96,10 +94,6 @@ public class StatisticsService {
             }
         }
 
-        // --- old repository call ---
-        // List<CategorySpending> expensesByCategory = transactionRepository.findSpendingByCategory(startDate, endDate);
-
-        // --- BUILD the list from map ---
         List<CategorySpending> expensesByCategory = spendingPerCategory.entrySet().stream()
             .map(entry -> {
                 String categoryId = entry.getKey();
@@ -135,7 +129,6 @@ public class StatisticsService {
             BigDecimal monthlyExpenses = BigDecimal.ZERO;
             Set<String> processedIds = new HashSet<>();
 
-            // --- NEW: Process linked transactions within the month ---
             for (Transaction tx : monthlyTransactions) {
                 if (tx.getLinkedTransactionId() != null && !processedIds.contains(tx.getId())) {
                      Transaction linkedTx = monthlyTransactions.stream()
@@ -152,7 +145,6 @@ public class StatisticsService {
                 }
             }
             
-            // --- Process remaining transactions for the month ---
             for (Transaction tx : monthlyTransactions) {
                  if (processedIds.contains(tx.getId())) continue;
 
@@ -160,8 +152,14 @@ public class StatisticsService {
                 if (amount.compareTo(BigDecimal.ZERO) > 0) {
                     monthlyIncome = monthlyIncome.add(amount);
                 } else {
-                    Category category = categoryMap.get(tx.getCategoryId());
-                    if (category == null || !category.isAssetTransfer()) {
+                    Category categoryToCheck = null;
+                    if (tx.getSubCategoryId() != null) {
+                        categoryToCheck = categoryMap.get(tx.getSubCategoryId());
+                    } else if (tx.getCategoryId() != null) {
+                        categoryToCheck = categoryMap.get(tx.getCategoryId());
+                    }
+
+                    if (categoryToCheck == null || !categoryToCheck.isAssetTransfer()) {
                         monthlyExpenses = monthlyExpenses.add(amount.abs());
                     }
                 }
