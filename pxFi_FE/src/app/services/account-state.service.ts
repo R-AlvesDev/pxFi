@@ -5,16 +5,27 @@ import { BehaviorSubject } from 'rxjs';
   providedIn: 'root'
 })
 export class AccountStateService {
-  // BehaviorSubject will hold the current value and notify subscribers of changes
-  public readonly currentAccountId$ = new BehaviorSubject<string | null>(null);
+  private currentAccountId = new BehaviorSubject<string | null>(null);
+  public currentAccountId$ = this.currentAccountId.asObservable();
 
-  constructor() { }
+  constructor() {
+    const savedAccountId = localStorage.getItem('selectedAccountId');
+    if (savedAccountId) {
+      this.currentAccountId.next(savedAccountId);
+    }
+  }
 
-  /**
-   * Sets the currently active account ID.
-   * @param accountId The ID of the account to set.
-   */
   setCurrentAccountId(accountId: string | null): void {
-    this.currentAccountId$.next(accountId);
+    if (accountId) {
+      localStorage.setItem('selectedAccountId', accountId);
+    } else {
+      localStorage.removeItem('selectedAccountId');
+    }
+    this.currentAccountId.next(accountId);
+  }
+
+  clearAll(): void {
+    localStorage.removeItem('selectedAccountId');
+    this.currentAccountId.next(null);
   }
 }

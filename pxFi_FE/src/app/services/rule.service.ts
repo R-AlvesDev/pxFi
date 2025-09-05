@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { ApiService, CategorizationRule, TestRuleResponse } from './api.service';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { ApiService, CategorizationRule, TestRuleResponse } from './api.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,37 +9,31 @@ export class RuleService {
   private rules = new BehaviorSubject<CategorizationRule[]>([]);
   public rules$ = this.rules.asObservable();
 
-  constructor(private api: ApiService) {
-    this.loadRules().subscribe();
-  }
+  constructor(private api: ApiService) {}
 
-  private loadRules(): Observable<CategorizationRule[]> {
-    return this.api.getRules().pipe(
+  getAllRules(): Observable<CategorizationRule[]> {
+    return this.api.getAllRules().pipe(
       tap(rules => this.rules.next(rules))
     );
-  }
+}
 
-  refreshRules(): void {
-    this.loadRules().subscribe();
-  }
-
-  createRule(rule: Partial<CategorizationRule>): Observable<CategorizationRule> {
-    return this.api.createRule(rule).pipe(
-      tap(() => this.refreshRules())
+  createRule(accessToken: string, rule: Partial<CategorizationRule>): Observable<CategorizationRule> {
+    return this.api.createRule(accessToken, rule).pipe(
+      tap(() => this.getAllRules(accessToken).subscribe())
     );
   }
 
-  applyAllRules(): Observable<{ updatedCount: number }> {
-    return this.api.applyAllRules();
+  applyAllRules(accessToken: string): Observable<{ updatedCount: number }> {
+    return this.api.applyAllRules(accessToken);
   }
 
-  deleteRule(id: string): Observable<void> {
-    return this.api.deleteRule(id).pipe(
-      tap(() => this.refreshRules())
+  deleteRule(accessToken: string, id: string): Observable<void> {
+    return this.api.deleteRule(accessToken, id).pipe(
+      tap(() => this.getAllRules(accessToken).subscribe())
     );
   }
 
-  testRule(rule: Partial<CategorizationRule>, accountId: string): Observable<TestRuleResponse> {
-    return this.api.testRule(rule, accountId);
+  testRule(accessToken: string, rule: Partial<CategorizationRule>, accountId: string): Observable<TestRuleResponse> {
+    return this.api.testRule(accessToken, rule, accountId);
   }
 }

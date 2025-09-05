@@ -4,6 +4,7 @@ import { ApiService, RequisitionResponse } from '../../services/api.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth/auth.service';
+import { NotificationService } from '../../services/notification.service'; // Import NotificationService
 
 @Component({
   selector: 'app-bank-connection',
@@ -32,14 +33,20 @@ export class BankConnectionComponent implements OnInit {
 
   accessToken: string | null = null;
 
-  constructor(private api: ApiService, private router: Router, private authService: AuthService) {}
+  constructor(
+    private api: ApiService, 
+    private router: Router, 
+    private authService: AuthService,
+    private notificationService: NotificationService // Inject NotificationService
+  ) {}
 
   ngOnInit() {
+    // This component is for logged-out users, so we can get a temporary token.
+    // In a full user system, this might be handled differently.
     this.api.getAccessToken().subscribe({
       next: (tokenObj) => {
         this.accessToken = tokenObj.accessToken;
-        localStorage.setItem('accessToken', this.accessToken); // <-- Save token here
-
+        
         this.countryControl.valueChanges.subscribe((countryCode: string | null) => {
           this.banks = [];
           this.bankControl.reset('');
@@ -65,14 +72,13 @@ export class BankConnectionComponent implements OnInit {
     });
   }
 
-
   connect() {
     if (!this.bankControl.value) {
-      this.error = 'Please select a bank.';
+      this.notificationService.show('Please select a bank.', 'error');
       return;
     }
     if (!this.accessToken) {
-      this.error = 'Access token is missing.';
+        this.notificationService.show('Access token is missing. Please try again.', 'error');
       return;
     }
 
@@ -84,13 +90,11 @@ export class BankConnectionComponent implements OnInit {
           next: (requisitionResponse) => {
             this.loadingConnection = false;
             if (requisitionResponse.id && requisitionResponse.link) {
-              // Save requisition ID and accessToken in localStorage for use in callback and transactions
               localStorage.setItem('requisitionId', requisitionResponse.id);
               localStorage.setItem('accessToken', this.accessToken!);
 
-              this.authService.updateLoginState();
-              
-              // Redirect to bank authentication link
+              // This is where a user would be associated with the connection in a full app.
+              // For now, we just redirect.
               window.location.href = requisitionResponse.link;
             } else {
               this.error = 'No connection link returned.';

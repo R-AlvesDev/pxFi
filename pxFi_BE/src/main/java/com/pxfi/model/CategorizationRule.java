@@ -23,6 +23,7 @@ public class CategorizationRule {
 
     @Id
     private String id;
+    private String userId; 
 
     private RuleField fieldToMatch; 
     private RuleOperator operator;   
@@ -34,6 +35,13 @@ public class CategorizationRule {
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
+    public String getUserId() {
+        return userId;
+    }
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+    
     public RuleField getFieldToMatch() { return fieldToMatch; }
     public void setFieldToMatch(RuleField fieldToMatch) { this.fieldToMatch = fieldToMatch; }
 

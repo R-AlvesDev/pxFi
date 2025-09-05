@@ -2,6 +2,7 @@ package com.pxfi.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,17 +21,18 @@ public class StatisticsController {
         this.statisticsService = statisticsService;
     }
 
-    @GetMapping("/monthly")
-    public ResponseEntity<StatisticsResponse> getMonthlyStatistics(
+    @GetMapping("/monthly/{accountId}")
+    public StatisticsResponse getMonthlyStatistics(
+            @PathVariable String accountId,
             @RequestParam int year,
             @RequestParam int month) {
-        StatisticsResponse stats = statisticsService.getMonthlyStatistics(year, month);
-        return ResponseEntity.ok(stats);
+        return statisticsService.getMonthlyStatistics(accountId, year, month);
     }
 
-    @GetMapping("/yearly")
-    public ResponseEntity<YearlyStatisticsResponse> getYearlyStatistics(@RequestParam int year) {
-        YearlyStatisticsResponse stats = statisticsService.getYearlyStatistics(year);
-        return ResponseEntity.ok(stats);
+    @GetMapping("/yearly/{accountId}")
+    public YearlyStatisticsResponse getYearlyStatistics(
+            @PathVariable String accountId,
+            @RequestParam int year) {
+        return statisticsService.getYearlyStatistics(accountId, year);
     }
 }
