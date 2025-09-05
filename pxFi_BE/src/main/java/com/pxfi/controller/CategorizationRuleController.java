@@ -13,16 +13,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pxfi.model.CategorizationRule;
+import com.pxfi.model.TestRuleRequest;
+import com.pxfi.model.TestRuleResponse;
+import com.pxfi.model.Transaction;
 import com.pxfi.service.CategorizationRuleService;
+import com.pxfi.service.RuleEngineService;
 
 @RestController
 @RequestMapping("/api/rules")
 public class CategorizationRuleController {
 
     private final CategorizationRuleService ruleService;
+    private final RuleEngineService ruleEngineService;
 
-    public CategorizationRuleController(CategorizationRuleService ruleService) {
+    public CategorizationRuleController(CategorizationRuleService ruleService, RuleEngineService ruleEngineService) {
         this.ruleService = ruleService;
+        this.ruleEngineService = ruleEngineService; 
     }
 
     @GetMapping
@@ -46,4 +52,11 @@ public class CategorizationRuleController {
         ruleService.deleteRule(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/test")
+    public ResponseEntity<TestRuleResponse> testRule(@RequestBody TestRuleRequest request) {
+        TestRuleResponse response = ruleService.testRule(request);
+        return ResponseEntity.ok(response);
+    }
+    
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ApiService, CategorizationRule } from './api.service';
+import { ApiService, CategorizationRule, TestRuleResponse } from './api.service';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 @Injectable({
@@ -37,5 +37,9 @@ export class RuleService {
     return this.api.deleteRule(id).pipe(
       tap(() => this.refreshRules())
     );
+  }
+
+  testRule(rule: Partial<CategorizationRule>, accountId: string): Observable<TestRuleResponse> {
+    return this.api.testRule(rule, accountId);
   }
 }

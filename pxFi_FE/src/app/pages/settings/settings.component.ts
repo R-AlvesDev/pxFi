@@ -3,9 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CategoryService } from '../../services/category.service';
 import { RuleService } from '../../services/rule.service';
-import { Category, CategorizationRule, RuleField, RuleOperator } from '../../services/api.service';
+import { Category, CategorizationRule, RuleField, RuleOperator, TestRuleResponse } from '../../services/api.service';
 import { Observable } from 'rxjs';
 import { NotificationService } from '../../services/notification.service';
+import { AccountStateService } from '../../services/account-state.service';
+
+declare var bootstrap: any;
 
 @Component({
   selector: 'app-settings',
@@ -30,12 +33,20 @@ export class SettingsComponent implements OnInit {
     operator: RuleOperator.CONTAINS
   };
   ruleFields = Object.values(RuleField);
-  ruleOperators = Object.values(RuleOperator);
+  textOperators = [RuleOperator.CONTAINS, RuleOperator.EQUALS, RuleOperator.STARTS_WITH, RuleOperator.ENDS_WITH];
+  amountOperators = [RuleOperator.AMOUNT_EQUALS, RuleOperator.AMOUNT_GREATER_THAN, RuleOperator.AMOUNT_LESS_THAN];
+  
+
+  // Test Rule Properties
+  testResults: TestRuleResponse | null = null;
+  private currentAccountId: string | null = null;
+  private testRuleModal: any;
 
   constructor(
     public categoryService: CategoryService,
     public ruleService: RuleService,
-    private notificationService: NotificationService // Inject NotificationService
+    private notificationService: NotificationService,
+    private accountState: AccountStateService
   ) {
     this.categories$ = this.categoryService.categories$;
     this.rules$ = this.ruleService.rules$;
@@ -45,8 +56,21 @@ export class SettingsComponent implements OnInit {
     this.categories$.subscribe(() => {
       this.mainCategories = this.categoryService.getMainCategories();
     });
+    this.accountState.currentAccountId$.subscribe(id => this.currentAccountId = id);
   }
 
+  get availableOperators(): RuleOperator[] {
+    if (this.newRule.fieldToMatch === RuleField.AMOUNT) {
+      return this.amountOperators;
+    }
+    return this.textOperators;
+  }
+
+  onFieldToMatchChange(): void {
+    // When the field changes, reset the operator to the first available option
+    this.newRule.operator = this.availableOperators[0];
+  }
+  
   // --- Category Methods ---
   toggleCategory(id: string): void {
     if (this.expandedCategoryIds.has(id)) {
@@ -129,4 +153,25 @@ export class SettingsComponent implements OnInit {
       error: err => this.notificationService.show('Failed to update category: ' + err.message, 'error')
     });
   }
+
+  // --- Test Rule Methods ---
+
+  testRule(): void {
+    if (!this.newRule.valueToMatch || !this.currentAccountId) {
+      this.notificationService.show('Please select an account from the navbar and fill out the rule value.', 'error');
+      return;
+    }
+
+    this.ruleService.testRule(this.newRule, this.currentAccountId).subscribe({
+      next: (response) => {
+        this.testResults = response;
+        if (!this.testRuleModal) {
+          this.testRuleModal = new bootstrap.Modal(document.getElementById('testRuleModal'));
+        }
+        this.testRuleModal.show();
+      },
+      error: (err) => this.notificationService.show('Error testing rule: ' + err.message, 'error')
+    });
+  }
+
 }
