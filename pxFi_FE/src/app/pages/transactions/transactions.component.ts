@@ -128,7 +128,7 @@ export class TransactionsComponent implements OnInit {
   }
 
   saveCategory(transaction: Transaction): void {
-    if (!transaction.categoryId) {
+    if (!transaction.categoryId || !this.accessToken) {
       this.notificationService.show('Please select a main category first.', 'error');
       return;
     }
@@ -136,7 +136,7 @@ export class TransactionsComponent implements OnInit {
     const originalTransaction = this.transactions.find(t => t.id === transaction.id);
     const wasAlreadyCategorized = !!originalTransaction?.categoryId;
 
-    this.api.updateTransactionCategory(transaction.id, transaction.categoryId, transaction.subCategoryId || null).subscribe({
+    this.api.updateTransactionCategory(this.accessToken, transaction.id, transaction.categoryId, transaction.subCategoryId || null).subscribe({
       next: updatedTx => {
         const index = this.transactions.findIndex(t => t.id === updatedTx.id);
         if (index !== -1) {
@@ -186,8 +186,8 @@ export class TransactionsComponent implements OnInit {
         ? `Found ${similarCount} other transaction(s) with the category "${updatedTx.categoryName}" but no subcategory. Apply the "${updatedTx.subCategoryName}" subcategory to them all?`
         : `Found ${similarCount} other uncategorized transaction(s) with the same description. Apply this category to them all?`;
 
-      if (confirm(message)) {
-        this.api.categorizeSimilarTransactions(remittanceInfo, updatedTx.categoryId!, updatedTx.subCategoryId || null).subscribe({
+      if (confirm(message) && this.accessToken) {
+        this.api.categorizeSimilarTransactions(this.accessToken, remittanceInfo, updatedTx.categoryId!, updatedTx.subCategoryId || null).subscribe({
           next: () => {
             this.notificationService.show(`Applied category to ${similarCount} similar transaction(s).`, 'success');
             this.loadCachedTransactions();
@@ -202,7 +202,8 @@ export class TransactionsComponent implements OnInit {
   }
 
   toggleIgnore(transaction: Transaction): void {
-    this.api.toggleTransactionIgnore(transaction.id).subscribe({
+    if (!this.accessToken) return;
+    this.api.toggleTransactionIgnore(this.accessToken, transaction.id).subscribe({
       next: updatedTx => {
         const index = this.transactions.findIndex(t => t.id === updatedTx.id);
         if (index !== -1) {
@@ -241,11 +242,11 @@ export class TransactionsComponent implements OnInit {
   }
 
   linkSelectedTransactions(): void {
-    if (!this.selectedExpenseId || !this.selectedIncomeId) {
+    if (!this.selectedExpenseId || !this.selectedIncomeId || !this.accessToken) {
       this.notificationService.show('You must select one income and one expense to link.', 'error');
       return;
     }
-    this.api.linkTransactions(this.selectedExpenseId, this.selectedIncomeId).subscribe({
+    this.api.linkTransactions(this.accessToken, this.selectedExpenseId, this.selectedIncomeId).subscribe({
       next: () => {
         this.isLinkingMode = false;
         this.selectedExpenseId = null;

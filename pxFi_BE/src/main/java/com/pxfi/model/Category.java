@@ -13,6 +13,7 @@ public class Category {
     private String name;
 
     private String parentId; 
+    private String userId; 
 
     private boolean isAssetTransfer = false; 
 
@@ -25,6 +26,14 @@ public class Category {
         this.id = id;
     }
 
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+    
     public String getName() {
         return name;
     }

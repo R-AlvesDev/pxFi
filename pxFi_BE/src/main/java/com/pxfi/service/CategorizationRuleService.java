@@ -9,9 +9,11 @@ import com.pxfi.model.CategorizationRule;
 import com.pxfi.model.TestRuleRequest;
 import com.pxfi.model.TestRuleResponse;
 import com.pxfi.model.Transaction;
+import com.pxfi.model.User;
 import com.pxfi.repository.CategorizationRuleRepository;
 import com.pxfi.repository.CategoryRepository;
 import com.pxfi.repository.TransactionRepository;
+import com.pxfi.security.SecurityConfiguration;
 
 @Service
 public class CategorizationRuleService {
@@ -34,10 +36,20 @@ public class CategorizationRuleService {
     }
 
     public List<CategorizationRule> getAllRules() {
-        return ruleRepository.findAll();
+        User currentUser = SecurityConfiguration.getCurrentUser();
+        if (currentUser == null) {
+            // Or throw an exception, returning empty list is safer for read operations
+            return new ArrayList<>(); 
+        }
+        return ruleRepository.findByUserId(currentUser.getId());
     }
 
     public CategorizationRule createRule(CategorizationRule rule) {
+        User currentUser = SecurityConfiguration.getCurrentUser();
+        if (currentUser == null) {
+            throw new IllegalStateException("Cannot create rule without a logged in user.");
+        }
+        rule.setUserId(currentUser.getId()); // Set the owner of the new rule
         return ruleRepository.save(rule);
     }
 

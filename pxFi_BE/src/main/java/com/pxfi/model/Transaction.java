@@ -8,6 +8,14 @@ import org.springframework.data.mongodb.core.mapping.Field;
 public class Transaction {
     @Id
     private String id;
+    private String userId;
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
     private String transactionId;
     private String internalTransactionId;

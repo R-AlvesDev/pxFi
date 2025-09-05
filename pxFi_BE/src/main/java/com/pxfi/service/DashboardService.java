@@ -3,6 +3,7 @@ package com.pxfi.service;
 import com.pxfi.model.Category;
 import com.pxfi.model.CategorySpending;
 import com.pxfi.model.DashboardSummaryResponse;
+import com.pxfi.model.StatisticsResponse;
 import com.pxfi.model.Transaction;
 import com.pxfi.repository.CategoryRepository;
 import com.pxfi.repository.TransactionRepository;
@@ -35,7 +36,7 @@ public class DashboardService {
         int currentMonth = today.getMonthValue();
 
         // Use the existing statistics service to get monthly totals
-        var monthlyStats = statisticsService.getMonthlyStatistics(currentYear, currentMonth);
+        StatisticsResponse monthlyStats = statisticsService.getMonthlyStatistics(accountId, currentYear, currentMonth);
 
         // Get top 5 spending categories for the current month
         List<CategorySpending> topSpendingCategories = monthlyStats.expensesByCategory().stream()
@@ -43,9 +44,10 @@ public class DashboardService {
                 .limit(5)
                 .collect(Collectors.toList());
 
-        // Get the 5 most recent transactions
+        // Get the 5 most recent transactions for this specific account
         List<Transaction> recentTransactions = transactionRepository
-                .findByAccountIdOrderByBookingDateDesc(accountId).stream()
+                .findByAccountIdAndUserIdOrderByBookingDateDesc(accountId, monthlyStats.userId()) // Assuming userId is on stats response
+                .stream()
                 .limit(5)
                 .collect(Collectors.toList());
 

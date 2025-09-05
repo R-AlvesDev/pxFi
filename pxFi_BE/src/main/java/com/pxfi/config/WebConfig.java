@@ -16,6 +16,7 @@ public class WebConfig {
                 registry.addMapping("/api/**") // enable CORS only for API paths
                         .allowedOrigins("http://localhost:4200") // Angular dev server origin
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // HTTP methods
+                        .allowedHeaders("*")
                         .allowCredentials(true); // if you use cookies or auth headers
             }
         };

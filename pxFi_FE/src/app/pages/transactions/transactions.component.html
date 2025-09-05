@@ -118,11 +118,9 @@
                   <div class="row">
                     <div class="col-md-6">
                       <strong>Internal Transaction ID:</strong> {{ tx.internalTransactionId || 'N/A' }} <br>
-                      <strong>Debtor Account:</strong> {{ tx.debtorAccount?.iban || 'N/A' }}
                     </div>
                     <div class="col-md-6">
                       <strong>Value Date:</strong> {{ tx.valueDate | date:'mediumDate' }} <br>
-                      <strong>Bank Code:</strong> {{ tx.bankTransactionCode || 'N/A' }}
                     </div>
                   </div>
                 </td>

@@ -14,7 +14,7 @@ import com.pxfi.model.Transaction;
 @Repository
 public interface TransactionRepository extends MongoRepository<Transaction, String> {
 
-    List<Transaction> findByAccountIdOrderByBookingDateDesc(String accountId);
+    List<Transaction> findByAccountIdAndUserIdOrderByBookingDateDesc(String accountId, String userId);
 
     boolean existsByTransactionIdAndAccountId(String transactionId, String accountId);
 
@@ -65,6 +65,10 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
         String remittanceInfo, String categoryId
     );
 
-    List<Transaction> findByAccountIdAndBookingDateBetweenOrderByBookingDateDesc(String accountId, String startDate, String endDate);
+    Optional<Transaction> findByIdAndUserId(String id, String userId);
+
+    List<Transaction> findAllByUserId(String userId);
+    
+    List<Transaction> findByAccountIdAndUserIdAndBookingDateBetweenOrderByBookingDateDesc(String accountId, String userId, String startDate, String endDate);
 
 }

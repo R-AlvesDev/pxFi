@@ -34,6 +34,15 @@ export interface RequisitionResponse {
   redirect_immediate: boolean;
 }
 
+export interface Account {
+  id: string;
+  userId: string;
+  gocardlessAccountId: string;
+  accountName: string;
+  institutionId: string;
+  iban: string;
+}
+
 export interface DebtorAccount {
   iban?: string;
   bban?: string;
@@ -97,6 +106,11 @@ export enum RuleOperator {
   AMOUNT_LESS_THAN = 'AMOUNT_LESS_THAN'
 }
 
+export interface AuthResponse {
+  token: string;
+}
+
+
 export interface CategorizationRule {
   id: string;
   fieldToMatch: RuleField;
@@ -156,6 +170,14 @@ export class ApiService {
     return new HttpHeaders().set('Authorization', `Bearer ${token}`);
   }
 
+  register(registerData: any): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/register`, registerData);
+  }
+
+  login(loginData: any): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/login`, loginData);
+  }
+
   getInstitutions(accessToken: string, countryCode: string): Observable<Institution[]> {
     return this.http.get<Institution[]>(`${this.baseUrl}/institutions`, {
       params: { accessToken, countryCode }
@@ -173,7 +195,6 @@ export class ApiService {
       access_valid_for_days: 30,
       access_scope: ['balances', 'details', 'transactions']
     };
-
     return this.http.post<AgreementResponse>(
       `${this.baseUrl}/agreements/enduser`,
       payload,
@@ -184,7 +205,6 @@ export class ApiService {
   createRequisition(accessToken: string, institutionId: string, agreementId: string): Observable<RequisitionResponse> {
     const url = `${this.baseUrl}/requisitions/create`;
     const body = { institutionId, agreementId };
-
     return this.http.post<RequisitionResponse>(url, body, { headers: this.createAuthHeaders(accessToken) });
   }
 
@@ -201,12 +221,11 @@ export class ApiService {
       params = params.set('startDate', startDate);
       params = params.set('endDate', endDate);
     }
-
     return this.http.get<Transaction[]>(`${this.baseUrl}/accounts/${accountId}/transactions`, {
       headers: this.createAuthHeaders(accessToken),
       params: params
     });
-}
+  }
 
   refreshTransactions(accessToken: string, accountId: string): Observable<Transaction[]> {
     return this.http.post<Transaction[]>(`${this.baseUrl}/accounts/${accountId}/transactions/refresh`, {}, {
@@ -214,70 +233,80 @@ export class ApiService {
     });
   }
 
-  toggleTransactionIgnore(transactionId: string): Observable<Transaction> {
-    return this.http.post<Transaction>(`${this.baseUrl}/transactions/${transactionId}/toggle-ignore`, {});
-  }
-
-  handleCallback(ref: string): Observable<any> {
-    const params = new HttpParams().set('ref', ref);
-    return this.http.get(`${this.baseUrl}/callback`, { params });
-  }
-
-  getCategories(): Observable<Category[]> {
-    return this.http.get<Category[]>(`${this.baseUrl}/categories`);
-  }
-
-  updateTransactionCategory(transactionId: string, categoryId: string, subCategoryId: string | null): Observable<Transaction> {
-    const payload = { categoryId, subCategoryId };
-    return this.http.post<Transaction>(`${this.baseUrl}/transactions/${transactionId}/category`, payload);
-  }
-
-  categorizeSimilarTransactions(remittanceInfo: string, categoryId: string, subCategoryId: string | null): Observable<Transaction[]> {
-    const payload = { remittanceInfo, categoryId, subCategoryId };
-    return this.http.post<Transaction[]>(`${this.baseUrl}/transactions/categorize-similar`, payload);
-  }
-
-  createCategory(category: { name: string, parentId: string | null }): Observable<Category> {
-    return this.http.post<Category>(`${this.baseUrl}/categories`, category);
-  }
-
-  updateCategory(id: string, category: Partial<Category>): Observable<Category> {
-    return this.http.put<Category>(`${this.baseUrl}/categories/${id}`, category);
-}
-
-  deleteCategory(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/categories/${id}`);
-  }
-
-  getRules(): Observable<CategorizationRule[]> {
-    return this.http.get<CategorizationRule[]>(`${this.baseUrl}/rules`);
-  }
-
-  createRule(rule: Partial<CategorizationRule>): Observable<CategorizationRule> {
-    return this.http.post<CategorizationRule>(`${this.baseUrl}/rules`, rule);
-  }
-
-  applyAllRules(): Observable<{ updatedCount: number }> {
-    return this.http.post<{ updatedCount: number }>(`${this.baseUrl}/rules/apply-all`, {});
-  }
-
-  deleteRule(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/rules/${id}`);
-  }
-
-  getMonthlyStatistics(year: number, month: number): Observable<StatisticsResponse> {
-    const params = { year: year.toString(), month: month.toString() };
-    return this.http.get<StatisticsResponse>(`${this.baseUrl}/statistics/monthly`, { params });
-  }
-
-  getYearlyStatistics(year: number): Observable<YearlyStatisticsResponse> {
-    const params = { year: year.toString() };
-    return this.http.get<YearlyStatisticsResponse>(`${this.baseUrl}/statistics/yearly`, { params });
+  toggleTransactionIgnore(accessToken: string, transactionId: string): Observable<Transaction> {
+    return this.http.post<Transaction>(`${this.baseUrl}/transactions/${transactionId}/toggle-ignore`, {}, { headers: this.createAuthHeaders(accessToken) });
   }
   
-  linkTransactions(expenseId: string, incomeId: string): Observable<void> {
+  updateTransactionCategory(accessToken: string, transactionId: string, categoryId: string, subCategoryId: string | null): Observable<Transaction> {
+    const payload = { categoryId, subCategoryId };
+    return this.http.post<Transaction>(`${this.baseUrl}/transactions/${transactionId}/category`, payload, { headers: this.createAuthHeaders(accessToken) });
+  }
+  
+  categorizeSimilarTransactions(accessToken: string, remittanceInfo: string, categoryId: string, subCategoryId: string | null): Observable<Transaction[]> {
+    const payload = { remittanceInfo, categoryId, subCategoryId };
+    return this.http.post<Transaction[]>(`${this.baseUrl}/transactions/categorize-similar`, payload, { headers: this.createAuthHeaders(accessToken) });
+  }
+
+  linkTransactions(accessToken: string, expenseId: string, incomeId: string): Observable<void> {
     const payload = { expenseId, incomeId };
-    return this.http.post<void>(`${this.baseUrl}/transactions/link`, payload);
+    return this.http.post<void>(`${this.baseUrl}/transactions/link`, payload, { headers: this.createAuthHeaders(accessToken) });
+  }
+
+  // --- Category & Rule Methods (Secured) ---
+
+  getAllCategories(accessToken: string): Observable<Category[]> {
+    return this.http.get<Category[]>(`${this.baseUrl}/categories`, { headers: this.createAuthHeaders(accessToken) });
+  }
+  
+  createCategory(accessToken: string, category: { name: string, parentId: string | null }): Observable<Category> {
+    return this.http.post<Category>(`${this.baseUrl}/categories`, category, { headers: this.createAuthHeaders(accessToken) });
+  }
+
+  updateCategory(accessToken: string, id: string, category: Partial<Category>): Observable<Category> {
+    return this.http.put<Category>(`${this.baseUrl}/categories/${id}`, category, { headers: this.createAuthHeaders(accessToken) });
+  }
+
+  deleteCategory(accessToken: string, id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/categories/${id}`, { headers: this.createAuthHeaders(accessToken) });
+  }
+
+  getAllRules(accessToken: string): Observable<CategorizationRule[]> {
+    return this.http.get<CategorizationRule[]>(`${this.baseUrl}/rules`, { headers: this.createAuthHeaders(accessToken) });
+  }
+
+  createRule(accessToken: string, rule: Partial<CategorizationRule>): Observable<CategorizationRule> {
+    return this.http.post<CategorizationRule>(`${this.baseUrl}/rules`, rule, { headers: this.createAuthHeaders(accessToken) });
+  }
+  
+  applyAllRules(accessToken: string): Observable<{ updatedCount: number }> {
+    return this.http.post<{ updatedCount: number }>(`${this.baseUrl}/rules/apply-all`, {}, { headers: this.createAuthHeaders(accessToken) });
+  }
+  
+  deleteRule(accessToken: string, id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/rules/${id}`, { headers: this.createAuthHeaders(accessToken) });
+  }
+  
+  testRule(accessToken: string, rule: Partial<CategorizationRule>, accountId: string): Observable<TestRuleResponse> {
+    const payload = { rule, accountId };
+    return this.http.post<TestRuleResponse>(`${this.baseUrl}/rules/test`, payload, { headers: this.createAuthHeaders(accessToken) });
+  }
+
+  // --- Statistics & Dashboard Methods (Secured) ---
+
+  getMonthlyStatistics(accessToken: string, accountId: string, year: number, month: number): Observable<StatisticsResponse> {
+    let params = new HttpParams().set('year', year.toString()).set('month', month.toString());
+    return this.http.get<StatisticsResponse>(`${this.baseUrl}/statistics/monthly/${accountId}`, {
+      headers: this.createAuthHeaders(accessToken),
+      params: params
+    });
+  }
+
+  getYearlyStatistics(accessToken: string, accountId: string, year: number): Observable<YearlyStatisticsResponse> {
+    let params = new HttpParams().set('year', year.toString());
+    return this.http.get<YearlyStatisticsResponse>(`${this.baseUrl}/statistics/yearly/${accountId}`, {
+      headers: this.createAuthHeaders(accessToken),
+      params: params
+    });
   }
 
   getDashboardSummary(accessToken: string, accountId: string): Observable<DashboardSummary> {
@@ -285,9 +314,18 @@ export class ApiService {
       headers: this.createAuthHeaders(accessToken)
     });
   }
+  
+  // --- Account Management (Secured) ---
 
-  testRule(rule: Partial<CategorizationRule>, accountId: string): Observable<TestRuleResponse> {
-    const payload = { rule, accountId };
-    return this.http.post<TestRuleResponse>(`${this.baseUrl}/rules/test`, payload);
+  getAccounts(accessToken: string): Observable<Account[]> {
+    return this.http.get<Account[]>(`${this.baseUrl}/accounts`, {
+      headers: this.createAuthHeaders(accessToken)
+    });
+  }
+
+  saveAccount(accessToken: string, accountData: any): Observable<Account> {
+    return this.http.post<Account>(`${this.baseUrl}/accounts`, accountData, {
+      headers: this.createAuthHeaders(accessToken)
+    });
   }
 }
