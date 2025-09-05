@@ -91,8 +91,10 @@ export enum RuleOperator {
   EQUALS = 'EQUALS',
   STARTS_WITH = 'STARTS_WITH',
   ENDS_WITH = 'ENDS_WITH',
-  GREATER_THAN = 'GREATER_THAN',
-  LESS_THAN = 'LESS_THAN'
+  // Amount operators
+  AMOUNT_EQUALS = 'AMOUNT_EQUALS',
+  AMOUNT_GREATER_THAN = 'AMOUNT_GREATER_THAN',
+  AMOUNT_LESS_THAN = 'AMOUNT_LESS_THAN'
 }
 
 export interface CategorizationRule {
@@ -127,6 +129,19 @@ export interface YearlyStatisticsResponse {
   averageMonthlyIncome: number;
   averageMonthlyExpenses: number;
   monthlyBreakdowns: MonthlyBreakdown[];
+}
+
+export interface TestRuleResponse {
+  matchedTransactions: Transaction[];
+  matchCount: number;
+}
+
+export interface DashboardSummary {
+  currentMonthIncome: number;
+  currentMonthExpenses: number;
+  netBalance: number;
+  topSpendingCategories: CategorySpending[];
+  recentTransactions: Transaction[];
 }
 
 @Injectable({
@@ -263,5 +278,16 @@ export class ApiService {
   linkTransactions(expenseId: string, incomeId: string): Observable<void> {
     const payload = { expenseId, incomeId };
     return this.http.post<void>(`${this.baseUrl}/transactions/link`, payload);
+  }
+
+  getDashboardSummary(accessToken: string, accountId: string): Observable<DashboardSummary> {
+    return this.http.get<DashboardSummary>(`${this.baseUrl}/dashboard/summary/${accountId}`, {
+      headers: this.createAuthHeaders(accessToken)
+    });
+  }
+
+  testRule(rule: Partial<CategorizationRule>, accountId: string): Observable<TestRuleResponse> {
+    const payload = { rule, accountId };
+    return this.http.post<TestRuleResponse>(`${this.baseUrl}/rules/test`, payload);
   }
 }

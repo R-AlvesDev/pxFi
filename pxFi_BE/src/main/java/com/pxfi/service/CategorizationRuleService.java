@@ -6,6 +6,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.pxfi.model.CategorizationRule;
+import com.pxfi.model.TestRuleRequest;
+import com.pxfi.model.TestRuleResponse;
 import com.pxfi.model.Transaction;
 import com.pxfi.repository.CategorizationRuleRepository;
 import com.pxfi.repository.CategoryRepository;
@@ -76,5 +78,18 @@ public class CategorizationRuleService {
 
         System.out.println("--- Finished applying rules. " + transactionsToUpdate.size() + " transactions were updated. ---");
         return transactionsToUpdate.size();
+    }
+
+    public TestRuleResponse testRule(TestRuleRequest request) {
+        if (request.getRule() == null || request.getAccountId() == null) {
+            throw new IllegalArgumentException("Rule and Account ID must be provided for testing.");
+        }
+        
+        List<Transaction> matchedTransactions = ruleEngineService.testRule(
+            request.getRule(),
+            request.getAccountId()
+        );
+        
+        return new TestRuleResponse(matchedTransactions);
     }
 }

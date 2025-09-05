@@ -23,14 +23,11 @@
           </form>
 
           <h6 class="mt-4 border-bottom pb-2 mb-3">Existing Categories</h6>
-          <p class="text-muted small">Check the box next to any category to mark it as an "Asset Transfer". Transactions in these categories (e.g., Savings, Investments) will be excluded from your total expenses.</p>
           <ul class="list-group">
             <ng-container *ngFor="let category of mainCategories">
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" [(ngModel)]="category.isAssetTransfer" 
-                         (ngModelChange)="onAssetTransferChange(category)" [id]="'cat-check-' + category.id">
-                  <label class="form-check-label" [for]="'cat-check-' + category.id" (click)="toggleCategory(category.id)" style="cursor: pointer;">
+                  <label class="form-check-label" (click)="toggleCategory(category.id)" style="cursor: pointer;">
                     <strong>{{ category.name }}</strong>
                   </label>
                 </div>
@@ -39,9 +36,7 @@
               <ng-container *ngIf="expandedCategoryIds.has(category.id)">
                 <li *ngFor="let sub of categoryService.getSubCategories(category.id)" class="list-group-item d-flex justify-content-between align-items-center ps-5">
                   <div class="form-check">
-                    <input class="form-check-input" type="checkbox" [(ngModel)]="sub.isAssetTransfer"
-                           (ngModelChange)="onAssetTransferChange(sub)" [id]="'cat-check-' + sub.id">
-                    <label class="form-check-label" [for]="'cat-check-' + sub.id">
+                    <label class="form-check-label">
                       {{ sub.name }}
                     </label>
                   </div>
@@ -57,17 +52,20 @@
     <div class="col-lg-6">
       <div class="card h-100">
         <div class="card-header"><h5 class="mb-0">Manage Automation Rules</h5></div>
-        <div class="card-body">
+        <div class="card-body d-flex flex-column">
           <form (ngSubmit)="createRule()" class="mb-4 p-3 border rounded bg-light">
             <h6 class="mb-3">Add New Rule</h6>
             <div class="input-group mb-2">
               <span class="input-group-text">IF</span>
-              <select class="form-select" [(ngModel)]="newRule.fieldToMatch" name="fieldToMatch">
+              
+              <select class="form-select" [(ngModel)]="newRule.fieldToMatch" name="fieldToMatch" (ngModelChange)="onFieldToMatchChange()">
                 <option *ngFor="let field of ruleFields" [value]="field">{{ field }}</option>
               </select>
+              
               <select class="form-select" [(ngModel)]="newRule.operator" name="operator">
-                <option *ngFor="let op of ruleOperators" [value]="op">{{ op }}</option>
+                <option *ngFor="let op of availableOperators" [value]="op">{{ op }}</option>
               </select>
+              
               <input type="text" class="form-control" placeholder="Value..." [(ngModel)]="newRule.valueToMatch" name="valueToMatch">
             </div>
             <div class="input-group">
@@ -81,7 +79,10 @@
                  <option *ngFor="let sub of categoryService.getSubCategories(newRule.categoryId!)" [value]="sub.id">{{ sub.name }}</option>
               </select>
             </div>
-            <button type="submit" class="btn btn-primary w-100 mt-3">Add Rule</button>
+            <div class="d-flex gap-2 mt-3">
+              <button type="button" class="btn btn-outline-info w-50" (click)="testRule()">Test Rule</button>
+              <button type="submit" class="btn btn-primary w-50">Add Rule</button>
+            </div>
           </form>
 
           <hr>
@@ -93,17 +94,57 @@
           </div>
           <hr>
 
-          <ul class="list-group">
-            <li *ngFor="let rule of rules$ | async" class="list-group-item d-flex justify-content-between align-items-center">
-              <div>
-                <small class="text-muted">IF {{ rule.fieldToMatch }} {{ rule.operator }} "{{ rule.valueToMatch }}"</small><br>
-                <strong>THEN ➞ {{ getCategoryName(rule.categoryId) }} <span *ngIf="rule.subCategoryId">/ {{ getCategoryName(rule.subCategoryId) }}</span></strong>
-              </div>
-              <button class="btn btn-outline-danger btn-sm" (click)="deleteRule(rule.id)">Delete</button>
-            </li>
-          </ul>
+          <div class="flex-grow-1" style="overflow-y: auto;">
+            <ul class="list-group">
+              <li *ngIf="(rules$ | async)?.length === 0" class="list-group-item text-muted text-center">
+                No rules created yet.
+              </li>
+              <li *ngFor="let rule of rules$ | async" class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <small class="text-muted">IF {{ rule.fieldToMatch }} {{ rule.operator }} "{{ rule.valueToMatch }}"</small><br>
+                  <strong>THEN ➞ {{ getCategoryName(rule.categoryId) }} <span *ngIf="rule.subCategoryId">/ {{ getCategoryName(rule.subCategoryId) }}</span></strong>
+                </div>
+                <button class="btn btn-outline-danger btn-sm" (click)="deleteRule(rule.id)">Delete</button>
+              </li>
+            </ul>
+          </div>
 
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="testRuleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Rule Test Results</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="testResults">
+          <div class="alert alert-info">
+            This rule matched <strong>{{ testResults.matchCount }}</strong> transaction(s) for the currently selected account.
+          </div>
+          <ul class="list-group">
+            <li *ngIf="testResults.matchCount === 0" class="list-group-item text-muted text-center">
+              No matching transactions found.
+            </li>
+            <li *ngFor="let tx of testResults.matchedTransactions" class="list-group-item">
+              <div class="d-flex justify-content-between">
+                <span>{{ tx.remittanceInformationUnstructured }}</span>
+                <span [ngClass]="+tx.transactionAmount.amount > 0 ? 'text-success' : 'text-danger'">
+                  {{ tx.transactionAmount.amount | currency:tx.transactionAmount.currency }}
+                </span>
+              </div>
+              <small class="text-muted">{{ tx.bookingDate | date:'mediumDate' }}</small>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>

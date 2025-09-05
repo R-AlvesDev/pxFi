@@ -16,16 +16,17 @@ public class CategorizationRule {
         EQUALS,
         STARTS_WITH,
         ENDS_WITH,
-        GREATER_THAN,
-        LESS_THAN
+        AMOUNT_EQUALS,      
+        AMOUNT_GREATER_THAN,
+        AMOUNT_LESS_THAN 
     }
 
     @Id
     private String id;
 
-    private RuleField fieldToMatch; // e.g., REMITTANCE_INFO
-    private RuleOperator operator;   // e.g., CONTAINS
-    private String valueToMatch;     // e.g., "COMPRA" or "1000"
+    private RuleField fieldToMatch; 
+    private RuleOperator operator;   
+    private String valueToMatch;     
     
     private String categoryId;
     private String subCategoryId; // Can be null
