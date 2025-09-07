@@ -30,84 +30,30 @@ public class StatisticsService {
             throw new IllegalStateException("User not authenticated.");
         }
         String userId = currentUser.getId();
+        System.out.println("[LOG] StatisticsService: Calculating stats for userId='" + userId + "', accountId='" + accountId + "' for " + year + "-" + month);
 
         String startDate = LocalDate.of(year, month, 1).toString();
         String endDate = LocalDate.of(year, month, 1).plusMonths(1).minusDays(1).toString();
 
         List<Transaction> transactions = transactionRepository.findByAccountIdAndUserIdAndBookingDateBetweenOrderByBookingDateDesc(accountId, userId, startDate, endDate);
-        Map<String, Category> categoryMap = categoryRepository.findByUserId(userId).stream()
-                .collect(Collectors.toMap(Category::getId, Function.identity()));
+        System.out.println("[LOG] StatisticsService: Found " + transactions.size() + " transactions for income calculation.");
 
-        BigDecimal totalIncome = BigDecimal.ZERO;
-        BigDecimal totalExpenses = BigDecimal.ZERO;
-        Set<String> processedIds = new HashSet<>();
-        Map<String, BigDecimal> spendingPerCategory = new HashMap<>();
+        BigDecimal totalIncome = transactions.stream()
+            .filter(tx -> !tx.isIgnored() && new BigDecimal(tx.getTransactionAmount().getAmount()).compareTo(BigDecimal.ZERO) > 0)
+            .map(tx -> new BigDecimal(tx.getTransactionAmount().getAmount()))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        Optional<String> uncategorizedCategoryIdOpt = categoryMap.values().stream()
-            .filter(cat -> "Uncategorized".equalsIgnoreCase(cat.getName()))
-            .map(Category::getId)
-            .findFirst();
+        List<CategorySpending> expensesByCategory = transactionRepository.findSpendingByCategory(userId, accountId, startDate, endDate);
+        System.out.println("[LOG] StatisticsService: Aggregation query found " + expensesByCategory.size() + " spending categories.");
+        
+        BigDecimal totalExpenses = expensesByCategory.stream()
+            .map(CategorySpending::total)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        System.out.println("[LOG] StatisticsService: TotalIncome=" + totalIncome + ", TotalExpenses=" + totalExpenses);
 
-        for (Transaction tx : transactions) {
-            if (tx.getLinkedTransactionId() != null && !processedIds.contains(tx.getId())) {
-                Transaction linkedTx = transactions.stream()
-                        .filter(t -> t.getId().equals(tx.getLinkedTransactionId()))
-                        .findFirst().orElse(null);
-                
-                if (linkedTx != null) {
-                    BigDecimal amount1 = new BigDecimal(tx.getTransactionAmount().getAmount());
-                    BigDecimal amount2 = new BigDecimal(linkedTx.getTransactionAmount().getAmount());
-                    BigDecimal netExpense = amount1.add(amount2).abs();
-                    totalExpenses = totalExpenses.add(netExpense);
-
-                    String categoryIdToUse = tx.getCategoryId() != null ? tx.getCategoryId() : uncategorizedCategoryIdOpt.orElse(null);
-                    if (categoryIdToUse != null) {
-                        spendingPerCategory.merge(categoryIdToUse, netExpense, BigDecimal::add);
-                    }
-                    processedIds.add(tx.getId());
-                    processedIds.add(linkedTx.getId());
-                }
-            }
-        }
-    
-        for (Transaction tx : transactions) {
-            if (processedIds.contains(tx.getId()) || tx.isIgnored()) {
-                continue;
-            }
-    
-            BigDecimal amount = new BigDecimal(tx.getTransactionAmount().getAmount());
-            if (amount.compareTo(BigDecimal.ZERO) > 0) {
-                totalIncome = totalIncome.add(amount);
-            } else {
-                Category categoryToCheck = null;
-                if (tx.getSubCategoryId() != null) {
-                    categoryToCheck = categoryMap.get(tx.getSubCategoryId());
-                } else if (tx.getCategoryId() != null) {
-                    categoryToCheck = categoryMap.get(tx.getCategoryId());
-                }
-    
-                if (categoryToCheck == null || !categoryToCheck.isAssetTransfer()) {
-                    BigDecimal expenseAmount = amount.abs();
-                    totalExpenses = totalExpenses.add(expenseAmount);
-                    
-                    String categoryIdToUse = tx.getCategoryId() != null ? tx.getCategoryId() : uncategorizedCategoryIdOpt.orElse(null);
-                    if (categoryIdToUse != null) {
-                        spendingPerCategory.merge(categoryIdToUse, expenseAmount, BigDecimal::add);
-                    }
-                }
-            }
-        }
-    
-        List<CategorySpending> expensesByCategory = spendingPerCategory.entrySet().stream()
-            .map(entry -> {
-                Category category = categoryMap.get(entry.getKey());
-                String categoryName = (category != null) ? category.getName() : "Uncategorized";
-                return new CategorySpending(categoryName, entry.getValue());
-            })
-            .collect(Collectors.toList());
-    
-            return new StatisticsResponse(userId, totalIncome, totalExpenses, expensesByCategory);
-        }
+        return new StatisticsResponse(userId, totalIncome, totalExpenses, expensesByCategory);
+    }
     
     public YearlyStatisticsResponse getYearlyStatistics(String accountId, int year) {
         User currentUser = SecurityConfiguration.getCurrentUser();

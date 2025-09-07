@@ -11,8 +11,8 @@ export class RuleService {
 
   constructor(private api: ApiService) {}
 
-  getAllRules(): Observable<CategorizationRule[]> {
-    return this.api.getAllRules().pipe(
+  getAllRules(accessToken: string): Observable<CategorizationRule[]> {
+    return this.api.getAllRules(accessToken).pipe(
       tap(rules => this.rules.next(rules))
     );
 }

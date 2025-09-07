@@ -122,7 +122,7 @@ public class GoCardlessController {
         transactionService.saveTransactions(accountId, freshData);
 
         // Return updated list from DB after saving
-        List<Transaction> updatedTransactions = transactionService.getTransactionsByAccountId(accountId);
+        List<Transaction> updatedTransactions = transactionService.getTransactionsByAccountId(accountId, null, null);
         return ResponseEntity.ok(updatedTransactions);
     }
 
