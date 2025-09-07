@@ -52,7 +52,7 @@ export class SettingsComponent implements OnInit {
   ngOnInit(): void {
     this.accessToken = localStorage.getItem('accessToken');
     if (this.accessToken) {
-      this.ruleService.getAllRules().subscribe();
+      this.ruleService.getAllRules(this.accessToken).subscribe();
       this.categoryService.refreshCategories(this.accessToken);
     }
     this.categories$.subscribe(() => {

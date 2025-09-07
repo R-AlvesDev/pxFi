@@ -43,8 +43,10 @@ public class TransactionService {
             throw new IllegalStateException("User not authenticated.");
         }
         String userId = currentUser.getId();
+        System.out.println("[LOG] TransactionService: Starting to process transactions for userId='" + userId + "', accountId='" + accountId + "'");
 
         if (transactionsResponse.getTransactions() == null || transactionsResponse.getTransactions().getBooked() == null) {
+            System.out.println("[LOG] TransactionService: No 'booked' transactions found in the response from the bank.");
             return;
         }
         
@@ -53,16 +55,22 @@ public class TransactionService {
         List<Transaction> incomingTxs = transactionsResponse.getTransactions().getBooked().stream()
             .filter(t -> t.getInternalTransactionId() != null && !t.getInternalTransactionId().isEmpty())
             .collect(Collectors.toList());
+        
+        System.out.println("[LOG] TransactionService: Received " + incomingTxs.size() + " valid transactions from the bank.");
 
         if (incomingTxs.isEmpty()) return;
 
         Set<String> existingInternalIds = transactionRepository.findAllByUserId(userId).stream()
             .map(Transaction::getInternalTransactionId)
             .collect(Collectors.toSet());
+        
+        System.out.println("[LOG] TransactionService: Found " + existingInternalIds.size() + " existing transactions for this user.");
 
         List<Transaction> transactionsToInsert = incomingTxs.stream()
             .filter(incoming -> !existingInternalIds.contains(incoming.getInternalTransactionId()))
             .collect(Collectors.toList());
+
+        System.out.println("[LOG] TransactionService: " + transactionsToInsert.size() + " new transactions will be saved.");
 
         if (!transactionsToInsert.isEmpty()) {
             transactionsToInsert.forEach(tx -> {
@@ -77,19 +85,29 @@ public class TransactionService {
                 }
             });
             transactionRepository.saveAll(transactionsToInsert);
+             System.out.println("[LOG] TransactionService: Successfully saved " + transactionsToInsert.size() + " new transactions.");
         }
     }
 
     public List<Transaction> getTransactionsByAccountId(String accountId, String startDate, String endDate) {
         User currentUser = SecurityConfiguration.getCurrentUser();
         if (currentUser == null) {
+             System.out.println("[LOG] TransactionService: No authenticated user found.");
             return List.of();
         }
         String userId = currentUser.getId();
+        System.out.println("[LOG] TransactionService: Fetching transactions for userId='" + userId + "', accountId='" + accountId + "'");
+
+        List<Transaction> transactions;
         if (startDate != null && endDate != null && !startDate.isEmpty() && !endDate.isEmpty()) {
-            return transactionRepository.findByAccountIdAndUserIdAndBookingDateBetweenOrderByBookingDateDesc(accountId, userId, startDate, endDate);
+            // Use the correct query method that includes the date range
+            transactions = transactionRepository.findByAccountIdAndUserIdAndBookingDateBetweenOrderByBookingDateDesc(accountId, userId, startDate, endDate);
+        } else {
+            transactions = transactionRepository.findByAccountIdAndUserIdOrderByBookingDateDesc(accountId, userId);
         }
-        return transactionRepository.findByAccountIdAndUserIdOrderByBookingDateDesc(accountId, userId);
+        
+        System.out.println("[LOG] TransactionService: Found " + transactions.size() + " transactions.");
+        return transactions;
     }
 
     public Transaction updateTransactionCategory(String transactionId, String categoryId, String subCategoryId) {

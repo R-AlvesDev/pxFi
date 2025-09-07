@@ -23,9 +23,22 @@ public class AccountController {
         User currentUser = SecurityConfiguration.getCurrentUser();
 
         if (currentUser == null) {
+            System.out.println("[LOG] AccountController: Cannot get accounts, user is not authenticated.");
             return ResponseEntity.status(401).build();
         }
+        System.out.println("[LOG] AccountController: Authenticated user is '" + currentUser.getUsername() + "' with ID '" + currentUser.getId() + "'");
         List<Account> accounts = accountService.getAccountsByUserId(currentUser.getId());
         return ResponseEntity.ok(accounts);
+    }
+
+    @PostMapping
+    public ResponseEntity<Account> saveAccount(@RequestBody Account account) {
+        User currentUser = SecurityConfiguration.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+        account.setUserId(currentUser.getId());
+        Account savedAccount = accountService.saveAccount(account);
+        return ResponseEntity.ok(savedAccount);
     }
 }

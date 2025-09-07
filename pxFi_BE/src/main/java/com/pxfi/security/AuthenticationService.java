@@ -5,6 +5,8 @@ import com.pxfi.repository.UserRepository;
 import com.pxfi.security.auth.AuthenticationRequest;
 import com.pxfi.security.auth.AuthenticationResponse;
 import com.pxfi.security.auth.RegisterRequest;
+import com.pxfi.service.CategoryService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,12 +18,15 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final CategoryService categoryService;
 
-    public AuthenticationService(UserRepository repository, PasswordEncoder passwordEncoder, JwtService jwtService, AuthenticationManager authenticationManager) {
+
+    public AuthenticationService(UserRepository repository, PasswordEncoder passwordEncoder, JwtService jwtService, AuthenticationManager authenticationManager, @Lazy CategoryService categoryService) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
+        this.categoryService = categoryService;
     }
 
     public AuthenticationResponse register(RegisterRequest request) {
@@ -30,6 +35,7 @@ public class AuthenticationService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         repository.save(user);
+        categoryService.createDefaultCategoriesForUser(user.getId());
         var jwtToken = jwtService.generateToken(user);
         return new AuthenticationResponse(jwtToken);
     }
