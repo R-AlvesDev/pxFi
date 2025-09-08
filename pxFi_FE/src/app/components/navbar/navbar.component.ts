@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { AsyncPipe, NgIf } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { AccountStateService } from '../../services/account-state.service';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../services/auth/auth.service';
@@ -8,7 +8,7 @@ import { AuthService } from '../../services/auth/auth.service';
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, AsyncPipe, NgIf],
+  imports: [RouterLink, RouterLinkActive, AsyncPipe],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss']
 })

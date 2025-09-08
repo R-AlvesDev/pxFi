@@ -1,5 +1,6 @@
 package com.pxfi.model;
 
+import org.bson.types.ObjectId; // Import ObjectId
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -11,51 +12,28 @@ public class Category {
     private String id;
 
     private String name;
+    private String parentId;
 
-    private String parentId; 
-    private String userId; 
+    // Change the type from String to ObjectId
+    private ObjectId userId; 
 
-    private boolean isAssetTransfer = false; 
+    private boolean isAssetTransfer = false;
 
     // Getters and Setters
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
     
-    public String getName() {
-        return name;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public String getParentId() { return parentId; }
+    public void setParentId(String parentId) { this.parentId = parentId; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getParentId() {
-        return parentId;
-    }
-
-    public void setParentId(String parentId) {
-        this.parentId = parentId;
-    }
+    // Update the getter and setter for the new type
+    public ObjectId getUserId() { return userId; }
+    public void setUserId(ObjectId userId) { this.userId = userId; }
 
     @JsonProperty("isAssetTransfer")
-    public boolean isAssetTransfer() {
-        return isAssetTransfer;
-    }
-
-    public void setAssetTransfer(boolean isAssetTransfer) {
-        this.isAssetTransfer = isAssetTransfer;
-    }
+    public boolean isAssetTransfer() { return isAssetTransfer; }
+    public void setAssetTransfer(boolean isAssetTransfer) { this.isAssetTransfer = isAssetTransfer; }
 }
