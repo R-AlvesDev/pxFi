@@ -17,7 +17,6 @@ import { NotificationService } from '../../services/notification.service';
 export class AccountsComponent implements OnInit {
   accounts$: Observable<Account[]> | undefined;
   loading = true;
-  accessToken: string | null = null;
 
   constructor(
     private api: ApiService,
@@ -28,21 +27,19 @@ export class AccountsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.accessToken = localStorage.getItem('accessToken');
-    if (this.accessToken) {
-      this.accounts$ = this.api.getAccounts(this.accessToken);
-      this.accounts$.subscribe({
-        next: () => this.loading = false,
-        error: (err) => {
-          this.notificationService.show('Failed to load accounts.', 'error');
-          this.loading = false;
-        }
-      });
-    }
+    this.accounts$ = this.api.getAccounts();
+    this.accounts$.subscribe({
+      next: () => this.loading = false,
+      error: (err) => {
+        this.notificationService.show('Failed to load accounts.', 'error');
+        this.loading = false;
+      }
+    });
   }
 
   selectAccount(account: Account): void {
     this.accountState.setCurrentAccountId(account.gocardlessAccountId);
-    this.router.navigate(['/dashboard']); // Navigate to the dashboard (home route)
+    // FIX: Pass the account's gocardlessAccountId as a parameter in the route
+    this.router.navigate(['/dashboard', account.gocardlessAccountId]);
   }
 }

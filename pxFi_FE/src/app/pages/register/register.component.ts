@@ -27,7 +27,7 @@ export class RegisterComponent {
   onRegister(): void {
     this.authService.register(this.registerData).subscribe({
       next: () => {
-        this.router.navigate(['/']);
+        this.router.navigate(['/accounts']); 
         this.notificationService.show('Registration successful! Welcome!', 'success');
       },
       error: (err) => {

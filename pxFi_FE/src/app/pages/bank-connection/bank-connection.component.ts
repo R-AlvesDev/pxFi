@@ -41,8 +41,7 @@ export class BankConnectionComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    // This component is for logged-out users, so we can get a temporary token.
-    // In a full user system, this might be handled differently.
+    // This component is for logged-in users, so we can get a temporary token.
     this.api.getAccessToken().subscribe({
       next: (tokenObj) => {
         this.accessToken = tokenObj.accessToken;
@@ -91,10 +90,9 @@ export class BankConnectionComponent implements OnInit {
             this.loadingConnection = false;
             if (requisitionResponse.id && requisitionResponse.link) {
               localStorage.setItem('requisitionId', requisitionResponse.id);
-              localStorage.setItem('accessToken', this.accessToken!);
+              // Store the gocardless token, not the user's JWT
+              localStorage.setItem('gocardlessToken', this.accessToken!);
 
-              // This is where a user would be associated with the connection in a full app.
-              // For now, we just redirect.
               window.location.href = requisitionResponse.link;
             } else {
               this.error = 'No connection link returned.';

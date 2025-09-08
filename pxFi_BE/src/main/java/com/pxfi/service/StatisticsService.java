@@ -30,27 +30,56 @@ public class StatisticsService {
             throw new IllegalStateException("User not authenticated.");
         }
         String userId = currentUser.getId();
-        System.out.println("[LOG] StatisticsService: Calculating stats for userId='" + userId + "', accountId='" + accountId + "' for " + year + "-" + month);
 
         String startDate = LocalDate.of(year, month, 1).toString();
         String endDate = LocalDate.of(year, month, 1).plusMonths(1).minusDays(1).toString();
 
         List<Transaction> transactions = transactionRepository.findByAccountIdAndUserIdAndBookingDateBetweenOrderByBookingDateDesc(accountId, userId, startDate, endDate);
-        System.out.println("[LOG] StatisticsService: Found " + transactions.size() + " transactions for income calculation.");
+        Map<String, Category> categoryMap = categoryRepository.findByUserId(userId).stream()
+                .collect(Collectors.toMap(Category::getId, Function.identity()));
 
-        BigDecimal totalIncome = transactions.stream()
-            .filter(tx -> !tx.isIgnored() && new BigDecimal(tx.getTransactionAmount().getAmount()).compareTo(BigDecimal.ZERO) > 0)
-            .map(tx -> new BigDecimal(tx.getTransactionAmount().getAmount()))
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalIncome = BigDecimal.ZERO;
+        BigDecimal totalExpenses = BigDecimal.ZERO;
+        Set<String> processedIds = new HashSet<>();
+        Map<String, BigDecimal> expensesByCategoryMap = new HashMap<>();
 
-        List<CategorySpending> expensesByCategory = transactionRepository.findSpendingByCategory(userId, accountId, startDate, endDate);
-        System.out.println("[LOG] StatisticsService: Aggregation query found " + expensesByCategory.size() + " spending categories.");
+        // First, process linked transactions so they are excluded from main calculations
+        for (Transaction tx : transactions) {
+            if (tx.getLinkedTransactionId() != null && !processedIds.contains(tx.getId())) {
+                Transaction linkedTx = transactions.stream()
+                    .filter(t -> t.getId().equals(tx.getLinkedTransactionId()))
+                    .findFirst().orElse(null);
+                
+                if (linkedTx != null) {
+                    processedIds.add(tx.getId());
+                    processedIds.add(linkedTx.getId());
+                }
+            }
+        }
+    
+        // Now, process all non-linked and non-ignored transactions
+        for (Transaction tx : transactions) {
+            if (processedIds.contains(tx.getId()) || tx.isIgnored()) {
+                continue;
+            }
+    
+            BigDecimal amount = new BigDecimal(tx.getTransactionAmount().getAmount());
+            if (amount.compareTo(BigDecimal.ZERO) > 0) {
+                totalIncome = totalIncome.add(amount);
+            } else {
+                Category category = categoryMap.get(tx.getCategoryId());
+                if (category == null || !category.isAssetTransfer()) {
+                    totalExpenses = totalExpenses.add(amount.abs());
+                    String categoryName = tx.getCategoryName() != null ? tx.getCategoryName() : "Uncategorized";
+                    expensesByCategoryMap.merge(categoryName, amount.abs(), BigDecimal::add);
+                }
+            }
+        }
         
-        BigDecimal totalExpenses = expensesByCategory.stream()
-            .map(CategorySpending::total)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        System.out.println("[LOG] StatisticsService: TotalIncome=" + totalIncome + ", TotalExpenses=" + totalExpenses);
+        List<CategorySpending> expensesByCategory = expensesByCategoryMap.entrySet().stream()
+            .map(entry -> new CategorySpending(entry.getKey(), entry.getValue()))
+            .sorted(Comparator.comparing(CategorySpending::total).reversed())
+            .collect(Collectors.toList());
 
         return new StatisticsResponse(userId, totalIncome, totalExpenses, expensesByCategory);
     }
@@ -66,7 +95,7 @@ public class StatisticsService {
         String endDate = LocalDate.of(year, 12, 31).toString();
         List<Transaction> transactions = transactionRepository.findByAccountIdAndUserIdAndBookingDateBetweenOrderByBookingDateDesc(accountId, userId, startDate, endDate);
         Map<String, Category> categoryMap = categoryRepository.findByUserId(userId).stream()
-                .collect(Collectors.toMap(Category::getId, Function.identity()));
+                .collect(Collectors.toMap(Category::getId, cat -> cat));
 
         Map<Integer, List<Transaction>> transactionsByMonth = transactions.stream()
                 .filter(tx -> !tx.isIgnored())

@@ -23,26 +23,25 @@ export class CallbackComponent implements OnInit {
 
   ngOnInit(): void {
     const requisitionId = localStorage.getItem('requisitionId');
-    const accessToken = localStorage.getItem('accessToken');
+    const gocardlessToken = localStorage.getItem('gocardlessToken');
 
-    if (!requisitionId || !accessToken) {
+    if (!requisitionId || !gocardlessToken) {
       this.message = 'Error: Missing connection data. Please try connecting again.';
       this.notificationService.show(this.message, 'error');
       this.router.navigate(['/accounts']);
       return;
     }
 
-    this.api.getRequisitionDetails(accessToken, requisitionId).pipe(
+    this.api.getRequisitionDetails(gocardlessToken, requisitionId).pipe(
       switchMap(details => {
         if (details.status === 'LN' && details.accounts.length > 0) {
           this.message = 'Connection successful! Saving your account...';
           const accountData = {
             gocardlessAccountId: details.accounts[0],
             institutionId: details.institution_id,
-            // We can prompt the user for a name later, for now use the institution ID
             accountName: details.institution_id 
           };
-          return this.api.saveAccount(accessToken, accountData);
+          return this.api.saveAccount(accountData);
         } else {
           throw new Error('Bank connection was not completed or no accounts were shared.');
         }
@@ -51,14 +50,16 @@ export class CallbackComponent implements OnInit {
       next: (savedAccount: Account) => {
         this.message = 'Account saved! Redirecting...';
         this.notificationService.show('New account connected successfully!', 'success');
-        localStorage.removeItem('requisitionId'); // Clean up
-        this.router.navigate(['/accounts']); // Navigate to the accounts list
+        localStorage.removeItem('requisitionId');
+        localStorage.removeItem('gocardlessToken');
+        this.router.navigate(['/accounts']);
       },
       error: (err) => {
         console.error('Error processing callback:', err);
         this.message = 'An error occurred while finalizing the connection. Please try again.';
         this.notificationService.show(err.message || this.message, 'error');
-        localStorage.removeItem('requisitionId'); // Clean up
+        localStorage.removeItem('requisitionId');
+        localStorage.removeItem('gocardlessToken');
         this.router.navigate(['/accounts']);
       }
     });

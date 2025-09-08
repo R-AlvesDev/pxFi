@@ -11,29 +11,29 @@ export class RuleService {
 
   constructor(private api: ApiService) {}
 
-  getAllRules(accessToken: string): Observable<CategorizationRule[]> {
-    return this.api.getAllRules(accessToken).pipe(
+  getAllRules( ): Observable<CategorizationRule[]> {
+    return this.api.getAllRules().pipe(
       tap(rules => this.rules.next(rules))
     );
 }
 
-  createRule(accessToken: string, rule: Partial<CategorizationRule>): Observable<CategorizationRule> {
-    return this.api.createRule(accessToken, rule).pipe(
-      tap(() => this.getAllRules(accessToken).subscribe())
+  createRule(rule: Partial<CategorizationRule>): Observable<CategorizationRule> {
+    return this.api.createRule(rule).pipe(
+      tap(() => this.getAllRules().subscribe())
     );
   }
 
-  applyAllRules(accessToken: string): Observable<{ updatedCount: number }> {
-    return this.api.applyAllRules(accessToken);
+  applyAllRules(): Observable<{ updatedCount: number }> {
+    return this.api.applyAllRules();
   }
 
-  deleteRule(accessToken: string, id: string): Observable<void> {
-    return this.api.deleteRule(accessToken, id).pipe(
-      tap(() => this.getAllRules(accessToken).subscribe())
+  deleteRule( id: string): Observable<void> {
+    return this.api.deleteRule(id).pipe(
+      tap(() => this.getAllRules().subscribe())
     );
   }
 
-  testRule(accessToken: string, rule: Partial<CategorizationRule>, accountId: string): Observable<TestRuleResponse> {
-    return this.api.testRule(accessToken, rule, accountId);
+  testRule(rule: Partial<CategorizationRule>, accountId: string): Observable<TestRuleResponse> {
+    return this.api.testRule(rule, accountId);
   }
 }

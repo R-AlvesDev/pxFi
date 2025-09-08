@@ -45,10 +45,11 @@ public class DashboardService {
                 .limit(5)
                 .collect(Collectors.toList());
 
-        // Get the 5 most recent transactions for this specific account
+        // Get the 5 most recent transactions for this specific account, sorted by date
         List<Transaction> recentTransactions = transactionRepository
-                .findByAccountIdAndUserIdOrderByBookingDateDesc(accountId, userId) // Correctly use the userId from the security context
+                .findByAccountIdAndUserIdOrderByBookingDateDesc(accountId, userId)
                 .stream()
+                .sorted(Comparator.comparing(Transaction::getBookingDate).reversed())
                 .limit(5)
                 .collect(Collectors.toList());
 

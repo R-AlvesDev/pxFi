@@ -23,10 +23,8 @@ public class AccountController {
         User currentUser = SecurityConfiguration.getCurrentUser();
 
         if (currentUser == null) {
-            System.out.println("[LOG] AccountController: Cannot get accounts, user is not authenticated.");
             return ResponseEntity.status(401).build();
         }
-        System.out.println("[LOG] AccountController: Authenticated user is '" + currentUser.getUsername() + "' with ID '" + currentUser.getId() + "'");
         List<Account> accounts = accountService.getAccountsByUserId(currentUser.getId());
         return ResponseEntity.ok(accounts);
     }

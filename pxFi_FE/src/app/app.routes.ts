@@ -7,14 +7,16 @@ import { SettingsComponent } from './pages/settings/settings.component';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { LoginComponent } from './pages/login/login.component';
 import { RegisterComponent } from './pages/register/register.component';
-import { AuthGuard } from './services/auth/auth.guard'; // Import the guard
-import { AccountsComponent } from './pages/accounts/accounts.component'; // Import the Accounts component
+import { AuthGuard } from './services/auth/auth.guard';
+import { AccountsComponent } from './pages/accounts/accounts.component';
 import { BankConnectionComponent } from './pages/bank-connection/bank-connection.component';
+import { DashboardComponent } from './pages/dashboard/dashboard.component';
 
 export const routes: Routes = [
   // Public routes
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
+  { path: '', component: HomeComponent, pathMatch: 'full' },
 
   // Protected routes (everything inside MainLayout)
   {
@@ -22,9 +24,8 @@ export const routes: Routes = [
     component: MainLayoutComponent,
     canActivate: [AuthGuard], // This guard protects all child routes
     children: [
-      { path: '', redirectTo: 'accounts', pathMatch: 'full' }, // Logged-in users default to the accounts page
-      { path: 'dashboard', component: HomeComponent },         // The dashboard is now at /dashboard
-      { path: 'accounts', component: AccountsComponent },       // The new accounts page
+      { path: 'accounts', component: AccountsComponent },
+      { path: 'dashboard/:accountId', component: DashboardComponent },
       { path: 'connect', component: BankConnectionComponent },
       { path: 'callback', component: CallbackComponent },
       { path: 'transactions/:accountId', component: TransactionsComponent },
