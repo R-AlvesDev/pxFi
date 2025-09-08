@@ -1,6 +1,6 @@
 {
   "name": "px-fi-fe",
-  "version": "0.0.0",
+  "version": "0.0.6",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -9,6 +9,10 @@
     "test": "ng test"
   },
   "private": true,
+  "engines": {
+    "node": ">=18.13.0",
+    "npm": ">=8.19.0"
+  },
   "dependencies": {
     "@angular/common": "^20.2.4",
     "@angular/compiler": "^20.2.4",
@@ -26,6 +30,7 @@
   },
   "devDependencies": {
     "@angular/build": "^20.2.2",
+    "@angular-devkit/build-angular": "^20.2.2",
     "@angular/cli": "^20.2.2",
     "@angular/compiler-cli": "^20.2.4",
     "@types/bootstrap": "^5.2.10",
