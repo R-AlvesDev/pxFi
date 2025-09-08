@@ -1,11 +1,12 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { ApiService, Transaction as ApiTransaction, Category } from '../../services/api.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountStateService } from '../../services/account-state.service';
 import { CategoryService } from '../../services/category.service';
-import { NotificationService } from '../../services/notification.service'; // 1. Import NotificationService
+import { NotificationService } from '../../services/notification.service';
+import { Subscription } from 'rxjs';
 
 interface Transaction extends ApiTransaction {
   expanded?: boolean;
@@ -19,13 +20,12 @@ interface Transaction extends ApiTransaction {
   templateUrl: './transactions.component.html',
   styleUrls: ['./transactions.component.scss']
 })
-export class TransactionsComponent implements OnInit {
+export class TransactionsComponent implements OnInit, OnDestroy {
   selectedAccountId: string | null = null;
   transactions: Transaction[] = [];
   filteredTransactions: Transaction[] = [];
   error: string | null = null;
   loading = false;
-  accessToken: string | null = null;
   mainCategories: Category[] = [];
   selectedCategoryFilter: string = 'all';
   isLinkingMode = false;
@@ -37,45 +37,46 @@ export class TransactionsComponent implements OnInit {
   startDate: string = '';
   endDate: string = '';
 
+  private accountSub: Subscription | undefined;
+
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
     private api: ApiService,
     private accountState: AccountStateService,
     public categoryService: CategoryService,
-    private notificationService: NotificationService 
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
-    this.accessToken = localStorage.getItem('accessToken');
-    if (!this.accessToken) {
-      this.error = 'Access token missing. Please reconnect your bank.';
-      return;
-    }
     this.categoryService.categories$.subscribe(() => {
       this.mainCategories = this.categoryService.getMainCategories();
     });
-    this.route.paramMap.subscribe(params => {
-      const accountId = params.get('accountId');
-      if (accountId) {
+
+    // Subscribe to the AccountStateService to always get the latest selected account
+    this.accountSub = this.accountState.currentAccountId$.subscribe(accountId => {
+      if (accountId && accountId !== this.selectedAccountId) {
         this.selectedAccountId = accountId;
-        this.accountState.setCurrentAccountId(accountId);
         this.loadCachedTransactions();
-      } else {
+      } else if (!accountId) {
         this.error = 'No account selected.';
-        this.accountState.setCurrentAccountId(null);
       }
     });
   }
 
+  ngOnDestroy(): void {
+    // Unsubscribe to prevent memory leaks
+    this.accountSub?.unsubscribe();
+  }
+
   loadCachedTransactions(): void {
-    if (!this.selectedAccountId || !this.accessToken) return;
+    if (!this.selectedAccountId) return;
     this.loading = true;
     this.error = null;
 
-    this.api.getAccountTransactions(this.accessToken, this.selectedAccountId, this.startDate, this.endDate).subscribe({
+    this.api.getAccountTransactions(this.selectedAccountId, this.startDate, this.endDate).subscribe({
       next: (res) => {
-        this.transactions = res.map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
+        this.transactions = res.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime())
+                               .map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
         this.applyFilters();
         this.loading = false;
       },
@@ -88,14 +89,17 @@ export class TransactionsComponent implements OnInit {
   }
 
   refreshTransactions(): void {
-    if (!this.selectedAccountId || !this.accessToken) return;
+    if (!this.selectedAccountId) return;
     this.loading = true;
     this.error = null;
     this.notificationService.show('Refreshing transactions from the bank...', 'info');
-    this.api.refreshTransactions(this.accessToken, this.selectedAccountId).subscribe({
-      next: (res) => {
-        this.transactions = res.map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
-        this.applyFilters();
+
+    this.api.refreshTransactions(this.selectedAccountId).subscribe({
+      next: (refreshedTransactions) => {
+        // Correctly update the main transactions array with the new data from the server
+        this.transactions = refreshedTransactions.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime())
+                                                  .map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
+        this.applyFilters(); // Re-apply filters to ensure the view updates
         this.loading = false;
         this.notificationService.show('Transactions refreshed successfully!', 'success');
       },
@@ -132,7 +136,7 @@ export class TransactionsComponent implements OnInit {
       this.notificationService.show('Please select a main category first.', 'error');
       return;
     }
-    
+
     const originalTransaction = this.transactions.find(t => t.id === transaction.id);
     const wasAlreadyCategorized = !!originalTransaction?.categoryId;
 
@@ -144,12 +148,12 @@ export class TransactionsComponent implements OnInit {
           this.transactions[index] = { ...updatedTx, expanded: wasExpanded, categoryDirty: false };
           this.applyFilters();
         }
-        this.notificationService.show('Category saved!', 'success'); // 3. Add success notification
+        this.notificationService.show('Category saved!', 'success');
         this.promptToCategorizeSimilar(updatedTx, wasAlreadyCategorized);
       },
       error: err => {
         console.error('Failed to update category', err);
-        this.notificationService.show('Failed to save category.', 'error'); // 4. Add error notification
+        this.notificationService.show('Failed to save category.', 'error');
       }
     });
   }
@@ -159,7 +163,6 @@ export class TransactionsComponent implements OnInit {
     if (!remittanceInfo) return;
 
     const normalizedRemittanceInfo = remittanceInfo.trim().replace(/\s+/g, ' ');
-
     let similarCount = 0;
     const isAddingSubcategory = wasAlreadyCategorized && !!updatedTx.subCategoryId;
     const isNewCategorization = !wasAlreadyCategorized && !!updatedTx.categoryId;
@@ -250,12 +253,12 @@ export class TransactionsComponent implements OnInit {
         this.isLinkingMode = false;
         this.selectedExpenseId = null;
         this.selectedIncomeId = null;
-        this.notificationService.show('Transactions linked successfully!', 'success'); // 5. Add success notification
+        this.notificationService.show('Transactions linked successfully!', 'success');
         this.loadCachedTransactions();
       },
       error: (err) => {
         console.error('Failed to link transactions', err);
-        this.notificationService.show('An error occurred while linking.', 'error'); // 6. Add error notification
+        this.notificationService.show('An error occurred while linking.', 'error');
       }
     });
   }

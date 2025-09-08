@@ -5,7 +5,10 @@ import com.pxfi.model.CategorizationRule;
 import com.pxfi.model.CategorizationRule.RuleField;
 import com.pxfi.model.CategorizationRule.RuleOperator;
 import com.pxfi.model.Transaction;
+import com.pxfi.model.User;
 import com.pxfi.repository.TransactionRepository;
+import com.pxfi.security.SecurityConfiguration;
+
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -73,11 +76,17 @@ public class RuleEngineService {
     }
 
     public List<Transaction> testRule(CategorizationRule rule, String accountId) {
+        User currentUser = SecurityConfiguration.getCurrentUser();
+        if (currentUser == null) {
+            return Collections.emptyList();
+        }
+        String userId = currentUser.getId();
+
         if (accountId == null || accountId.isEmpty()) {
             return Collections.emptyList();
         }
         
-        List<Transaction> allTransactions = transactionRepository.findByAccountIdOrderByBookingDateDesc(accountId);
+        List<Transaction> allTransactions = transactionRepository.findByAccountIdAndUserIdOrderByBookingDateDesc(accountId, userId);
         
         return allTransactions.stream()
             .filter(tx -> matches(tx, rule))

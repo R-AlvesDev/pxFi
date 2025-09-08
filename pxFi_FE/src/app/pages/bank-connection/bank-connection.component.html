@@ -6,30 +6,42 @@
       <label for="country" class="form-label">1. Select your country:</label>
       <select class="form-select" [formControl]="countryControl" id="country" [disabled]="loadingBanks">
         <option value="" disabled>-- Select Country --</option>
-        <option *ngFor="let c of countries" [value]="c.code">{{ c.name }}</option>
+        @for (c of countries; track c) {
+          <option [value]="c.code">{{ c.name }}</option>
+        }
       </select>
     </div>
 
-    <div *ngIf="loadingBanks" class="d-flex align-items-center text-muted my-3">
-      <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-      <span>Loading banks...</span>
-    </div>
+    @if (loadingBanks) {
+      <div class="d-flex align-items-center text-muted my-3">
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+        <span>Loading banks...</span>
+      </div>
+    }
 
-    <div *ngIf="banks.length > 0" class="mb-3">
-      <label for="bank" class="form-label">2. Select your bank:</label>
-      <select class="form-select" [formControl]="bankControl" id="bank" [disabled]="loadingConnection || loadingBanks">
-        <option value="" disabled>-- Select Bank --</option>
-        <option *ngFor="let bank of banks" [value]="bank.id">{{ bank.name }}</option>
-      </select>
-    </div>
+    @if (banks.length > 0) {
+      <div class="mb-3">
+        <label for="bank" class="form-label">2. Select your bank:</label>
+        <select class="form-select" [formControl]="bankControl" id="bank" [disabled]="loadingConnection || loadingBanks">
+          <option value="" disabled>-- Select Bank --</option>
+          @for (bank of banks; track bank) {
+            <option [value]="bank.id">{{ bank.name }}</option>
+          }
+        </select>
+      </div>
+    }
 
     <div class="d-grid mt-4">
       <button class="btn btn-primary btn-lg" (click)="connect()" [disabled]="!bankControl.value || loadingConnection">
-        <span *ngIf="loadingConnection" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        @if (loadingConnection) {
+          <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        }
         {{ loadingConnection ? 'Redirecting...' : 'Connect to Bank' }}
       </button>
     </div>
 
-    <div *ngIf="error" class="alert alert-danger mt-3 mb-0">{{ error }}</div>
+    @if (error) {
+      <div class="alert alert-danger mt-3 mb-0">{{ error }}</div>
+    }
   </div>
 </div>

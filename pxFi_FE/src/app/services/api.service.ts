@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+
+// ... (All interfaces remain the same) ...
 
 export interface Institution {
   id: string;
@@ -32,6 +34,15 @@ export interface RequisitionResponse {
   ssn?: string;
   account_selection: boolean;
   redirect_immediate: boolean;
+}
+
+export interface Account {
+  id: string;
+  userId: string;
+  gocardlessAccountId: string;
+  accountName: string;
+  institutionId: string;
+  iban: string;
 }
 
 export interface DebtorAccount {
@@ -97,6 +108,11 @@ export enum RuleOperator {
   AMOUNT_LESS_THAN = 'AMOUNT_LESS_THAN'
 }
 
+export interface AuthResponse {
+  token: string;
+}
+
+
 export interface CategorizationRule {
   id: string;
   fieldToMatch: RuleField;
@@ -152,8 +168,18 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  private createAuthHeaders(token: string) {
-    return new HttpHeaders().set('Authorization', `Bearer ${token}`);
+  // --- Auth & Public GoCardless ---
+
+  register(registerData: any): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/register`, registerData);
+  }
+
+  login(loginData: any): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/login`, loginData);
+  }
+
+  getAccessToken(): Observable<{ accessToken: string }> {
+    return this.http.get<{ accessToken: string }>(`${this.baseUrl}/access-token`);
   }
 
   getInstitutions(accessToken: string, countryCode: string): Observable<Institution[]> {
@@ -162,132 +188,124 @@ export class ApiService {
     });
   }
 
-  getAccessToken(): Observable<{ accessToken: string }> {
-    return this.http.get<{ accessToken: string }>(`${this.baseUrl}/access-token`);
-  }
+  // --- Bank Connection Flow (User JWT is added by interceptor) ---
 
-  createEndUserAgreement(accessToken: string, institutionId: string): Observable<AgreementResponse> {
-    const payload = {
-      institution_id: institutionId,
-      max_historical_days: 90,
-      access_valid_for_days: 30,
-      access_scope: ['balances', 'details', 'transactions']
-    };
-
+  createEndUserAgreement(gocardlessToken: string, institutionId: string): Observable<AgreementResponse> {
+    const payload = { institution_id: institutionId };
     return this.http.post<AgreementResponse>(
       `${this.baseUrl}/agreements/enduser`,
       payload,
-      { headers: this.createAuthHeaders(accessToken) }
+      { params: { gocardlessToken } }
     );
   }
 
-  createRequisition(accessToken: string, institutionId: string, agreementId: string): Observable<RequisitionResponse> {
-    const url = `${this.baseUrl}/requisitions/create`;
+  createRequisition(gocardlessToken: string, institutionId: string, agreementId: string): Observable<RequisitionResponse> {
     const body = { institutionId, agreementId };
-
-    return this.http.post<RequisitionResponse>(url, body, { headers: this.createAuthHeaders(accessToken) });
+    return this.http.post<RequisitionResponse>(
+      `${this.baseUrl}/requisitions/create`,
+      body,
+      { params: { gocardlessToken } }
+    );
   }
 
-  getRequisitionDetails(accessToken: string, requisitionId: string): Observable<RequisitionResponse> {
+  getRequisitionDetails(gocardlessToken: string, requisitionId: string): Observable<RequisitionResponse> {
     return this.http.get<RequisitionResponse>(`${this.baseUrl}/requisitions/details`, {
-      params: { requisitionId },
-      headers: this.createAuthHeaders(accessToken)
+      params: { gocardlessToken, requisitionId }
     });
   }
 
-  getAccountTransactions(accessToken: string, accountId: string, startDate?: string, endDate?: string): Observable<Transaction[]> {
+  // --- Account & Transaction Management (User JWT is added by interceptor) ---
+  
+  saveAccount(accountData: any): Observable<Account> {
+    return this.http.post<Account>(`${this.baseUrl}/accounts`, accountData);
+  }
+  
+  getAccounts(): Observable<Account[]> {
+    return this.http.get<Account[]>(`${this.baseUrl}/accounts`);
+  }
+
+  getAccountTransactions(accountId: string, startDate?: string, endDate?: string): Observable<Transaction[]> {
     let params = new HttpParams();
-    if (startDate && endDate) {
-      params = params.set('startDate', startDate);
-      params = params.set('endDate', endDate);
-    }
+    if (startDate) params = params.set('startDate', startDate);
+    if (endDate) params = params.set('endDate', endDate);
+    return this.http.get<Transaction[]>(`${this.baseUrl}/accounts/${accountId}/transactions`, { params });
+  }
 
-    return this.http.get<Transaction[]>(`${this.baseUrl}/accounts/${accountId}/transactions`, {
-      headers: this.createAuthHeaders(accessToken),
-      params: params
-    });
-}
-
-  refreshTransactions(accessToken: string, accountId: string): Observable<Transaction[]> {
-    return this.http.post<Transaction[]>(`${this.baseUrl}/accounts/${accountId}/transactions/refresh`, {}, {
-      headers: this.createAuthHeaders(accessToken)
-    });
+  refreshTransactions(accountId: string): Observable<Transaction[]> {
+    return this.http.post<Transaction[]>(`${this.baseUrl}/accounts/${accountId}/transactions/refresh`, {});
   }
 
   toggleTransactionIgnore(transactionId: string): Observable<Transaction> {
     return this.http.post<Transaction>(`${this.baseUrl}/transactions/${transactionId}/toggle-ignore`, {});
   }
-
-  handleCallback(ref: string): Observable<any> {
-    const params = new HttpParams().set('ref', ref);
-    return this.http.get(`${this.baseUrl}/callback`, { params });
-  }
-
-  getCategories(): Observable<Category[]> {
-    return this.http.get<Category[]>(`${this.baseUrl}/categories`);
-  }
-
+  
   updateTransactionCategory(transactionId: string, categoryId: string, subCategoryId: string | null): Observable<Transaction> {
     const payload = { categoryId, subCategoryId };
     return this.http.post<Transaction>(`${this.baseUrl}/transactions/${transactionId}/category`, payload);
   }
-
+  
   categorizeSimilarTransactions(remittanceInfo: string, categoryId: string, subCategoryId: string | null): Observable<Transaction[]> {
     const payload = { remittanceInfo, categoryId, subCategoryId };
     return this.http.post<Transaction[]>(`${this.baseUrl}/transactions/categorize-similar`, payload);
   }
 
+  linkTransactions(expenseId: string, incomeId: string): Observable<void> {
+    const payload = { expenseId, incomeId };
+    return this.http.post<void>(`${this.baseUrl}/transactions/link`, payload);
+  }
+
+  // --- Category & Rule Methods (User JWT is added by interceptor) ---
+
+  getAllCategories(): Observable<Category[]> {
+    return this.http.get<Category[]>(`${this.baseUrl}/categories`);
+  }
+  
   createCategory(category: { name: string, parentId: string | null }): Observable<Category> {
     return this.http.post<Category>(`${this.baseUrl}/categories`, category);
   }
 
   updateCategory(id: string, category: Partial<Category>): Observable<Category> {
     return this.http.put<Category>(`${this.baseUrl}/categories/${id}`, category);
-}
+  }
 
   deleteCategory(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/categories/${id}`);
   }
 
-  getRules(): Observable<CategorizationRule[]> {
+  getAllRules(): Observable<CategorizationRule[]> {
     return this.http.get<CategorizationRule[]>(`${this.baseUrl}/rules`);
   }
 
   createRule(rule: Partial<CategorizationRule>): Observable<CategorizationRule> {
     return this.http.post<CategorizationRule>(`${this.baseUrl}/rules`, rule);
   }
-
+  
   applyAllRules(): Observable<{ updatedCount: number }> {
     return this.http.post<{ updatedCount: number }>(`${this.baseUrl}/rules/apply-all`, {});
   }
-
+  
   deleteRule(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/rules/${id}`);
   }
-
-  getMonthlyStatistics(year: number, month: number): Observable<StatisticsResponse> {
-    const params = { year: year.toString(), month: month.toString() };
-    return this.http.get<StatisticsResponse>(`${this.baseUrl}/statistics/monthly`, { params });
-  }
-
-  getYearlyStatistics(year: number): Observable<YearlyStatisticsResponse> {
-    const params = { year: year.toString() };
-    return this.http.get<YearlyStatisticsResponse>(`${this.baseUrl}/statistics/yearly`, { params });
-  }
   
-  linkTransactions(expenseId: string, incomeId: string): Observable<void> {
-    const payload = { expenseId, incomeId };
-    return this.http.post<void>(`${this.baseUrl}/transactions/link`, payload);
-  }
-
-  getDashboardSummary(accessToken: string, accountId: string): Observable<DashboardSummary> {
-    return this.http.get<DashboardSummary>(`${this.baseUrl}/dashboard/summary/${accountId}`, {
-      headers: this.createAuthHeaders(accessToken)
-    });
-  }
-
   testRule(rule: Partial<CategorizationRule>, accountId: string): Observable<TestRuleResponse> {
     const payload = { rule, accountId };
     return this.http.post<TestRuleResponse>(`${this.baseUrl}/rules/test`, payload);
+  }
+
+  // --- Statistics & Dashboard Methods (User JWT is added by interceptor) ---
+
+  getMonthlyStatistics(accountId: string, year: number, month: number): Observable<StatisticsResponse> {
+    const params = new HttpParams().set('year', year.toString()).set('month', month.toString());
+    return this.http.get<StatisticsResponse>(`${this.baseUrl}/statistics/monthly/${accountId}`, { params });
+  }
+
+  getYearlyStatistics(accountId: string, year: number): Observable<YearlyStatisticsResponse> {
+    const params = new HttpParams().set('year', year.toString());
+    return this.http.get<YearlyStatisticsResponse>(`${this.baseUrl}/statistics/yearly/${accountId}`, { params });
+  }
+
+  getDashboardSummary(accountId: string): Observable<DashboardSummary> {
+    return this.http.get<DashboardSummary>(`${this.baseUrl}/dashboard/summary/${accountId}`);
   }
 }

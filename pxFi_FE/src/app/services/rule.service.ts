@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { ApiService, CategorizationRule, TestRuleResponse } from './api.service';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { ApiService, CategorizationRule, TestRuleResponse } from './api.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,23 +9,17 @@ export class RuleService {
   private rules = new BehaviorSubject<CategorizationRule[]>([]);
   public rules$ = this.rules.asObservable();
 
-  constructor(private api: ApiService) {
-    this.loadRules().subscribe();
-  }
+  constructor(private api: ApiService) {}
 
-  private loadRules(): Observable<CategorizationRule[]> {
-    return this.api.getRules().pipe(
+  getAllRules( ): Observable<CategorizationRule[]> {
+    return this.api.getAllRules().pipe(
       tap(rules => this.rules.next(rules))
     );
-  }
-
-  refreshRules(): void {
-    this.loadRules().subscribe();
-  }
+}
 
   createRule(rule: Partial<CategorizationRule>): Observable<CategorizationRule> {
     return this.api.createRule(rule).pipe(
-      tap(() => this.refreshRules())
+      tap(() => this.getAllRules().subscribe())
     );
   }
 
@@ -33,9 +27,9 @@ export class RuleService {
     return this.api.applyAllRules();
   }
 
-  deleteRule(id: string): Observable<void> {
+  deleteRule( id: string): Observable<void> {
     return this.api.deleteRule(id).pipe(
-      tap(() => this.refreshRules())
+      tap(() => this.getAllRules().subscribe())
     );
   }
 

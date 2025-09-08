@@ -7,32 +7,49 @@
         <button type="button" class="btn" [ngClass]="viewMode === 'yearly' ? 'btn-primary' : 'btn-outline-secondary'" (click)="viewMode = 'yearly'; loadStatistics()">Yearly</button>
       </div>
       <div class="d-flex gap-2">
-        <select *ngIf="viewMode === 'monthly'" class="form-select" [(ngModel)]="currentMonth" (ngModelChange)="loadStatistics()">
-          <option *ngFor="let month of months" [value]="month.value">{{ month.name }}</option>
-        </select>
+        @if (viewMode === 'monthly') {
+          <select class="form-select" [(ngModel)]="currentMonth" (ngModelChange)="loadStatistics()">
+            @for (month of months; track month) {
+              <option [value]="month.value">{{ month.name }}</option>
+            }
+          </select>
+        }
         <select class="form-select" [(ngModel)]="currentYear" (ngModelChange)="loadStatistics()">
-          <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+          @for (year of years; track year) {
+            <option [value]="year">{{ year }}</option>
+          }
         </select>
       </div>
     </div>
   </div>
 
-  <div *ngIf="loading" class="text-center p-5"><div class="spinner-border text-primary"></div></div>
-  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+  @if (loading) {
+    <div class="text-center p-5"><div class="spinner-border text-primary"></div></div>
+  }
+  @if (error) {
+    <div class="alert alert-danger">{{ error }}</div>
+  }
 
-  <div *ngIf="viewMode === 'monthly' && monthlyStats && !loading">
-    <div class="row g-4">
-      <div class="col-md-4"><div class="card text-center h-100 bg-success-subtle border-success"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Total Income</h6><p class="card-text fs-2 fw-bold">{{ monthlyStats.totalIncome | currency:'EUR' }}</p></div></div></div>
-      <div class="col-md-4"><div class="card text-center h-100 bg-danger-subtle border-danger"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Total Expenses</h6><p class="card-text fs-2 fw-bold">{{ monthlyStats.totalExpenses | currency:'EUR' }}</p></div></div></div>
-      <div class="col-md-4"><div class="card text-center h-100" [ngClass]="(monthlyStats.totalIncome - monthlyStats.totalExpenses >= 0) ? 'bg-primary-subtle border-primary' : 'bg-warning-subtle border-warning'"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Net Balance</h6><p class="card-text fs-2 fw-bold">{{ (monthlyStats.totalIncome - monthlyStats.totalExpenses) | currency:'EUR' }}</p></div></div></div>
-      <div class="col-md-7"><div class="card h-100"><div class="card-body"><h5 class="card-title">Expenses by Category</h5><div *ngIf="showChart" style="height: 350px;">
-        <canvas baseChart [data]="doughnutChartData" [type]="doughnutChartType" [options]="doughnutChartOptions"></canvas>
-      </div></div></div></div>
-      <div class="col-md-5"><div class="card h-100"><div class="card-body"><h5 class="card-title">Breakdown</h5><ul class="list-group list-group-flush"><li *ngFor="let item of monthlyStats.expensesByCategory" class="list-group-item d-flex justify-content-between align-items-center">{{ item.categoryName || 'Uncategorized' }} <span class="badge bg-primary rounded-pill">{{ item.total | currency:'EUR' }}</span></li></ul></div></div></div>
-    </div>
+  @if (viewMode === 'monthly' && monthlyStats && !loading) {
+    <div>
+      <div class="row g-4">
+        <div class="col-md-4"><div class="card text-center h-100 bg-success-subtle border-success"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Total Income</h6><p class="card-text fs-2 fw-bold">{{ monthlyStats.totalIncome | currency:'EUR' }}</p></div></div></div>
+        <div class="col-md-4"><div class="card text-center h-100 bg-danger-subtle border-danger"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Total Expenses</h6><p class="card-text fs-2 fw-bold">{{ monthlyStats.totalExpenses | currency:'EUR' }}</p></div></div></div>
+        <div class="col-md-4"><div class="card text-center h-100" [ngClass]="(monthlyStats.totalIncome - monthlyStats.totalExpenses >= 0) ? 'bg-primary-subtle border-primary' : 'bg-warning-subtle border-warning'"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Net Balance</h6><p class="card-text fs-2 fw-bold">{{ (monthlyStats.totalIncome - monthlyStats.totalExpenses) | currency:'EUR' }}</p></div></div></div>
+        <div class="col-md-7"><div class="card h-100"><div class="card-body"><h5 class="card-title">Expenses by Category</h5>@if (showChart) {
+        <div style="height: 350px;">
+          <canvas baseChart [data]="doughnutChartData" [type]="doughnutChartType" [options]="doughnutChartOptions"></canvas>
+        </div>
+      }</div></div></div>
+      <div class="col-md-5"><div class="card h-100"><div class="card-body"><h5 class="card-title">Breakdown</h5><ul class="list-group list-group-flush">@for (item of monthlyStats.expensesByCategory; track item) {
+      <li class="list-group-item d-flex justify-content-between align-items-center">{{ item.categoryName || 'Uncategorized' }} <span class="badge bg-primary rounded-pill">{{ item.total | currency:'EUR' }}</span></li>
+    }</ul></div></div></div>
   </div>
+</div>
+}
 
-  <div *ngIf="viewMode === 'yearly' && yearlyStats && !loading">
+@if (viewMode === 'yearly' && yearlyStats && !loading) {
+  <div>
     <div class="row g-4">
       <div class="col-md-3"><div class="card text-center h-100 bg-success-subtle border-success"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Total Income</h6><p class="fs-4 fw-bold">{{ yearlyStats.totalIncome | currency:'EUR' }}</p></div></div></div>
       <div class="col-md-3"><div class="card text-center h-100 bg-danger-subtle border-danger"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Total Expenses</h6><p class="fs-4 fw-bold">{{ yearlyStats.totalExpenses | currency:'EUR' }}</p></div></div></div>
@@ -50,4 +67,5 @@
       </div>
     </div>
   </div>
+}
 </div>

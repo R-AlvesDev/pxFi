@@ -7,8 +7,7 @@ import { Category, CategorizationRule, RuleField, RuleOperator, TestRuleResponse
 import { Observable } from 'rxjs';
 import { NotificationService } from '../../services/notification.service';
 import { AccountStateService } from '../../services/account-state.service';
-
-declare var bootstrap: any;
+import { Modal } from 'bootstrap';
 
 @Component({
   selector: 'app-settings',
@@ -18,15 +17,14 @@ declare var bootstrap: any;
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent implements OnInit {
-  // Category Properties
+  // Properties
   categories$: Observable<Category[]>;
   mainCategories: Category[] = [];
   newCategoryName: string = '';
   newCategoryParentId: string | null = null;
   expandedCategoryIds = new Set<string>();
   isApplyingRules = false;
-
-  // Rule Properties
+  
   rules$: Observable<CategorizationRule[]>;
   newRule: Partial<CategorizationRule> = {
     fieldToMatch: RuleField.REMITTANCE_INFO,
@@ -35,12 +33,10 @@ export class SettingsComponent implements OnInit {
   ruleFields = Object.values(RuleField);
   textOperators = [RuleOperator.CONTAINS, RuleOperator.EQUALS, RuleOperator.STARTS_WITH, RuleOperator.ENDS_WITH];
   amountOperators = [RuleOperator.AMOUNT_EQUALS, RuleOperator.AMOUNT_GREATER_THAN, RuleOperator.AMOUNT_LESS_THAN];
-  
 
-  // Test Rule Properties
   testResults: TestRuleResponse | null = null;
   private currentAccountId: string | null = null;
-  private testRuleModal: any;
+  private testRuleModal: Modal | undefined;
 
   constructor(
     public categoryService: CategoryService,
@@ -53,6 +49,10 @@ export class SettingsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Refresh the rules and categories when the component loads
+    this.ruleService.getAllRules().subscribe();
+    this.categoryService.refreshCategories();
+
     this.categories$.subscribe(() => {
       this.mainCategories = this.categoryService.getMainCategories();
     });
@@ -67,10 +67,9 @@ export class SettingsComponent implements OnInit {
   }
 
   onFieldToMatchChange(): void {
-    // When the field changes, reset the operator to the first available option
     this.newRule.operator = this.availableOperators[0];
   }
-  
+
   // --- Category Methods ---
   toggleCategory(id: string): void {
     if (this.expandedCategoryIds.has(id)) {
@@ -101,6 +100,13 @@ export class SettingsComponent implements OnInit {
     }
   }
 
+  onAssetTransferChange(category: Category): void {
+    this.categoryService.updateCategory(category).subscribe({
+      next: () => this.notificationService.show(`'${category.name}' asset transfer status updated.`, 'success'),
+      error: err => this.notificationService.show('Failed to update category: ' + err.message, 'error')
+    });
+  }
+
   // --- Rule Methods ---
   createRule(): void {
     if (!this.newRule.valueToMatch || !this.newRule.categoryId) {
@@ -121,7 +127,7 @@ export class SettingsComponent implements OnInit {
 
   applyAllRules(): void {
     this.isApplyingRules = true;
-    this.notificationService.show('Applying rules to all transactions...', 'info', 10000); // Longer timeout
+    this.notificationService.show('Applying rules to all transactions...', 'info', 10000);
     this.ruleService.applyAllRules().subscribe({
       next: (response) => {
         this.notificationService.show(`Successfully updated ${response.updatedCount} transaction(s)!`, 'success');
@@ -147,31 +153,22 @@ export class SettingsComponent implements OnInit {
     }
   }
 
-  onAssetTransferChange(category: Category): void {
-    this.categoryService.updateCategory(category).subscribe({
-      next: () => this.notificationService.show(`'${category.name}' asset transfer status updated.`, 'success'),
-      error: err => this.notificationService.show('Failed to update category: ' + err.message, 'error')
-    });
-  }
-
-  // --- Test Rule Methods ---
-
   testRule(): void {
     if (!this.newRule.valueToMatch || !this.currentAccountId) {
-      this.notificationService.show('Please select an account from the navbar and fill out the rule value.', 'error');
+      this.notificationService.show('Please select an account and fill out the rule value.', 'error');
       return;
     }
 
     this.ruleService.testRule(this.newRule, this.currentAccountId).subscribe({
       next: (response) => {
         this.testResults = response;
-        if (!this.testRuleModal) {
-          this.testRuleModal = new bootstrap.Modal(document.getElementById('testRuleModal'));
+        const modalElement = document.getElementById('testRuleModal');
+        if (modalElement) {
+          this.testRuleModal = new Modal(modalElement);
+          this.testRuleModal.show();
         }
-        this.testRuleModal.show();
       },
       error: (err) => this.notificationService.show('Error testing rule: ' + err.message, 'error')
     });
   }
-
 }

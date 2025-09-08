@@ -2,13 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ApiService, RequisitionResponse } from '../../services/api.service';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { AuthService } from '../../services/auth/auth.service';
+import { NotificationService } from '../../services/notification.service'; // Import NotificationService
 
 @Component({
   selector: 'app-bank-connection',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './bank-connection.component.html',
   styleUrls: ['./bank-connection.component.scss']
 })
@@ -32,14 +33,19 @@ export class BankConnectionComponent implements OnInit {
 
   accessToken: string | null = null;
 
-  constructor(private api: ApiService, private router: Router, private authService: AuthService) {}
+  constructor(
+    private api: ApiService, 
+    private router: Router, 
+    private authService: AuthService,
+    private notificationService: NotificationService // Inject NotificationService
+  ) {}
 
   ngOnInit() {
+    // This component is for logged-in users, so we can get a temporary token.
     this.api.getAccessToken().subscribe({
       next: (tokenObj) => {
         this.accessToken = tokenObj.accessToken;
-        localStorage.setItem('accessToken', this.accessToken); // <-- Save token here
-
+        
         this.countryControl.valueChanges.subscribe((countryCode: string | null) => {
           this.banks = [];
           this.bankControl.reset('');
@@ -65,14 +71,13 @@ export class BankConnectionComponent implements OnInit {
     });
   }
 
-
   connect() {
     if (!this.bankControl.value) {
-      this.error = 'Please select a bank.';
+      this.notificationService.show('Please select a bank.', 'error');
       return;
     }
     if (!this.accessToken) {
-      this.error = 'Access token is missing.';
+        this.notificationService.show('Access token is missing. Please try again.', 'error');
       return;
     }
 
@@ -84,13 +89,10 @@ export class BankConnectionComponent implements OnInit {
           next: (requisitionResponse) => {
             this.loadingConnection = false;
             if (requisitionResponse.id && requisitionResponse.link) {
-              // Save requisition ID and accessToken in localStorage for use in callback and transactions
               localStorage.setItem('requisitionId', requisitionResponse.id);
-              localStorage.setItem('accessToken', this.accessToken!);
+              // Store the gocardless token, not the user's JWT
+              localStorage.setItem('gocardlessToken', this.accessToken!);
 
-              this.authService.updateLoginState();
-              
-              // Redirect to bank authentication link
               window.location.href = requisitionResponse.link;
             } else {
               this.error = 'No connection link returned.';

@@ -10,14 +10,6 @@ export class CategoryService {
   public categories$ = this.categories.asObservable();
 
   constructor(private api: ApiService) {
-    // Fetch categories as soon as the service is created
-    this.loadCategories().subscribe();
-  }
-
-  private loadCategories(): Observable<Category[]> {
-    return this.api.getCategories().pipe(
-      tap(categories => this.categories.next(categories))
-    );
   }
 
   getMainCategories(): Category[] {
@@ -28,25 +20,27 @@ export class CategoryService {
     return this.categories.getValue().filter(c => c.parentId === parentId);
   }
 
-  refreshCategories(): void {
-    this.loadCategories().subscribe();
+  refreshCategories() {
+    this.api.getAllCategories().pipe(
+      tap(categories => this.categories.next(categories))
+    ).subscribe();
   }
 
-  createCategory(name: string, parentId: string | null = null): Observable<Category> {
+  createCategory(name: string, parentId: string | null): Observable<Category> {
     return this.api.createCategory({ name, parentId }).pipe(
-      tap(() => this.refreshCategories()) // Refresh the list after creating
+      tap(() => this.refreshCategories())
     );
   }
 
   updateCategory(category: Category): Observable<Category> {
     return this.api.updateCategory(category.id, category).pipe(
-      tap(() => this.refreshCategories()) // Refresh after updating
+      tap(() => this.refreshCategories())
     );
   }
 
   deleteCategory(id: string): Observable<void> {
     return this.api.deleteCategory(id).pipe(
-      tap(() => this.refreshCategories()) // Refresh after deleting
+      tap(() => this.refreshCategories())
     );
   }
 

@@ -16,7 +16,6 @@ import { RouterLink } from '@angular/router';
 export class DashboardComponent implements OnInit {
   summary: DashboardSummary | null = null;
   loading = true;
-  accessToken: string | null = null;
   currentAccountId: string | null = null;
 
   constructor(
@@ -26,7 +25,6 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.accessToken = localStorage.getItem('accessToken');
 
     this.accountState.currentAccountId$.pipe(
       tap(() => {
@@ -34,9 +32,9 @@ export class DashboardComponent implements OnInit {
         this.summary = null;
       }),
       switchMap(accountId => {
-        if (accountId && this.accessToken) {
+        if (accountId) {
           this.currentAccountId = accountId;
-          return this.api.getDashboardSummary(this.accessToken, accountId);
+          return this.api.getDashboardSummary(accountId);
         }
         return of(null); 
       })
