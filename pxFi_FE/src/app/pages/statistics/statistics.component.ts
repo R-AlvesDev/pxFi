@@ -15,7 +15,6 @@ import { AccountStateService } from '../../services/account-state.service';
 })
 export class StatisticsComponent implements OnInit {
   // Authentication and account state
-  accessToken: string | null = null;
   currentAccountId: string | null = null;
   // View control
   viewMode: 'monthly' | 'yearly' = 'monthly';
@@ -61,7 +60,6 @@ export class StatisticsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.accessToken = localStorage.getItem('accessToken');
     this.accountState.currentAccountId$.subscribe(id => {
       this.currentAccountId = id;
       if (id) {
@@ -71,7 +69,7 @@ export class StatisticsComponent implements OnInit {
   }
 
   loadStatistics(): void {
-    if (!this.accessToken || !this.currentAccountId) {
+    if (!this.currentAccountId) {
       this.error = 'Cannot load statistics without an access token and selected account.';
       return;
     }
@@ -83,12 +81,12 @@ export class StatisticsComponent implements OnInit {
     this.showChart = false;
 
     if (this.viewMode === 'monthly') {
-      this.api.getMonthlyStatistics(this.accessToken, this.currentAccountId, this.currentYear, this.currentMonth).subscribe({
+      this.api.getMonthlyStatistics(this.currentAccountId, this.currentYear, this.currentMonth).subscribe({
         next: this.handleMonthlyResponse.bind(this),
         error: this.handleError.bind(this)
       });
     } else {
-      this.api.getYearlyStatistics(this.accessToken, this.currentAccountId, this.currentYear).subscribe({
+      this.api.getYearlyStatistics(this.currentAccountId, this.currentYear).subscribe({
         next: this.handleYearlyResponse.bind(this),
         error: this.handleError.bind(this)
       });

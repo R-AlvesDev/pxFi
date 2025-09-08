@@ -37,7 +37,6 @@ export class SettingsComponent implements OnInit {
   testResults: TestRuleResponse | null = null;
   private currentAccountId: string | null = null;
   private testRuleModal: Modal | undefined;
-  accessToken: string | null = null;
 
   constructor(
     public categoryService: CategoryService,
@@ -50,11 +49,10 @@ export class SettingsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.accessToken = localStorage.getItem('accessToken');
-    if (this.accessToken) {
-      this.ruleService.getAllRules(this.accessToken).subscribe();
-      this.categoryService.refreshCategories(this.accessToken);
-    }
+    // Refresh the rules and categories when the component loads
+    this.ruleService.getAllRules().subscribe();
+    this.categoryService.refreshCategories();
+
     this.categories$.subscribe(() => {
       this.mainCategories = this.categoryService.getMainCategories();
     });
@@ -82,8 +80,8 @@ export class SettingsComponent implements OnInit {
   }
 
   addCategory(): void {
-    if (!this.newCategoryName.trim() || !this.accessToken) return;
-    this.categoryService.createCategory(this.accessToken, this.newCategoryName, this.newCategoryParentId).subscribe({
+    if (!this.newCategoryName.trim()) return;
+    this.categoryService.createCategory(this.newCategoryName, this.newCategoryParentId).subscribe({
         next: () => {
             this.notificationService.show('Category added successfully!', 'success');
             this.newCategoryName = '';
@@ -94,8 +92,8 @@ export class SettingsComponent implements OnInit {
   }
 
   deleteCategory(id: string): void {
-    if (confirm('Are you sure you want to delete this category? This cannot be undone.') && this.accessToken) {
-      this.categoryService.deleteCategory(this.accessToken, id).subscribe({
+    if (confirm('Are you sure you want to delete this category? This cannot be undone.')) {
+      this.categoryService.deleteCategory(id).subscribe({
           next: () => this.notificationService.show('Category deleted.', 'success'),
           error: (err) => this.notificationService.show('Error deleting category: ' + err.message, 'error')
       });
@@ -103,8 +101,7 @@ export class SettingsComponent implements OnInit {
   }
 
   onAssetTransferChange(category: Category): void {
-    if (!this.accessToken) return;
-    this.categoryService.updateCategory(this.accessToken, category).subscribe({
+    this.categoryService.updateCategory(category).subscribe({
       next: () => this.notificationService.show(`'${category.name}' asset transfer status updated.`, 'success'),
       error: err => this.notificationService.show('Failed to update category: ' + err.message, 'error')
     });
@@ -112,11 +109,11 @@ export class SettingsComponent implements OnInit {
 
   // --- Rule Methods ---
   createRule(): void {
-    if (!this.newRule.valueToMatch || !this.newRule.categoryId || !this.accessToken) {
+    if (!this.newRule.valueToMatch || !this.newRule.categoryId) {
       this.notificationService.show('Please fill out all rule fields.', 'error');
       return;
     }
-    this.ruleService.createRule(this.accessToken, this.newRule).subscribe({
+    this.ruleService.createRule(this.newRule).subscribe({
         next: () => {
             this.notificationService.show('Rule created successfully!', 'success');
             this.newRule = {
@@ -129,10 +126,9 @@ export class SettingsComponent implements OnInit {
   }
 
   applyAllRules(): void {
-    if (!this.accessToken) return;
     this.isApplyingRules = true;
     this.notificationService.show('Applying rules to all transactions...', 'info', 10000);
-    this.ruleService.applyAllRules(this.accessToken).subscribe({
+    this.ruleService.applyAllRules().subscribe({
       next: (response) => {
         this.notificationService.show(`Successfully updated ${response.updatedCount} transaction(s)!`, 'success');
         this.isApplyingRules = false;
@@ -149,8 +145,8 @@ export class SettingsComponent implements OnInit {
   }
 
   deleteRule(id: string): void {
-    if (confirm('Are you sure you want to delete this rule?') && this.accessToken) {
-      this.ruleService.deleteRule(this.accessToken, id).subscribe({
+    if (confirm('Are you sure you want to delete this rule?')) {
+      this.ruleService.deleteRule(id).subscribe({
           next: () => this.notificationService.show('Rule deleted.', 'success'),
           error: (err) => this.notificationService.show('Error deleting rule: ' + err.message, 'error')
       });
@@ -158,12 +154,12 @@ export class SettingsComponent implements OnInit {
   }
 
   testRule(): void {
-    if (!this.newRule.valueToMatch || !this.currentAccountId || !this.accessToken) {
+    if (!this.newRule.valueToMatch || !this.currentAccountId) {
       this.notificationService.show('Please select an account and fill out the rule value.', 'error');
       return;
     }
 
-    this.ruleService.testRule(this.accessToken, this.newRule, this.currentAccountId).subscribe({
+    this.ruleService.testRule(this.newRule, this.currentAccountId).subscribe({
       next: (response) => {
         this.testResults = response;
         const modalElement = document.getElementById('testRuleModal');

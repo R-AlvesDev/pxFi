@@ -1,5 +1,6 @@
 package com.pxfi.model;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -8,12 +9,12 @@ import org.springframework.data.mongodb.core.mapping.Field;
 public class Transaction {
     @Id
     private String id;
-    private String userId;
-    public String getUserId() {
+    private ObjectId userId; 
+    public ObjectId getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(ObjectId userId) {
         this.userId = userId;
     }
 
