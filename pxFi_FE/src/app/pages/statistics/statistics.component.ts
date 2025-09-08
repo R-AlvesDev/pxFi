@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartData, ChartType, registerables } from 'chart.js';
 import { ApiService, StatisticsResponse, YearlyStatisticsResponse } from '../../services/api.service';
+import { AccountStateService } from '../../services/account-state.service';
 
 @Component({
   selector: 'app-statistics',
@@ -13,6 +14,8 @@ import { ApiService, StatisticsResponse, YearlyStatisticsResponse } from '../../
   styleUrls: ['./statistics.component.scss']
 })
 export class StatisticsComponent implements OnInit {
+  // Authentication and account state
+  currentAccountId: string | null = null;
   // View control
   viewMode: 'monthly' | 'yearly' = 'monthly';
 
@@ -52,28 +55,38 @@ export class StatisticsComponent implements OnInit {
   public barChartType: ChartType = 'bar';
   public barChartOptions: ChartConfiguration['options'] = { responsive: true, maintainAspectRatio: false };
 
-  constructor(private api: ApiService) {
+  constructor(private api: ApiService, private accountState: AccountStateService) {
     Chart.register(...registerables);
   }
 
   ngOnInit(): void {
-    this.loadStatistics();
+    this.accountState.currentAccountId$.subscribe(id => {
+      this.currentAccountId = id;
+      if (id) {
+        this.loadStatistics();
+      }
+    });
   }
 
   loadStatistics(): void {
+    if (!this.currentAccountId) {
+      this.error = 'Cannot load statistics without an access token and selected account.';
+      return;
+    }
+
     this.loading = true;
     this.error = null;
     this.monthlyStats = null;
     this.yearlyStats = null;
-    this.showChart = false; // Hide chart before fetching new data
+    this.showChart = false;
 
     if (this.viewMode === 'monthly') {
-      this.api.getMonthlyStatistics(this.currentYear, this.currentMonth).subscribe({
+      this.api.getMonthlyStatistics(this.currentAccountId, this.currentYear, this.currentMonth).subscribe({
         next: this.handleMonthlyResponse.bind(this),
         error: this.handleError.bind(this)
       });
     } else {
-      this.api.getYearlyStatistics(this.currentYear).subscribe({
+      this.api.getYearlyStatistics(this.currentAccountId, this.currentYear).subscribe({
         next: this.handleYearlyResponse.bind(this),
         error: this.handleError.bind(this)
       });

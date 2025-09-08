@@ -5,14 +5,21 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ng-container *ngIf="isLoggedIn$ | async">
+      @if (isLoggedIn$ | async) {
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Dashboard</a>
+            <a class="nav-link" routerLink="/accounts" routerLinkActive="active">Accounts</a>
           </li>
-          <li class="nav-item" *ngIf="currentAccountId$ | async as accountId">
-            <a class="nav-link" [routerLink]="['/transactions', accountId]" routerLinkActive="active">Transactions</a>
-          </li>
+          @if (currentAccountId$ | async; as accountId) {
+            <li class="nav-item">
+              <a class="nav-link" [routerLink]="['/dashboard', accountId]" routerLinkActive="active">Dashboard</a>
+            </li>
+          }
+          @if (currentAccountId$ | async; as accountId) {
+            <li class="nav-item">
+              <a class="nav-link" [routerLink]="['/transactions', accountId]" routerLinkActive="active">Transactions</a>
+            </li>
+          }
           <li class="nav-item">
             <a class="nav-link" routerLink="/statistics" routerLinkActive="active">Statistics</a>
           </li>
@@ -25,7 +32,7 @@
             <button class="btn btn-outline-light" (click)="logout()">Logout</button>
           </li>
         </ul>
-      </ng-container>
+      }
     </div>
   </div>
 </nav>

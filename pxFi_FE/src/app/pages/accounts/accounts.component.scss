@@ -1,0 +1,21 @@
+.account-card {
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+  
+    &.add-new {
+      border-style: dashed;
+      border-width: 2px;
+  
+      &:hover {
+        border-color: var(--bs-primary);
+        .text-muted {
+          color: var(--bs-primary) !important;
+        }
+      }
+    }
+  }

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { AsyncPipe, NgIf } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../services/auth/auth.service';
@@ -9,7 +9,7 @@ import { DashboardComponent } from '../dashboard/dashboard.component'; // Import
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [NgIf, AsyncPipe, RouterLink, BankConnectionComponent, DashboardComponent], // Add DashboardComponent
+  imports: [AsyncPipe, RouterLink, BankConnectionComponent, DashboardComponent], // Add DashboardComponent
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })

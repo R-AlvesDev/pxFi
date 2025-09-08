@@ -1,6 +1,5 @@
 package com.pxfi.controller;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +10,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,13 +38,6 @@ public class GoCardlessController {
         this.transactionService = transactionService;
     }
 
-    private String extractToken(String authorizationHeader) {
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("Invalid Authorization header.");
-        }
-        return authorizationHeader.substring(7);
-    }
-
     @GetMapping("/access-token")
     public ResponseEntity<Map<String, String>> getAccessToken() throws Exception {
         String accessToken = goCardlessService.fetchAccessToken();
@@ -67,33 +58,30 @@ public class GoCardlessController {
     @PostMapping("/agreements/enduser")
     public ResponseEntity<EndUserAgreementResponse> createEndUserAgreement(
             @RequestBody EndUserAgreementRequest request,
-            @RequestHeader("Authorization") String authorization) throws Exception {
-
-        String accessToken = extractToken(authorization);
-        EndUserAgreementResponse response = goCardlessService.createEndUserAgreement(request.getInstitution_id(), accessToken);
+            @RequestParam String gocardlessToken) throws Exception { 
+        
+        EndUserAgreementResponse response = goCardlessService.createEndUserAgreement(request.getInstitution_id(), gocardlessToken);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/requisitions/create")
     public ResponseEntity<RequisitionResponse> createRequisition(
             @RequestBody Map<String, String> payload,
-            @RequestHeader("Authorization") String authorization) throws Exception {
+            @RequestParam String gocardlessToken) throws Exception {
 
-        String accessToken = extractToken(authorization);
         String institutionId = payload.get("institutionId");
         String agreementId = payload.get("agreementId");
 
-        RequisitionResponse response = goCardlessService.createRequisition(accessToken, institutionId, agreementId);
+        RequisitionResponse response = goCardlessService.createRequisition(gocardlessToken, institutionId, agreementId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/requisitions/details")
     public ResponseEntity<RequisitionDetailsResponse> getRequisitionDetails(
-            @RequestHeader("Authorization") String authorization,
+            @RequestParam String gocardlessToken,
             @RequestParam String requisitionId) throws Exception {
 
-        String accessToken = extractToken(authorization);
-        RequisitionDetailsResponse response = goCardlessService.getRequisitionDetails(accessToken, requisitionId);
+        RequisitionDetailsResponse response = goCardlessService.getRequisitionDetails(gocardlessToken, requisitionId);
         return ResponseEntity.ok(response);
     }
 
@@ -113,16 +101,13 @@ public class GoCardlessController {
     }
 
     @PostMapping("/accounts/{accountId}/transactions/refresh")
-    public ResponseEntity<List<Transaction>> refreshTransactions(
-            @RequestHeader("Authorization") String authorization,
-            @PathVariable String accountId) throws Exception {
-
-        String accessToken = extractToken(authorization);
-        TransactionsResponse freshData = goCardlessService.getAccountTransactions(accessToken, accountId);
+    public ResponseEntity<List<Transaction>> refreshTransactions(@PathVariable String accountId) throws Exception {
+        // The backend will now fetch the GoCardless token itself.
+        String gocardlessToken = goCardlessService.fetchAccessToken();
+        TransactionsResponse freshData = goCardlessService.getAccountTransactions(gocardlessToken, accountId);
         transactionService.saveTransactions(accountId, freshData);
 
-        // Return updated list from DB after saving
-        List<Transaction> updatedTransactions = transactionService.getTransactionsByAccountId(accountId);
+        List<Transaction> updatedTransactions = transactionService.getTransactionsByAccountId(accountId, null, null);
         return ResponseEntity.ok(updatedTransactions);
     }
 

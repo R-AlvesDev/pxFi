@@ -1,5 +1,6 @@
 package com.pxfi.model;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -23,6 +24,7 @@ public class CategorizationRule {
 
     @Id
     private String id;
+    private ObjectId userId; 
 
     private RuleField fieldToMatch; 
     private RuleOperator operator;   
@@ -34,6 +36,9 @@ public class CategorizationRule {
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
+    public ObjectId getUserId() { return userId; }
+    public void setUserId(ObjectId userId) { this.userId = userId; }
+    
     public RuleField getFieldToMatch() { return fieldToMatch; }
     public void setFieldToMatch(RuleField fieldToMatch) { this.fieldToMatch = fieldToMatch; }
 
