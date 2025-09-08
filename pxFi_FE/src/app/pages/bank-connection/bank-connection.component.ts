@@ -2,14 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ApiService, RequisitionResponse } from '../../services/api.service';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { AuthService } from '../../services/auth/auth.service';
 import { NotificationService } from '../../services/notification.service'; // Import NotificationService
 
 @Component({
   selector: 'app-bank-connection',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './bank-connection.component.html',
   styleUrls: ['./bank-connection.component.scss']
 })

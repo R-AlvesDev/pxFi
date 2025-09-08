@@ -3,6 +3,7 @@ package com.pxfi.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bson.types.ObjectId; // Import ObjectId
 import org.springframework.stereotype.Service;
 
 import com.pxfi.model.CategorizationRule;
@@ -38,7 +39,6 @@ public class CategorizationRuleService {
     public List<CategorizationRule> getAllRules() {
         User currentUser = SecurityConfiguration.getCurrentUser();
         if (currentUser == null) {
-            // Or throw an exception, returning empty list is safer for read operations
             return new ArrayList<>(); 
         }
         return ruleRepository.findByUserId(currentUser.getId());
@@ -49,7 +49,8 @@ public class CategorizationRuleService {
         if (currentUser == null) {
             throw new IllegalStateException("Cannot create rule without a logged in user.");
         }
-        rule.setUserId(currentUser.getId()); // Set the owner of the new rule
+        // Convert the String ID to an ObjectId before saving
+        rule.setUserId(new ObjectId(currentUser.getId()));
         return ruleRepository.save(rule);
     }
 
@@ -58,23 +59,21 @@ public class CategorizationRuleService {
     }
 
     public long applyAllRules() {
-        List<Transaction> allTransactions = transactionRepository.findAll();
-        List<CategorizationRule> allRules = ruleRepository.findAll();
+        User currentUser = SecurityConfiguration.getCurrentUser();
+        if (currentUser == null) {
+            return 0;
+        }
+        List<Transaction> allTransactions = transactionRepository.findAllByUserId(currentUser.getId());
+        List<CategorizationRule> allRules = ruleRepository.findByUserId(currentUser.getId());
         List<Transaction> transactionsToUpdate = new ArrayList<>();
 
-        System.out.println("--- Applying " + allRules.size() + " rules to " + allTransactions.size() + " transactions. ---");
-
         for (Transaction tx : allTransactions) {
-            // The engine will now return true if it modifies the transaction
             boolean wasModified = ruleEngineService.applyRules(tx, allRules);
-
             if (wasModified) {
-                // If changed, add it to our list to be saved.
                 transactionsToUpdate.add(tx);
             }
         }
 
-        // Now, update the category names for ONLY the transactions that changed.
         transactionsToUpdate.forEach(tx -> {
             categoryRepository.findById(tx.getCategoryId()).ifPresent(cat -> tx.setCategoryName(cat.getName()));
             if (tx.getSubCategoryId() != null) {
@@ -87,8 +86,7 @@ public class CategorizationRuleService {
         if (!transactionsToUpdate.isEmpty()) {
             transactionRepository.saveAll(transactionsToUpdate);
         }
-
-        System.out.println("--- Finished applying rules. " + transactionsToUpdate.size() + " transactions were updated. ---");
+        
         return transactionsToUpdate.size();
     }
 

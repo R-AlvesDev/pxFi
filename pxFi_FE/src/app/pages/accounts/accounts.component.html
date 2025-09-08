@@ -1,23 +1,27 @@
 <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-      <h2 class="mb-0">Your Accounts</h2>
-    </div>
-  
-    <div *ngIf="loading" class="text-center p-5">
+  <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+    <h2 class="mb-0">Your Accounts</h2>
+  </div>
+
+  @if (loading) {
+    <div class="text-center p-5">
       <div class="spinner-border text-primary" role="status"></div>
     </div>
-  
-    <div *ngIf="!loading && (accounts$ | async) as accounts" class="row g-4">
-      <div *ngFor="let account of accounts" class="col-md-4">
-        <div class="card account-card h-100 shadow-sm" (click)="selectAccount(account)">
-          <div class="card-body text-center d-flex flex-column justify-content-center">
-            <i class="fas fa-university fa-3x mb-3 text-primary"></i>
-            <h5 class="card-title">{{ account.accountName }}</h5>
-            <p class="card-text text-muted">{{ account.iban || 'IBAN not available' }}</p>
+  }
+
+  @if (!loading && (accounts$ | async); as accounts) {
+    <div class="row g-4">
+      @for (account of accounts; track account) {
+        <div class="col-md-4">
+          <div class="card account-card h-100 shadow-sm" (click)="selectAccount(account)">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+              <i class="fas fa-university fa-3x mb-3 text-primary"></i>
+              <h5 class="card-title">{{ account.accountName }}</h5>
+              <p class="card-text text-muted">{{ account.iban || 'IBAN not available' }}</p>
+            </div>
           </div>
         </div>
-      </div>
-  
+      }
       <div class="col-md-4">
         <div class="card account-card add-new h-100 shadow-sm" routerLink="/connect">
           <div class="card-body text-center d-flex flex-column justify-content-center">
@@ -27,4 +31,5 @@
         </div>
       </div>
     </div>
-  </div>
+  }
+</div>

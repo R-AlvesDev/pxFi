@@ -1,13 +1,17 @@
 <div class="container py-5">
-  <div *ngIf="!(isLoggedIn$ | async)" class="text-center">
-    <h1 class="display-4">Welcome to pxFi</h1>
-    <p class="lead text-muted">Your personal finance intelligence tool.</p>
-    <hr class="my-4">
-    <p>Please login or register to continue.</p>
-    <a class="btn btn-primary btn-lg" routerLink="/login">Login / Register</a>
-  </div>
+  @if (!(isLoggedIn$ | async)) {
+    <div class="text-center">
+      <h1 class="display-4">Welcome to pxFi</h1>
+      <p class="lead text-muted">Your personal finance intelligence tool.</p>
+      <hr class="my-4">
+      <p>Please login or register to continue.</p>
+      <a class="btn btn-primary btn-lg" routerLink="/login">Login / Register</a>
+    </div>
+  }
 
-  <div *ngIf="isLoggedIn$ | async">
-    <app-dashboard></app-dashboard>
-  </div>
+  @if (isLoggedIn$ | async) {
+    <div>
+      <app-dashboard></app-dashboard>
+    </div>
+  }
 </div>
