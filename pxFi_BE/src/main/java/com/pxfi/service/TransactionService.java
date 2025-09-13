@@ -10,8 +10,9 @@ import com.pxfi.repository.CategoryRepository;
 import com.pxfi.repository.CategorizationRuleRepository;
 import com.pxfi.repository.TransactionRepository;
 import com.pxfi.security.SecurityConfiguration;
-
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 @Service
 public class TransactionService {
 
+    private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
     final TransactionRepository transactionRepository;
     private final CategorizationRuleRepository ruleRepository;
     private final RuleEngineService ruleEngineService;
@@ -151,7 +153,7 @@ public class TransactionService {
         transactionRepository.saveAll(List.of(expenseTx, incomeTx));
     }
 
-    public List<Transaction> categorizeSimilarTransactions(String remittanceInfo, String categoryId, String subCategoryId) {
+    public List<Transaction> categorizeSimilarTransactions(String remittanceInfo, String categoryId, String subCategoryId, boolean isAddingSubcategory) {
         User currentUser = SecurityConfiguration.getCurrentUser();
         if (currentUser == null) {
             return new ArrayList<>();
@@ -162,14 +164,21 @@ public class TransactionService {
         String normalizedRemittanceInfo = remittanceInfo.trim().replaceAll("\\s+", " ");
 
         List<Transaction> transactionsToUpdate = allUserTransactions.stream()
-            .filter(tx -> tx.getCategoryId() == null) // Only find uncategorized transactions
             .filter(tx -> {
                 String txRemittance = tx.getRemittanceInformationUnstructured();
                 if (txRemittance == null) return false;
                 String normalizedTxRemittance = txRemittance.trim().replaceAll("\\s+", " ");
                 return normalizedRemittanceInfo.equals(normalizedTxRemittance);
             })
+            .filter(tx -> {
+                if (isAddingSubcategory) {
+                    return categoryId.equals(tx.getCategoryId()) && tx.getSubCategoryId() == null;
+                } else {
+                    return tx.getCategoryId() == null;
+                }
+            })
             .collect(Collectors.toList());
+
 
         if (!transactionsToUpdate.isEmpty()) {
             Map<String, Category> categoryMap = categoryRepository.findByUserId(currentUser.getId()).stream()
@@ -238,4 +247,3 @@ public class TransactionService {
         return tx;
     }
 }
-
