@@ -13,8 +13,11 @@ public class EncryptionService {
     private final TextEncryptor textEncryptor;
 
     public EncryptionService(@Value("${application.security.encryption.key}") String key, @Value("${application.security.encryption.salt}") String salt) {
-        logger.info("Initializing EncryptionService with robust TextEncryptor.");
-        // Uses AES-256 in CBC mode with PKCS5Padding, a standard and secure choice.
+        // --- ADD THESE LOGS ---
+        logger.info("Initializing EncryptionService...");
+        logger.info("Using Key starting with: '{}...'", key.substring(0, Math.min(8, key.length())));
+        logger.info("Using Salt starting with: '{}...'", salt.substring(0, Math.min(8, salt.length())));
+        
         this.textEncryptor = Encryptors.text(key, salt);
     }
 
@@ -32,14 +35,12 @@ public class EncryptionService {
         try {
             return textEncryptor.decrypt(encryptedData);
         } catch (Exception e) {
-            // **THE KEY CHANGE IS HERE**: Log the full stack trace of the error.
             logger.error(
                 "!!! DECRYPTION FAILED for value starting with [{}...]. THIS IS LIKELY THE ROOT CAUSE. Returning original value.",
                 encryptedData.substring(0, Math.min(10, encryptedData.length())),
-                e // This will print the full stack trace.
+                e
             );
             return encryptedData;
         }
     }
 }
-
