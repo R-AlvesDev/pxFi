@@ -21,7 +21,6 @@ public class StatisticsService {
     private final TransactionService transactionService;
     private final CategoryRepository categoryRepository;
 
-    // Use @Lazy to prevent potential circular dependency issues during application startup.
     public StatisticsService(@Lazy TransactionService transactionService, CategoryRepository categoryRepository) {
         this.transactionService = transactionService;
         this.categoryRepository = categoryRepository;
@@ -38,7 +37,6 @@ public class StatisticsService {
         String endDate = LocalDate.of(year, month, 1).plusMonths(1).minusDays(1).toString();
 
         List<Transaction> transactions = transactionService.getTransactionsByAccountId(accountId, startDate, endDate);
-        
         Map<String, Category> categoryMap = categoryRepository.findByUserId(userId).stream()
                 .collect(Collectors.toMap(Category::getId, Function.identity()));
 
@@ -65,13 +63,18 @@ public class StatisticsService {
                 continue;
             }
     
-            // This will now work correctly because the amount is decrypted.
             BigDecimal amount = new BigDecimal(tx.getTransactionAmount().getAmount());
             if (amount.compareTo(BigDecimal.ZERO) > 0) {
                 totalIncome = totalIncome.add(amount);
             } else {
-                Category category = categoryMap.get(tx.getCategoryId());
-                if (category == null || !category.isAssetTransfer()) {
+                Category categoryToCheck = null;
+                if (tx.getSubCategoryId() != null) {
+                    categoryToCheck = categoryMap.get(tx.getSubCategoryId());
+                } else if (tx.getCategoryId() != null) {
+                    categoryToCheck = categoryMap.get(tx.getCategoryId());
+                }
+
+                if (categoryToCheck == null || !categoryToCheck.isAssetTransfer()) {
                     totalExpenses = totalExpenses.add(amount.abs());
                     String categoryName = tx.getCategoryName() != null ? tx.getCategoryName() : "Uncategorized";
                     expensesByCategoryMap.merge(categoryName, amount.abs(), BigDecimal::add);
@@ -96,7 +99,6 @@ public class StatisticsService {
 
         String startDate = LocalDate.of(year, 1, 1).toString();
         String endDate = LocalDate.of(year, 12, 31).toString();
-        
         List<Transaction> transactions = transactionService.getTransactionsByAccountId(accountId, startDate, endDate);
         
         Map<String, Category> categoryMap = categoryRepository.findByUserId(userId).stream()

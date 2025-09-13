@@ -27,21 +27,29 @@
           <h6 class="mt-4 border-bottom pb-2 mb-3">Existing Categories</h6>
           <ul class="list-group">
             @for (category of mainCategories; track category) {
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div class="form-check">
-                  <label class="form-check-label" (click)="toggleCategory(category.id)" style="cursor: pointer;">
-                    <strong>{{ category.name }}</strong>
-                  </label>
+              <li class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" [id]="'asset-transfer-' + category.id" 
+                               [(ngModel)]="category.isAssetTransfer" 
+                               (ngModelChange)="onAssetTransferChange(category)">
+                        <label class="form-check-label" (click)="toggleCategory(category.id)" style="cursor: pointer;" [for]="'asset-transfer-' + category.id">
+                            <strong>{{ category.name }}</strong>
+                        </label>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm" (click)="$event.stopPropagation(); deleteCategory(category.id)">Delete</button>
                 </div>
-                <button class="btn btn-outline-danger btn-sm" (click)="$event.stopPropagation(); deleteCategory(category.id)">Delete</button>
               </li>
               @if (expandedCategoryIds.has(category.id)) {
                 @for (sub of categoryService.getSubCategories(category.id); track sub) {
                   <li class="list-group-item d-flex justify-content-between align-items-center ps-5">
-                    <div class="form-check">
-                      <label class="form-check-label">
-                        {{ sub.name }}
-                      </label>
+                     <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" [id]="'asset-transfer-' + sub.id" 
+                               [(ngModel)]="sub.isAssetTransfer" 
+                               (ngModelChange)="onAssetTransferChange(sub)">
+                        <label class="form-check-label" [for]="'asset-transfer-' + sub.id">
+                            {{ sub.name }}
+                        </label>
                     </div>
                     <button class="btn btn-outline-danger btn-sm" (click)="$event.stopPropagation(); deleteCategory(sub.id)">Delete</button>
                   </li>
@@ -53,6 +61,7 @@
       </div>
     </div>
 
+    <!-- The rest of the file (Rules Management) remains the same -->
     <div class="col-lg-6">
       <div class="card h-100">
         <div class="card-header"><h5 class="mb-0">Manage Automation Rules</h5></div>
