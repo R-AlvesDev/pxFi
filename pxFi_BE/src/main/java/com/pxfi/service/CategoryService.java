@@ -40,7 +40,7 @@ public class CategoryService {
             throw new IllegalStateException("Cannot create a category without a logged in user.");
         }
         // Convert the String ID to an ObjectId before saving
-        category.setUserId(new ObjectId(currentUser.getId()));
+        category.setUserId(currentUser.getId());
         return categoryRepository.save(category);
     }
 
@@ -73,10 +73,9 @@ public class CategoryService {
         categoryRepository.deleteById(id);
     }
 
-    public void createDefaultCategoriesForUser(String userId) {
+    public void createDefaultCategoriesForUser(ObjectId userId) {
         if (userId == null) return;
         
-        ObjectId userObjectId = new ObjectId(userId); // Convert the ID once
 
         Map<String, String> parentCategories = Map.of(
             "Income", "salary,meal-allowance,other-income",
@@ -94,7 +93,7 @@ public class CategoryService {
         parentCategories.forEach((parentName, subNames) -> {
             Category parent = new Category();
             parent.setName(parentName);
-            parent.setUserId(userObjectId); // Assign to the new user
+            parent.setUserId(userId); // Assign to the new user
             categoryRepository.save(parent);
 
             for (String subName : subNames.split(",")) {
@@ -102,7 +101,7 @@ public class CategoryService {
                 String formattedSubName = toTitleCase(subName.replace('-', ' '));
                 sub.setName(formattedSubName);
                 sub.setParentId(parent.getId());
-                sub.setUserId(userObjectId); // Assign to the new user
+                sub.setUserId(userId); // Assign to the new user
 
                 if ("Savings Investments".equalsIgnoreCase(formattedSubName)) {
                     sub.setAssetTransfer(true);
@@ -113,7 +112,7 @@ public class CategoryService {
 
         Category uncategorized = new Category();
         uncategorized.setName("Uncategorized");
-        uncategorized.setUserId(userObjectId); // Assign to the new user
+        uncategorized.setUserId(userId); // Assign to the new user
         categoryRepository.save(uncategorized);
     }
 

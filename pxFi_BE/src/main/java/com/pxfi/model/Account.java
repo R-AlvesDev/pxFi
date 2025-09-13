@@ -1,5 +1,6 @@
 package com.pxfi.model;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -7,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Account {
     @Id
     private String id;
-    private String userId;
+    private ObjectId userId;
     private String gocardlessAccountId; // The ID from the GoCardless API
     private String accountName; // User-defined alias
     private String institutionId; // The ID of the bank (e.g., "REVOLUT_REVOGB21")
@@ -16,8 +17,8 @@ public class Account {
     // Getters and Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
-    public String getUserId() { return userId; }
-    public void setUserId(String userId) { this.userId = userId; }
+    public ObjectId getUserId() { return userId; }
+    public void setUserId(ObjectId userId) { this.userId = userId; }
     public String getGocardlessAccountId() { return gocardlessAccountId; }
     public void setGocardlessAccountId(String gocardlessAccountId) { this.gocardlessAccountId = gocardlessAccountId; }
     public String getAccountName() { return accountName; }
