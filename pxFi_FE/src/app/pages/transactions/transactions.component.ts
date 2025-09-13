@@ -52,7 +52,6 @@ export class TransactionsComponent implements OnInit, OnDestroy {
       this.mainCategories = this.categoryService.getMainCategories();
     });
 
-    // Subscribe to the AccountStateService to always get the latest selected account
     this.accountSub = this.accountState.currentAccountId$.subscribe(accountId => {
       if (accountId && accountId !== this.selectedAccountId) {
         this.selectedAccountId = accountId;
@@ -64,7 +63,6 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Unsubscribe to prevent memory leaks
     this.accountSub?.unsubscribe();
   }
 
@@ -77,7 +75,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.transactions = res.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime())
                                .map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
-        this.applyFilters();
+        this.applyFilters(true); // Reset to page 1 when loading all new data
         this.loading = false;
       },
       error: (err) => {
@@ -96,10 +94,9 @@ export class TransactionsComponent implements OnInit, OnDestroy {
 
     this.api.refreshTransactions(this.selectedAccountId).subscribe({
       next: (refreshedTransactions) => {
-        // Correctly update the main transactions array with the new data from the server
         this.transactions = refreshedTransactions.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime())
                                                   .map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
-        this.applyFilters(); // Re-apply filters to ensure the view updates
+        this.applyFilters(true); // Reset to page 1 after a full refresh
         this.loading = false;
         this.notificationService.show('Transactions refreshed successfully!', 'success');
       },
@@ -111,8 +108,15 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  applyFilters(): void {
-    this.currentPage = 1;
+  /**
+   * Applies filters to the transaction list.
+   * @param resetPage If true, resets the current page to 1. Defaults to true.
+   */
+  applyFilters(resetPage: boolean = true): void {
+    if (resetPage) {
+      this.currentPage = 1;
+    }
+    
     if (this.selectedCategoryFilter === 'all') {
       this.filteredTransactions = [...this.transactions];
     } else if (this.selectedCategoryFilter === 'uncategorized') {
@@ -146,7 +150,8 @@ export class TransactionsComponent implements OnInit, OnDestroy {
         if (index !== -1) {
           const wasExpanded = this.transactions[index].expanded;
           this.transactions[index] = { ...updatedTx, expanded: wasExpanded, categoryDirty: false };
-          this.applyFilters();
+          
+          this.applyFilters(false);
         }
         this.notificationService.show('Category saved!', 'success');
         this.promptToCategorizeSimilar(updatedTx, wasAlreadyCategorized);
@@ -162,6 +167,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     const remittanceInfo = updatedTx.remittanceInformationUnstructured;
     if (!remittanceInfo) return;
 
+    // Use normalized remittance info for local filtering to be consistent with backend
     const normalizedRemittanceInfo = remittanceInfo.trim().replace(/\s+/g, ' ');
     let similarCount = 0;
     const isAddingSubcategory = wasAlreadyCategorized && !!updatedTx.subCategoryId;
@@ -190,9 +196,11 @@ export class TransactionsComponent implements OnInit, OnDestroy {
         : `Found ${similarCount} other uncategorized transaction(s) with the same description. Apply this category to them all?`;
 
       if (confirm(message)) {
+        // We send the original remittance info, as the backend will normalize it
         this.api.categorizeSimilarTransactions(remittanceInfo, updatedTx.categoryId!, updatedTx.subCategoryId || null).subscribe({
           next: () => {
             this.notificationService.show(`Applied category to ${similarCount} similar transaction(s).`, 'success');
+            // After a bulk update, it's correct to reload everything and go to page 1.
             this.loadCachedTransactions();
           },
           error: (err) => {
@@ -211,7 +219,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
         if (index !== -1) {
           const wasExpanded = this.transactions[index].expanded;
           this.transactions[index] = { ...updatedTx, expanded: wasExpanded };
-          this.applyFilters();
+          this.applyFilters(false);
         }
         this.notificationService.show(`Transaction ignore status updated.`, 'success');
       },
@@ -254,7 +262,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
         this.selectedExpenseId = null;
         this.selectedIncomeId = null;
         this.notificationService.show('Transactions linked successfully!', 'success');
-        this.loadCachedTransactions();
+        this.loadCachedTransactions(); // Okay to go to page 1 after a major action like linking.
       },
       error: (err) => {
         console.error('Failed to link transactions', err);
@@ -326,3 +334,4 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     }
   }
 }
+

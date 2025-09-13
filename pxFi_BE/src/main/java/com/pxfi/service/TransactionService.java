@@ -113,14 +113,11 @@ public class TransactionService {
         Transaction transaction = transactionRepository.findByIdAndUserId(transactionId, currentUser.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Transaction not found or permission denied."));
 
-        // Update the category IDs on the raw transaction object
         transaction.setCategoryId(categoryId);
         transaction.setSubCategoryId(subCategoryId);
         
-        // Save the updated transaction back to the database
         Transaction savedTransaction = transactionRepository.save(transaction);
         
-        // **THE FIX IS HERE**: Decrypt and enrich the saved transaction BEFORE returning it to the frontend.
         Transaction decryptedAndEnrichedTx = decryptTransaction(savedTransaction);
         Map<String, Category> categoryMap = categoryRepository.findByUserId(currentUser.getId()).stream()
                 .collect(Collectors.toMap(Category::getId, Function.identity()));
@@ -154,27 +151,55 @@ public class TransactionService {
         transactionRepository.saveAll(List.of(expenseTx, incomeTx));
     }
 
-    public List<Transaction> getAllTransactions() {
+    public List<Transaction> categorizeSimilarTransactions(String remittanceInfo, String categoryId, String subCategoryId) {
         User currentUser = SecurityConfiguration.getCurrentUser();
-        if (currentUser == null) return List.of();
+        if (currentUser == null) {
+            return new ArrayList<>();
+        }
         
-        return transactionRepository.findAllByUserId(currentUser.getId()).stream()
+        List<Transaction> allUserTransactions = this.getAllTransactions(); // Gets decrypted transactions
+        
+        String normalizedRemittanceInfo = remittanceInfo.trim().replaceAll("\\s+", " ");
+
+        List<Transaction> transactionsToUpdate = allUserTransactions.stream()
+            .filter(tx -> tx.getCategoryId() == null) // Only find uncategorized transactions
+            .filter(tx -> {
+                String txRemittance = tx.getRemittanceInformationUnstructured();
+                if (txRemittance == null) return false;
+                String normalizedTxRemittance = txRemittance.trim().replaceAll("\\s+", " ");
+                return normalizedRemittanceInfo.equals(normalizedTxRemittance);
+            })
+            .collect(Collectors.toList());
+
+        if (!transactionsToUpdate.isEmpty()) {
+            Map<String, Category> categoryMap = categoryRepository.findByUserId(currentUser.getId()).stream()
+                .collect(Collectors.toMap(Category::getId, Function.identity()));
+
+            transactionsToUpdate.forEach(tx -> {
+                tx.setCategoryId(categoryId);
+                tx.setSubCategoryId(subCategoryId);
+                enrichTransactionWithCategoryNames(tx, categoryMap);
+                encryptTransaction(tx); // Re-encrypt before saving
+            });
+            transactionRepository.saveAll(transactionsToUpdate);
+        }
+        
+        // Return the updated transactions, but decrypted for the frontend.
+        return transactionsToUpdate.stream()
             .map(this::decryptTransaction)
             .collect(Collectors.toList());
     }
 
-    public List<Transaction> categorizeSimilarTransactions(String remittanceInfo, String categoryId, String subCategoryId) {
+    public List<Transaction> getAllTransactions() {
+        User currentUser = SecurityConfiguration.getCurrentUser();
+        if (currentUser == null) return List.of();
+        ObjectId userId = currentUser.getId();
 
-        // This method needs to be made fully user-aware if you continue to use it,
-
-        // but for now, this resolves the compilation errors in other services.
-
-        // It should fetch transactions for the current user only.
-
-        return new ArrayList<>();
-
+        return transactionRepository.findAllByUserId(userId).stream()
+                .map(this::decryptTransaction)
+                .collect(Collectors.toList());
     }
-
+    
     public void saveAllTransactions(List<Transaction> transactions) {
         transactionRepository.saveAll(transactions);
     }
@@ -195,21 +220,21 @@ public class TransactionService {
 
     public Transaction encryptTransaction(Transaction tx) {
         if (tx == null) return null;
-        tx.setTransactionId(encryptionService.encrypt(tx.getTransactionId()));
-        tx.setRemittanceInformationUnstructured(encryptionService.encrypt(tx.getRemittanceInformationUnstructured()));
         if (tx.getTransactionAmount() != null) {
             tx.getTransactionAmount().setAmount(encryptionService.encrypt(tx.getTransactionAmount().getAmount()));
         }
+        tx.setRemittanceInformationUnstructured(encryptionService.encrypt(tx.getRemittanceInformationUnstructured()));
+        tx.setTransactionId(encryptionService.encrypt(tx.getTransactionId()));
         return tx;
     }
 
     public Transaction decryptTransaction(Transaction tx) {
         if (tx == null) return null;
-        tx.setTransactionId(encryptionService.decrypt(tx.getTransactionId()));
-        tx.setRemittanceInformationUnstructured(encryptionService.decrypt(tx.getRemittanceInformationUnstructured()));
         if (tx.getTransactionAmount() != null) {
             tx.getTransactionAmount().setAmount(encryptionService.decrypt(tx.getTransactionAmount().getAmount()));
         }
+        tx.setRemittanceInformationUnstructured(encryptionService.decrypt(tx.getRemittanceInformationUnstructured()));
+        tx.setTransactionId(encryptionService.decrypt(tx.getTransactionId()));
         return tx;
     }
 }
