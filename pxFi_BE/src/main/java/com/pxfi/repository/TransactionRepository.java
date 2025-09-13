@@ -3,6 +3,7 @@ package com.pxfi.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
@@ -15,7 +16,7 @@ import com.pxfi.model.Transaction;
 public interface TransactionRepository extends MongoRepository<Transaction, String> {
 
     @Query("{'accountId': ?0, 'userId': ObjectId('?1')}")
-    List<Transaction> findByAccountIdAndUserIdOrderByBookingDateDesc(String accountId, String userId);
+    List<Transaction> findByAccountIdAndUserIdOrderByBookingDateDesc(String accountId, ObjectId userId);
 
     boolean existsByTransactionIdAndAccountId(String transactionId, String accountId);
 
@@ -40,7 +41,7 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
         "{ '$group': { '_id': '$categoryName', 'total': { '$sum': { '$toDouble': '$transactionAmount.amount' } } } }",
         "{ '$project': { 'categoryName': '$_id', 'total': { '$abs': '$total' }, '_id': 0 } }"
     })
-    List<CategorySpending> findSpendingByCategory(String userId, String accountId, String startDate, String endDate);
+    List<CategorySpending> findSpendingByCategory(ObjectId userId, String accountId, String startDate, String endDate);
 
     List<Transaction> findByBookingDateBetween(String startDate, String endDate);
 
@@ -51,12 +52,12 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
     );
     
     @Query("{'_id': ?0, 'userId': ObjectId('?1')}")
-    Optional<Transaction> findByIdAndUserId(String id, String userId);
+    Optional<Transaction> findByIdAndUserId(String id, ObjectId userId);
 
     @Query("{'userId': ObjectId('?0')}")
-    List<Transaction> findAllByUserId(String userId);
+    List<Transaction> findAllByUserId(ObjectId userId);
     
     @Query("{'accountId': ?0, 'userId': ObjectId('?1'), 'bookingDate': {'$gte': ?2, '$lte': ?3}}")
-    List<Transaction> findByAccountIdAndUserIdAndBookingDateBetweenOrderByBookingDateDesc(String accountId, String userId, String startDate, String endDate);
+    List<Transaction> findByAccountIdAndUserIdAndBookingDateBetweenOrderByBookingDateDesc(String accountId, ObjectId userId, String startDate, String endDate);
 
 }

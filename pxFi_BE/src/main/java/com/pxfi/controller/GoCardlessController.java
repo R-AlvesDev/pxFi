@@ -139,7 +139,8 @@ public class GoCardlessController {
         List<Transaction> updatedTransactions = transactionService.categorizeSimilarTransactions(
             request.getRemittanceInfo(),
             request.getCategoryId(),
-            request.getSubCategoryId()
+            request.getSubCategoryId(),
+            request.isAddingSubcategory()
         );
         return ResponseEntity.ok(updatedTransactions);
     }

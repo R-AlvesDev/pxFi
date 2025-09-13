@@ -1,28 +1,23 @@
 package com.pxfi.service;
 
 import com.pxfi.model.CategorizationRule;
-// Use the correct import syntax for inner enums
 import com.pxfi.model.CategorizationRule.RuleField;
-import com.pxfi.model.CategorizationRule.RuleOperator;
 import com.pxfi.model.Transaction;
-import com.pxfi.model.User;
-import com.pxfi.repository.TransactionRepository;
-import com.pxfi.security.SecurityConfiguration;
-
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class RuleEngineService {
 
-    private final TransactionRepository transactionRepository;
+    private final TransactionService transactionService;
 
-    public RuleEngineService(TransactionRepository transactionRepository) {
-        this.transactionRepository = transactionRepository;
+    // Use @Lazy to prevent potential circular dependency issues during application startup.
+    public RuleEngineService(@Lazy TransactionService transactionService) {
+        this.transactionService = transactionService;
     }
 
     public boolean applyRules(Transaction transaction, List<CategorizationRule> rules) {
@@ -30,66 +25,64 @@ public class RuleEngineService {
             if (matches(transaction, rule)) {
                 transaction.setCategoryId(rule.getCategoryId());
                 transaction.setSubCategoryId(rule.getSubCategoryId());
-                return true; 
+                return true;
             }
         }
-        return false; 
+        return false;
     }
 
     private boolean matches(Transaction tx, CategorizationRule rule) {
-        String valueToMatch = rule.getValueToMatch().toLowerCase();
+        // Normalize the value from the rule: trim, lowercase, and collapse multiple whitespace
+        String valueToMatch = rule.getValueToMatch() == null ? "" : rule.getValueToMatch().trim().replaceAll("\\s+", " ").toLowerCase();
+        
+        // Normalize the value from the transaction
         String targetValue = getTargetValue(tx, rule.getFieldToMatch());
-
-        if (targetValue == null) {
-            return false;
-        }
+        targetValue = targetValue == null ? "" : targetValue.trim().replaceAll("\\s+", " ").toLowerCase();
 
         switch (rule.getOperator()) {
             case CONTAINS:
-                return targetValue.toLowerCase().contains(valueToMatch);
+                return targetValue.contains(valueToMatch);
             case EQUALS:
-                return targetValue.toLowerCase().equals(valueToMatch);
+                return targetValue.equals(valueToMatch);
             case STARTS_WITH:
-                return targetValue.toLowerCase().startsWith(valueToMatch);
+                return targetValue.startsWith(valueToMatch);
             case ENDS_WITH:
-                return targetValue.toLowerCase().endsWith(valueToMatch);
+                return targetValue.endsWith(valueToMatch);
             case AMOUNT_EQUALS:
-                return new BigDecimal(targetValue).compareTo(new BigDecimal(valueToMatch)) == 0;
+                try {
+                    return new BigDecimal(targetValue).compareTo(new BigDecimal(valueToMatch)) == 0;
+                } catch (NumberFormatException e) { return false; }
             case AMOUNT_GREATER_THAN:
-                return new BigDecimal(targetValue).compareTo(new BigDecimal(valueToMatch)) > 0;
+                 try {
+                    return new BigDecimal(targetValue).compareTo(new BigDecimal(valueToMatch)) > 0;
+                } catch (NumberFormatException e) { return false; }
             case AMOUNT_LESS_THAN:
-                return new BigDecimal(targetValue).compareTo(new BigDecimal(valueToMatch)) < 0;
+                 try {
+                    return new BigDecimal(targetValue).compareTo(new BigDecimal(valueToMatch)) < 0;
+                } catch (NumberFormatException e) { return false; }
             default:
                 return false;
         }
     }
 
     private String getTargetValue(Transaction tx, RuleField field) {
+        if (tx == null) return null;
         switch (field) {
             case REMITTANCE_INFO:
                 return tx.getRemittanceInformationUnstructured();
             case AMOUNT:
-                return tx.getTransactionAmount().getAmount();
+                return (tx.getTransactionAmount() != null) ? tx.getTransactionAmount().getAmount() : null;
             default:
                 return null;
         }
     }
 
     public List<Transaction> testRule(CategorizationRule rule, String accountId) {
-        User currentUser = SecurityConfiguration.getCurrentUser();
-        if (currentUser == null) {
-            return Collections.emptyList();
-        }
-        String userId = currentUser.getId();
-
-        if (accountId == null || accountId.isEmpty()) {
-            return Collections.emptyList();
-        }
-        
-        List<Transaction> allTransactions = transactionRepository.findByAccountIdAndUserIdOrderByBookingDateDesc(accountId, userId);
+        List<Transaction> allTransactions = transactionService.getTransactionsByAccountId(accountId, null, null);
         
         return allTransactions.stream()
             .filter(tx -> matches(tx, rule))
             .collect(Collectors.toList());
     }
 }
+

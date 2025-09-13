@@ -3,8 +3,6 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-// ... (All interfaces remain the same) ...
-
 export interface Institution {
   id: string;
   name: string;
@@ -245,8 +243,8 @@ export class ApiService {
     return this.http.post<Transaction>(`${this.baseUrl}/transactions/${transactionId}/category`, payload);
   }
   
-  categorizeSimilarTransactions(remittanceInfo: string, categoryId: string, subCategoryId: string | null): Observable<Transaction[]> {
-    const payload = { remittanceInfo, categoryId, subCategoryId };
+  categorizeSimilarTransactions(remittanceInfo: string, categoryId: string, subCategoryId: string | null, isAddingSubcategory: boolean): Observable<Transaction[]> {
+    const payload = { remittanceInfo, categoryId, subCategoryId, isAddingSubcategory };
     return this.http.post<Transaction[]>(`${this.baseUrl}/transactions/categorize-similar`, payload);
   }
 

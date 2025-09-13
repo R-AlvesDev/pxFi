@@ -2,8 +2,10 @@ package com.pxfi.service;
 
 import com.pxfi.model.*;
 import com.pxfi.repository.CategoryRepository;
-import com.pxfi.repository.TransactionRepository;
 import com.pxfi.security.SecurityConfiguration;
+
+import org.bson.types.ObjectId;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -16,11 +18,11 @@ import java.util.stream.Collectors;
 @Service
 public class StatisticsService {
 
-    private final TransactionRepository transactionRepository;
+    private final TransactionService transactionService;
     private final CategoryRepository categoryRepository;
 
-    public StatisticsService(TransactionRepository transactionRepository, CategoryRepository categoryRepository) {
-        this.transactionRepository = transactionRepository;
+    public StatisticsService(@Lazy TransactionService transactionService, CategoryRepository categoryRepository) {
+        this.transactionService = transactionService;
         this.categoryRepository = categoryRepository;
     }
 
@@ -29,12 +31,12 @@ public class StatisticsService {
         if (currentUser == null) {
             throw new IllegalStateException("User not authenticated.");
         }
-        String userId = currentUser.getId();
+        ObjectId userId = currentUser.getId();
 
         String startDate = LocalDate.of(year, month, 1).toString();
         String endDate = LocalDate.of(year, month, 1).plusMonths(1).minusDays(1).toString();
 
-        List<Transaction> transactions = transactionRepository.findByAccountIdAndUserIdAndBookingDateBetweenOrderByBookingDateDesc(accountId, userId, startDate, endDate);
+        List<Transaction> transactions = transactionService.getTransactionsByAccountId(accountId, startDate, endDate);
         Map<String, Category> categoryMap = categoryRepository.findByUserId(userId).stream()
                 .collect(Collectors.toMap(Category::getId, Function.identity()));
 
@@ -43,7 +45,6 @@ public class StatisticsService {
         Set<String> processedIds = new HashSet<>();
         Map<String, BigDecimal> expensesByCategoryMap = new HashMap<>();
 
-        // First, process linked transactions so they are excluded from main calculations
         for (Transaction tx : transactions) {
             if (tx.getLinkedTransactionId() != null && !processedIds.contains(tx.getId())) {
                 Transaction linkedTx = transactions.stream()
@@ -57,7 +58,6 @@ public class StatisticsService {
             }
         }
     
-        // Now, process all non-linked and non-ignored transactions
         for (Transaction tx : transactions) {
             if (processedIds.contains(tx.getId()) || tx.isIgnored()) {
                 continue;
@@ -67,8 +67,14 @@ public class StatisticsService {
             if (amount.compareTo(BigDecimal.ZERO) > 0) {
                 totalIncome = totalIncome.add(amount);
             } else {
-                Category category = categoryMap.get(tx.getCategoryId());
-                if (category == null || !category.isAssetTransfer()) {
+                Category categoryToCheck = null;
+                if (tx.getSubCategoryId() != null) {
+                    categoryToCheck = categoryMap.get(tx.getSubCategoryId());
+                } else if (tx.getCategoryId() != null) {
+                    categoryToCheck = categoryMap.get(tx.getCategoryId());
+                }
+
+                if (categoryToCheck == null || !categoryToCheck.isAssetTransfer()) {
                     totalExpenses = totalExpenses.add(amount.abs());
                     String categoryName = tx.getCategoryName() != null ? tx.getCategoryName() : "Uncategorized";
                     expensesByCategoryMap.merge(categoryName, amount.abs(), BigDecimal::add);
@@ -89,11 +95,12 @@ public class StatisticsService {
         if (currentUser == null) {
             throw new IllegalStateException("User not authenticated.");
         }
-        String userId = currentUser.getId();
+        ObjectId userId = currentUser.getId();
 
         String startDate = LocalDate.of(year, 1, 1).toString();
         String endDate = LocalDate.of(year, 12, 31).toString();
-        List<Transaction> transactions = transactionRepository.findByAccountIdAndUserIdAndBookingDateBetweenOrderByBookingDateDesc(accountId, userId, startDate, endDate);
+        List<Transaction> transactions = transactionService.getTransactionsByAccountId(accountId, startDate, endDate);
+        
         Map<String, Category> categoryMap = categoryRepository.findByUserId(userId).stream()
                 .collect(Collectors.toMap(Category::getId, cat -> cat));
 
@@ -173,3 +180,4 @@ public class StatisticsService {
         );
     }
 }
+

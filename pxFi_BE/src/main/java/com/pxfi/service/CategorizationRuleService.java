@@ -2,10 +2,16 @@ package com.pxfi.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import org.bson.types.ObjectId; // Import ObjectId
+import org.bson.types.ObjectId;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import com.pxfi.crypto.EncryptionService;
+import com.pxfi.model.Category;
 import com.pxfi.model.CategorizationRule;
 import com.pxfi.model.TestRuleRequest;
 import com.pxfi.model.TestRuleResponse;
@@ -13,27 +19,30 @@ import com.pxfi.model.Transaction;
 import com.pxfi.model.User;
 import com.pxfi.repository.CategorizationRuleRepository;
 import com.pxfi.repository.CategoryRepository;
-import com.pxfi.repository.TransactionRepository;
 import com.pxfi.security.SecurityConfiguration;
 
 @Service
 public class CategorizationRuleService {
 
     private final CategorizationRuleRepository ruleRepository;
-    private final TransactionRepository transactionRepository;
+    private final TransactionService transactionService;
     private final RuleEngineService ruleEngineService;
     private final CategoryRepository categoryRepository;
+    private final EncryptionService encryptionService;
 
+    // Use @Lazy on services that might have circular dependencies
     public CategorizationRuleService(
         CategorizationRuleRepository ruleRepository,
-        TransactionRepository transactionRepository,
-        RuleEngineService ruleEngineService,
-        CategoryRepository categoryRepository
+        @Lazy TransactionService transactionService,
+        @Lazy RuleEngineService ruleEngineService,
+        CategoryRepository categoryRepository,
+        EncryptionService encryptionService
     ) {
         this.ruleRepository = ruleRepository;
-        this.transactionRepository = transactionRepository;
+        this.transactionService = transactionService;
         this.ruleEngineService = ruleEngineService;
         this.categoryRepository = categoryRepository;
+        this.encryptionService = encryptionService;
     }
 
     public List<CategorizationRule> getAllRules() {
@@ -41,7 +50,11 @@ public class CategorizationRuleService {
         if (currentUser == null) {
             return new ArrayList<>(); 
         }
-        return ruleRepository.findByUserId(currentUser.getId());
+        // Decrypt rules after fetching them from the database
+        return ruleRepository.findByUserId(currentUser.getId())
+                .stream()
+                .map(this::decryptRule)
+                .collect(Collectors.toList());
     }
 
     public CategorizationRule createRule(CategorizationRule rule) {
@@ -49,9 +62,9 @@ public class CategorizationRuleService {
         if (currentUser == null) {
             throw new IllegalStateException("Cannot create rule without a logged in user.");
         }
-        // Convert the String ID to an ObjectId before saving
-        rule.setUserId(new ObjectId(currentUser.getId()));
-        return ruleRepository.save(rule);
+        rule.setUserId(currentUser.getId());
+        // Encrypt the rule before saving
+        return ruleRepository.save(encryptRule(rule));
     }
 
     public void deleteRule(String ruleId) {
@@ -63,8 +76,10 @@ public class CategorizationRuleService {
         if (currentUser == null) {
             return 0;
         }
-        List<Transaction> allTransactions = transactionRepository.findAllByUserId(currentUser.getId());
-        List<CategorizationRule> allRules = ruleRepository.findByUserId(currentUser.getId());
+        
+        List<Transaction> allTransactions = transactionService.getAllTransactions(); 
+        List<CategorizationRule> allRules = this.getAllRules();
+        
         List<Transaction> transactionsToUpdate = new ArrayList<>();
 
         for (Transaction tx : allTransactions) {
@@ -74,17 +89,27 @@ public class CategorizationRuleService {
             }
         }
 
-        transactionsToUpdate.forEach(tx -> {
-            categoryRepository.findById(tx.getCategoryId()).ifPresent(cat -> tx.setCategoryName(cat.getName()));
-            if (tx.getSubCategoryId() != null) {
-                categoryRepository.findById(tx.getSubCategoryId()).ifPresent(subCat -> tx.setSubCategoryName(subCat.getName()));
-            } else {
-                tx.setSubCategoryName(null);
-            }
-        });
-
         if (!transactionsToUpdate.isEmpty()) {
-            transactionRepository.saveAll(transactionsToUpdate);
+            Map<String, Category> categoryMap = categoryRepository.findByUserId(currentUser.getId()).stream()
+                .collect(Collectors.toMap(Category::getId, Function.identity()));
+            
+            transactionsToUpdate.forEach(tx -> {
+                // Enrich with category names before saving
+                if (tx.getCategoryId() != null) {
+                    Category mainCat = categoryMap.get(tx.getCategoryId());
+                    if (mainCat != null) tx.setCategoryName(mainCat.getName());
+                }
+                 if (tx.getSubCategoryId() != null) {
+                    Category subCat = categoryMap.get(tx.getSubCategoryId());
+                    if (subCat != null) tx.setSubCategoryName(subCat.getName());
+                } else {
+                    tx.setSubCategoryName(null);
+                }
+                // **IMPORTANT**: Re-encrypt the transaction before saving it back
+                transactionService.encryptTransaction(tx);
+            });
+
+            transactionService.transactionRepository.saveAll(transactionsToUpdate);
         }
         
         return transactionsToUpdate.size();
@@ -95,6 +120,7 @@ public class CategorizationRuleService {
             throw new IllegalArgumentException("Rule and Account ID must be provided for testing.");
         }
         
+        // The rule engine will now get decrypted transactions from the service
         List<Transaction> matchedTransactions = ruleEngineService.testRule(
             request.getRule(),
             request.getAccountId()
@@ -102,4 +128,19 @@ public class CategorizationRuleService {
         
         return new TestRuleResponse(matchedTransactions);
     }
+
+    // --- Helper Methods for Encryption/Decryption ---
+
+    public CategorizationRule encryptRule(CategorizationRule rule) {
+        if (rule == null) return null;
+        rule.setValueToMatch(encryptionService.encrypt(rule.getValueToMatch()));
+        return rule;
+    }
+
+    public CategorizationRule decryptRule(CategorizationRule rule) {
+        if (rule == null) return null;
+        rule.setValueToMatch(encryptionService.decrypt(rule.getValueToMatch()));
+        return rule;
+    }
 }
+
