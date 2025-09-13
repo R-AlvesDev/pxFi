@@ -36,7 +36,7 @@ public class TransactionService {
     public TransactionService(
         TransactionRepository transactionRepository,
         CategorizationRuleRepository ruleRepository,
-        @Lazy RuleEngineService ruleEngineService, // Use @Lazy to break circular dependency
+        @Lazy RuleEngineService ruleEngineService,
         CategoryRepository categoryRepository,
         EncryptionService encryptionService
     ) {
@@ -92,10 +92,14 @@ public class TransactionService {
             .collect(Collectors.toList());
 
         if (!transactionsToInsert.isEmpty()) {
+            Map<String, Category> categoryMap = categoryRepository.findByUserId(userId).stream()
+                .collect(Collectors.toMap(Category::getId, Function.identity()));
+
             transactionsToInsert.forEach(tx -> {
                 tx.setAccountId(accountId);
                 tx.setUserId(userId);
                 ruleEngineService.applyRules(tx, allRules);
+                enrichTransactionWithCategoryNames(tx, categoryMap);
                 encryptTransaction(tx);
             });
             transactionRepository.saveAll(transactionsToInsert);
@@ -107,13 +111,20 @@ public class TransactionService {
         if (currentUser == null) throw new IllegalStateException("User not authenticated.");
         
         Transaction transaction = transactionRepository.findByIdAndUserId(transactionId, currentUser.getId())
-                .map(this::decryptTransaction)
                 .orElseThrow(() -> new IllegalArgumentException("Transaction not found or permission denied."));
 
+        // Update the category IDs on the raw transaction object
         transaction.setCategoryId(categoryId);
         transaction.setSubCategoryId(subCategoryId);
         
-        return transactionRepository.save(encryptTransaction(transaction));
+        // Save the updated transaction back to the database
+        Transaction savedTransaction = transactionRepository.save(transaction);
+        
+        // **THE FIX IS HERE**: Decrypt and enrich the saved transaction BEFORE returning it to the frontend.
+        Transaction decryptedAndEnrichedTx = decryptTransaction(savedTransaction);
+        Map<String, Category> categoryMap = categoryRepository.findByUserId(currentUser.getId()).stream()
+                .collect(Collectors.toMap(Category::getId, Function.identity()));
+        return enrichTransactionWithCategoryNames(decryptedAndEnrichedTx, categoryMap);
     }
     
     public Optional<Transaction> toggleTransactionIgnoreStatus(String transactionId) {
@@ -143,6 +154,15 @@ public class TransactionService {
         transactionRepository.saveAll(List.of(expenseTx, incomeTx));
     }
 
+    public List<Transaction> getAllTransactions() {
+        User currentUser = SecurityConfiguration.getCurrentUser();
+        if (currentUser == null) return List.of();
+        
+        return transactionRepository.findAllByUserId(currentUser.getId()).stream()
+            .map(this::decryptTransaction)
+            .collect(Collectors.toList());
+    }
+
     public List<Transaction> categorizeSimilarTransactions(String remittanceInfo, String categoryId, String subCategoryId) {
 
         // This method needs to be made fully user-aware if you continue to use it,
@@ -155,14 +175,10 @@ public class TransactionService {
 
     }
 
-    public List<Transaction> getAllTransactions() {
-        User currentUser = SecurityConfiguration.getCurrentUser();
-        if (currentUser == null) return List.of();
-        
-        return transactionRepository.findAllByUserId(currentUser.getId())
-                .stream().map(this::decryptTransaction).collect(Collectors.toList());
+    public void saveAllTransactions(List<Transaction> transactions) {
+        transactionRepository.saveAll(transactions);
     }
-
+    
     private Transaction enrichTransactionWithCategoryNames(Transaction tx, Map<String, Category> categoryMap) {
         if (tx.getCategoryId() != null) {
             Category mainCat = categoryMap.get(tx.getCategoryId());
@@ -171,6 +187,8 @@ public class TransactionService {
         if (tx.getSubCategoryId() != null) {
             Category subCat = categoryMap.get(tx.getSubCategoryId());
             if (subCat != null) tx.setSubCategoryName(subCat.getName());
+        } else {
+            tx.setSubCategoryName(null);
         }
         return tx;
     }

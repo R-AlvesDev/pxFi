@@ -41,7 +41,7 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
         "{ '$group': { '_id': '$categoryName', 'total': { '$sum': { '$toDouble': '$transactionAmount.amount' } } } }",
         "{ '$project': { 'categoryName': '$_id', 'total': { '$abs': '$total' }, '_id': 0 } }"
     })
-    List<CategorySpending> findSpendingByCategory(String userId, String accountId, String startDate, String endDate);
+    List<CategorySpending> findSpendingByCategory(ObjectId userId, String accountId, String startDate, String endDate);
 
     List<Transaction> findByBookingDateBetween(String startDate, String endDate);
 
