@@ -1,0 +1,42 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Run Spring Boot (Default Profile)",
+            "request": "launch",
+            "mainClass": "com.pxfi.PxFiApplication",
+            "projectName": "pxFi",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Run Spring Boot (Cloud Profile)",
+            "request": "launch",
+            "mainClass": "com.pxfi.PxFiApplication",
+            "projectName": "pxFi",
+            "args": "--spring.profiles.active=cloud",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Run Data Migration Script (Cloud DB)",
+            "request": "launch",
+            "mainClass": "com.pxfi.PxFiApplication",
+            "projectName": "pxFi",
+            "args": "--spring.profiles.active=cloud,datamigration",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
