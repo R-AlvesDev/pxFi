@@ -23,6 +23,7 @@ interface Transaction extends ApiTransaction {
 export class TransactionsComponent implements OnInit, OnDestroy {
   selectedAccountId: string | null = null;
   transactions: Transaction[] = [];
+  originalTransactions: Transaction[] = []; // Store the original state
   filteredTransactions: Transaction[] = [];
   error: string | null = null;
   loading = false;
@@ -66,18 +67,22 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     this.accountSub?.unsubscribe();
   }
 
+  private setTransactions(data: Transaction[]): void {
+    this.transactions = data.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime())
+                          .map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
+    // Create a deep copy of the pristine data for comparison later
+    this.originalTransactions = JSON.parse(JSON.stringify(this.transactions));
+    this.applyFilters(true);
+    this.loading = false;
+  }
+
   loadCachedTransactions(): void {
     if (!this.selectedAccountId) return;
     this.loading = true;
     this.error = null;
 
     this.api.getAccountTransactions(this.selectedAccountId, this.startDate, this.endDate).subscribe({
-      next: (res) => {
-        this.transactions = res.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime())
-                               .map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
-        this.applyFilters(true); // Reset to page 1 when loading all new data
-        this.loading = false;
-      },
+      next: (res) => this.setTransactions(res),
       error: (err) => {
         this.error = 'Failed to load transactions: ' + err.message;
         this.loading = false;
@@ -94,10 +99,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
 
     this.api.refreshTransactions(this.selectedAccountId).subscribe({
       next: (refreshedTransactions) => {
-        this.transactions = refreshedTransactions.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime())
-                                                  .map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
-        this.applyFilters(true); // Reset to page 1 after a full refresh
-        this.loading = false;
+        this.setTransactions(refreshedTransactions);
         this.notificationService.show('Transactions refreshed successfully!', 'success');
       },
       error: (err) => {
@@ -108,10 +110,6 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Applies filters to the transaction list.
-   * @param resetPage If true, resets the current page to 1. Defaults to true.
-   */
   applyFilters(resetPage: boolean = true): void {
     if (resetPage) {
       this.currentPage = 1;
@@ -137,80 +135,69 @@ export class TransactionsComponent implements OnInit, OnDestroy {
 
   saveCategory(transaction: Transaction): void {
     if (!transaction.categoryId) {
-      this.notificationService.show('Please select a main category first.', 'error');
-      return;
+        this.notificationService.show('Please select a main category first.', 'error');
+        return;
     }
 
-    const originalTransaction = this.transactions.find(t => t.id === transaction.id);
-    const wasAlreadyCategorized = !!originalTransaction?.categoryId;
+    const originalTransactionBeforeAnyChange = this.originalTransactions.find(t => t.id === transaction.id);
+    const wasAlreadyCategorized = !!originalTransactionBeforeAnyChange?.categoryId;
 
     this.api.updateTransactionCategory(transaction.id, transaction.categoryId, transaction.subCategoryId || null).subscribe({
-      next: updatedTx => {
-        const index = this.transactions.findIndex(t => t.id === updatedTx.id);
-        if (index !== -1) {
-          const wasExpanded = this.transactions[index].expanded;
-          this.transactions[index] = { ...updatedTx, expanded: wasExpanded, categoryDirty: false };
-          
-          this.applyFilters(false);
-        }
-        this.notificationService.show('Category saved!', 'success');
-        this.promptToCategorizeSimilar(updatedTx, wasAlreadyCategorized);
-      },
-      error: err => {
-        console.error('Failed to update category', err);
-        this.notificationService.show('Failed to save category.', 'error');
-      }
-    });
-  }
+        next: updatedTx => {
+            const index = this.transactions.findIndex(t => t.id === updatedTx.id);
+            if (index !== -1) {
+                const wasExpanded = this.transactions[index].expanded;
+                this.transactions[index] = { ...updatedTx, expanded: wasExpanded, categoryDirty: false };
+                
+                this.originalTransactions[index] = { ...this.transactions[index] };
 
-  private promptToCategorizeSimilar(updatedTx: Transaction, wasAlreadyCategorized: boolean): void {
+                this.applyFilters(false);
+            }
+            this.notificationService.show('Category saved!', 'success');
+            this.promptToCategorizeSimilar(updatedTx, wasAlreadyCategorized);
+        },
+        error: err => {
+            console.error('Failed to update category', err);
+            this.notificationService.show('Failed to save category.', 'error');
+        }
+    });
+}
+
+private promptToCategorizeSimilar(updatedTx: Transaction, wasAlreadyCategorized: boolean): void {
     const remittanceInfo = updatedTx.remittanceInformationUnstructured;
     if (!remittanceInfo) return;
 
-    // Use normalized remittance info for local filtering to be consistent with backend
     const normalizedRemittanceInfo = remittanceInfo.trim().replace(/\s+/g, ' ');
     let similarCount = 0;
-    const isAddingSubcategory = wasAlreadyCategorized && !!updatedTx.subCategoryId;
+
     const isNewCategorization = !wasAlreadyCategorized && !!updatedTx.categoryId;
 
-    if (isAddingSubcategory) {
-      similarCount = this.transactions.filter(t => {
-        const currentRemittance = t.remittanceInformationUnstructured?.trim().replace(/\s+/g, ' ') || '';
-        return t.id !== updatedTx.id &&
-               currentRemittance === normalizedRemittanceInfo &&
-               t.categoryId === updatedTx.categoryId &&
-               !t.subCategoryId;
-      }).length;
-    } else if (isNewCategorization) {
-      similarCount = this.transactions.filter(t => {
-        const currentRemittance = t.remittanceInformationUnstructured?.trim().replace(/\s+/g, ' ') || '';
-        return t.id !== updatedTx.id &&
-               currentRemittance === normalizedRemittanceInfo &&
-               !t.categoryId;
-      }).length;
+    if (isNewCategorization) {
+        similarCount = this.transactions.filter(t => {
+            const currentRemittance = t.remittanceInformationUnstructured?.trim().replace(/\s+/g, ' ') || '';
+            return t.id !== updatedTx.id &&
+                   currentRemittance === normalizedRemittanceInfo &&
+                   !t.categoryId;
+        }).length;
     }
 
     if (similarCount > 0) {
-      const message = isAddingSubcategory
-        ? `Found ${similarCount} other transaction(s) with the category "${updatedTx.categoryName}" but no subcategory. Apply the "${updatedTx.subCategoryName}" subcategory to them all?`
-        : `Found ${similarCount} other uncategorized transaction(s) with the same description. Apply this category to them all?`;
+        const message = `Found ${similarCount} other uncategorized transaction(s) with the same description. Apply this category to them all?`;
 
-      if (confirm(message)) {
-        // We send the original remittance info, as the backend will normalize it
-        this.api.categorizeSimilarTransactions(remittanceInfo, updatedTx.categoryId!, updatedTx.subCategoryId || null).subscribe({
-          next: () => {
-            this.notificationService.show(`Applied category to ${similarCount} similar transaction(s).`, 'success');
-            // After a bulk update, it's correct to reload everything and go to page 1.
-            this.loadCachedTransactions();
-          },
-          error: (err) => {
-            console.error('Failed to categorize similar transactions', err);
-            this.notificationService.show('Failed to categorize similar transactions.', 'error');
-          }
-        });
-      }
+        if (confirm(message)) {
+            this.api.categorizeSimilarTransactions(remittanceInfo, updatedTx.categoryId!, updatedTx.subCategoryId || null, false).subscribe({
+                next: () => {
+                    this.notificationService.show(`Applied category to ${similarCount} similar transaction(s).`, 'success');
+                    this.loadCachedTransactions();
+                },
+                error: (err) => {
+                    console.error('Failed to categorize similar transactions', err);
+                    this.notificationService.show('Failed to categorize similar transactions.', 'error');
+                }
+            });
+        }
     }
-  }
+}
 
   toggleIgnore(transaction: Transaction): void {
     this.api.toggleTransactionIgnore(transaction.id).subscribe({
@@ -334,4 +321,3 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     }
   }
 }
-
