@@ -56,18 +56,18 @@ This document outlines the features and implementation plan for the first fully 
     * [X] **Frontend**: Implement an `HttpInterceptor` to automatically attach the JWT to all API requests.
     * [X] **Frontend**: Implement route guards to protect all data-sensitive pages.
 
-## Tier 4: Security Hardening 
+## Tier 4: Security Hardening
 
-* [ ] **Feature: Application-Level Encryption**
-    * [ ] **Backend**: Create an `AttributeConverter` class to automatically encrypt and decrypt sensitive fields.
-    * [ ] **Backend**: Implement a secure key management strategy to store the encryption key outside of the database and source code (e.g., using environment variables or a secrets manager).
-    * [ ] **Backend**: Apply the encryption converter to the following sensitive fields in the models:
+* [X] **Feature: Application-Level Encryption**
+    * [X] **Backend**: Create an `AttributeConverter` class to automatically encrypt and decrypt sensitive fields.
+    * [X] **Backend**: Implement a secure key management strategy to store the encryption key outside of the database and source code (e.g., using environment variables or a secrets manager).
+    * [X] **Backend**: Apply the encryption converter to the following sensitive fields in the models:
         * `Transaction.transactionId`
         * `Transaction.remittanceInformationUnstructured`
         * `Transaction.transactionAmount.amount`
         * `Account.accountName`
         * `CategorizationRule.valueToMatch`
-    * [ ] **Task**: Perform a final review of all models for any other potentially sensitive PII that should be encrypted.
+    * [X] **Task**: Perform a final review of all models for any other potentially sensitive PII that should be encrypted.
 
 ## Tier 5: Polish & Final Touches
 
@@ -81,6 +81,7 @@ This document outlines the features and implementation plan for the first fully 
     * [ ] **Empty States**: Improve the messages and guidance shown on pages with no data (e.g., a new user's transaction page).
     * [ ] **Accessibility Review**: Do a quick pass to ensure all interactive elements have proper labels for screen readers.
     * [ ] **Mobile Responsiveness**: Test and refine the layout on various screen sizes to ensure a good mobile experience.
+    * [ ] **Transactions List Improv**: Fix the size of the transactions so we have a consistent container size, only expanding when opening transaction details.
 
 * [ ] **Task: Final Code Cleanup**
     * [ ] **Linting**: Run a linter (like ESLint for frontend, and a static analyzer for Java) across the entire codebase to enforce consistent style.
