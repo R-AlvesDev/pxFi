@@ -194,11 +194,25 @@
       }
 
       @if (!loading && !error && filteredTransactions.length === 0) {
-        <div class="alert alert-secondary text-center">
-          No transactions found. Try adjusting your filters or click Refresh to sync with your bank.
+        <div class="text-center p-5">
+            <i class="fas fa-search-dollar fa-3x text-muted mb-3"></i>
+            <h4>No Transactions Found</h4>
+            <p class="text-muted">
+                There are no transactions that match your current filters. <br>
+                Try clearing the date filter or selecting a different category.
+            </p>
+            <button class="btn btn-primary" (click)="refreshTransactions()" [disabled]="loading">
+                @if (loading) {
+                <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                <span>Refreshing...</span>
+                } @else {
+                <i class="fas fa-sync-alt me-1"></i>
+                <span>Refresh Connection</span>
+                }
+            </button>
         </div>
       }
-    </div>
+      </div>
   </div>
 
   @if (isLinkingMode && selectedExpenseId && selectedIncomeId) {
