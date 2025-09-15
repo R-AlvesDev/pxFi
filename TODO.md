@@ -80,8 +80,7 @@ This document outlines the features and implementation plan for the first fully 
     * [X] **Account Naming**: Allow users to edit the name of their connected bank accounts.
     * [X] **Empty States**: Improve the messages and guidance shown on pages with no data (e.g., a new user's transaction page).
     * [ ] **Accessibility Review**: Do a quick pass to ensure all interactive elements have proper labels for screen readers.
-    * [ ] **Mobile Responsiveness**: Test and refine the layout on various screen sizes to ensure a good mobile experience.
-    * [ ] **Transactions List Improv**: Fix the size of the transactions so we have a consistent container size, only expanding when opening transaction details.
+    * [X] **Mobile Responsiveness**: Test and refine the layout on various screen sizes to ensure a good mobile experience.
 
 * [ ] **Task: Final Code Cleanup**
     * [ ] **Linting**: Run a linter (like ESLint for frontend, and a static analyzer for Java) across the entire codebase to enforce consistent style.
