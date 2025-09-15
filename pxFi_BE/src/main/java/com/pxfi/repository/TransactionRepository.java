@@ -60,4 +60,6 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
     @Query("{'accountId': ?0, 'userId': ObjectId('?1'), 'bookingDate': {'$gte': ?2, '$lte': ?3}}")
     List<Transaction> findByAccountIdAndUserIdAndBookingDateBetweenOrderByBookingDateDesc(String accountId, ObjectId userId, String startDate, String endDate);
 
+    void deleteByAccountId(String accountId);
+
 }

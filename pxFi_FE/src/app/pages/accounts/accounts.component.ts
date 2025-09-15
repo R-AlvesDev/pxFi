@@ -1,22 +1,25 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { Observable } from 'rxjs';
 import { ApiService, Account } from '../../services/api.service';
 import { AccountStateService } from '../../services/account-state.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { NotificationService } from '../../services/notification.service';
+import { FormsModule } from '@angular/forms'; 
 
 @Component({
   selector: 'app-accounts',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './accounts.component.html',
   styleUrls: ['./accounts.component.scss']
 })
 export class AccountsComponent implements OnInit {
-  accounts$: Observable<Account[]> | undefined;
+  accounts: Account[] = []; 
   loading = true;
+
+  editingAccountId: string | null = null;
+  originalAccountName: string = '';
 
   constructor(
     private api: ApiService,
@@ -27,9 +30,16 @@ export class AccountsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.accounts$ = this.api.getAccounts();
-    this.accounts$.subscribe({
-      next: () => this.loading = false,
+    this.loadAccounts();
+  }
+
+  loadAccounts(): void {
+    this.loading = true;
+    this.api.getAccounts().subscribe({
+      next: (data) => {
+        this.accounts = data;
+        this.loading = false;
+      },
       error: (err) => {
         this.notificationService.show('Failed to load accounts.', 'error');
         this.loading = false;
@@ -38,8 +48,61 @@ export class AccountsComponent implements OnInit {
   }
 
   selectAccount(account: Account): void {
-    this.accountState.setCurrentAccountId(account.gocardlessAccountId);
-    // FIX: Pass the account's gocardlessAccountId as a parameter in the route
-    this.router.navigate(['/dashboard', account.gocardlessAccountId]);
+    if (this.editingAccountId !== account.id) {
+      this.accountState.setCurrentAccountId(account.gocardlessAccountId);
+      this.router.navigate(['/dashboard', account.gocardlessAccountId]);
+    }
+  }
+
+  startEditing(account: Account, event: MouseEvent): void {
+    event.stopPropagation(); 
+    this.editingAccountId = account.id;
+    this.originalAccountName = account.accountName;
+  }
+
+  cancelEditing(account: Account, event: Event): void {
+    event.stopPropagation();
+    account.accountName = this.originalAccountName;
+    this.editingAccountId = null;
+  }
+
+  saveAccountName(account: Account, event: Event): void {
+    event.stopPropagation();
+    if (!account.accountName || account.accountName.trim() === '') {
+      this.notificationService.show('Account name cannot be empty.', 'error');
+      account.accountName = this.originalAccountName; 
+      return;
+    }
+
+    this.api.updateAccountName(account.id, account.accountName).subscribe({
+      next: (updatedAccount) => {
+        const index = this.accounts.findIndex(a => a.id === updatedAccount.id);
+        if (index !== -1) {
+          this.accounts[index] = updatedAccount;
+        }
+        this.notificationService.show('Account name updated!', 'success');
+        this.editingAccountId = null; 
+      },
+      error: (err) => {
+        this.notificationService.show('Failed to update name.', 'error');
+        account.accountName = this.originalAccountName;
+      }
+    });
+  }
+
+  deleteAccount(accountId: string, event: Event): void {
+    event.stopPropagation();
+    
+    if (confirm('Are you sure you want to delete this account? This will also delete all of its transactions.')) {
+      this.api.deleteAccount(accountId).subscribe({
+        next: () => {
+          this.notificationService.show('Account deleted successfully!', 'success');
+          this.loadAccounts(); // Refresh the account list
+        },
+        error: (err) => {
+          this.notificationService.show('Failed to delete account.', 'error');
+        }
+      });
+    }
   }
 }

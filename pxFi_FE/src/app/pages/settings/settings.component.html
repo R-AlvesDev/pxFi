@@ -28,14 +28,9 @@
           <ul class="list-group">
             @for (category of mainCategories; track category) {
               <li class="list-group-item">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" [id]="'asset-transfer-' + category.id" 
-                               [(ngModel)]="category.isAssetTransfer" 
-                               (ngModelChange)="onAssetTransferChange(category)">
-                        <label class="form-check-label" (click)="toggleCategory(category.id)" style="cursor: pointer;" [for]="'asset-transfer-' + category.id">
-                            <strong>{{ category.name }}</strong>
-                        </label>
+                <div class="d-flex justify-content-between align-items-center" (click)="toggleCategory(category.id)" style="cursor: pointer;">
+                    <div>
+                        <strong>{{ category.name }}</strong>
                     </div>
                     <button class="btn btn-outline-danger btn-sm" (click)="$event.stopPropagation(); deleteCategory(category.id)">Delete</button>
                 </div>
@@ -61,7 +56,6 @@
       </div>
     </div>
 
-    <!-- The rest of the file (Rules Management) remains the same -->
     <div class="col-lg-6">
       <div class="card h-100">
         <div class="card-header"><h5 class="mb-0">Manage Automation Rules</h5></div>
