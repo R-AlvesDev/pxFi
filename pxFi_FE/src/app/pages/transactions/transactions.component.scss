@@ -129,4 +129,13 @@ tr.ignored {
       }
     }
   }
+  .d-flex.justify-content-between.align-items-center {
+    flex-direction: column; // Stack the "Rows" dropdown and the pagination
+    gap: 1rem; // Add some space between them
+
+    .pagination {
+      flex-wrap: wrap; // Allow pagination items to wrap onto the next line
+      justify-content: center; // Center the wrapped items
+    }
+  }
 }
