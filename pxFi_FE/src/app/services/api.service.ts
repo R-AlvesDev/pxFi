@@ -223,6 +223,15 @@ export class ApiService {
     return this.http.get<Account[]>(`${this.baseUrl}/accounts`);
   }
 
+  updateAccountName(accountId: string, newName: string): Observable<Account> {
+    const payload = { name: newName };
+    return this.http.put<Account>(`${this.baseUrl}/accounts/${accountId}`, payload);
+  }
+
+  deleteAccount(accountId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/accounts/${accountId}`);
+  }
+  
   getAccountTransactions(accountId: string, startDate?: string, endDate?: string): Observable<Transaction[]> {
     let params = new HttpParams();
     if (startDate) params = params.set('startDate', startDate);

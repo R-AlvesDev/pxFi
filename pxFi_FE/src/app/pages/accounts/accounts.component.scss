@@ -1,21 +1,40 @@
 .account-card {
-    cursor: pointer;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  
-    &:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-    }
-  
-    &.add-new {
-      border-style: dashed;
-      border-width: 2px;
-  
-      &:hover {
-        border-color: var(--bs-primary);
-        .text-muted {
-          color: var(--bs-primary) !important;
-        }
-      }
-    }
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  position: relative; // This is crucial for positioning the child element
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
   }
+
+  &.add-new {
+    border-style: dashed;
+    border-width: 2px;
+  }
+}
+
+.card-actions {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 10; // Ensures buttons are on top of other card content
+  display: flex;
+  gap: 0.25rem;
+}
+
+.btn {
+  transition: background-color 0.2s ease-in-out;
+  border-radius: 0.25rem; // Gives a slightly rounded background on hover
+
+  // Hover for the generic (edit) button
+  &:hover {
+    background-color: #e9ecef; // A light grey background
+  }
+
+  // Specific hover for the delete button to make it pink/red
+  &.text-danger:hover {
+    background-color: #f8d7da; // A light red background
+    color: #721c24 !important;  // Darker red text for contrast
+  }
+}

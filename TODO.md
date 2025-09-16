@@ -71,17 +71,16 @@ This document outlines the features and implementation plan for the first fully 
 
 ## Tier 5: Polish & Final Touches
 
-* [ ] **Feature: Harden Registration Process**
-    * [ ] **Backend**: Add validation to the registration endpoint to enforce strong passwords (e.g., minimum length, uppercase, number, special character).
-    * [ ] **Backend**: Add validation for username (e.g., minimum length, no special characters) and ensure email is a valid format.
-    * [ ] **Frontend**: Update the registration form to provide real-time feedback on these new requirements.
+* [X] **Feature: Harden Registration Process**
+    * [X] **Backend**: Add validation to the registration endpoint to enforce strong passwords (e.g., minimum length, uppercase, number, special character).
+    * [X] **Backend**: Add validation for username (e.g., minimum length, no special characters) and ensure email is a valid format.
+    * [X] **Frontend**: Update the registration form to provide real-time feedback on these new requirements.
 
 * [ ] **Task: General UI/UX Improvements**
-    * [ ] **Account Naming**: Allow users to edit the name of their connected bank accounts.
-    * [ ] **Empty States**: Improve the messages and guidance shown on pages with no data (e.g., a new user's transaction page).
+    * [X] **Account Naming**: Allow users to edit the name of their connected bank accounts.
+    * [X] **Empty States**: Improve the messages and guidance shown on pages with no data (e.g., a new user's transaction page).
     * [ ] **Accessibility Review**: Do a quick pass to ensure all interactive elements have proper labels for screen readers.
-    * [ ] **Mobile Responsiveness**: Test and refine the layout on various screen sizes to ensure a good mobile experience.
-    * [ ] **Transactions List Improv**: Fix the size of the transactions so we have a consistent container size, only expanding when opening transaction details.
+    * [X] **Mobile Responsiveness**: Test and refine the layout on various screen sizes to ensure a good mobile experience.
 
 * [ ] **Task: Final Code Cleanup**
     * [ ] **Linting**: Run a linter (like ESLint for frontend, and a static analyzer for Java) across the entire codebase to enforce consistent style.

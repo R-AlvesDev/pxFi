@@ -1,29 +1,50 @@
 <div class="row justify-content-center mt-5">
-    <div class="col-md-6 col-lg-4">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h3 class="card-title text-center mb-4">Register</h3>
-          <form (ngSubmit)="onRegister()">
-            <div class="mb-3">
-              <label for="username" class="form-label">Username</label>
-              <input type="text" class="form-control" id="username" [(ngModel)]="registerData.username" name="username" required>
+  <div class="col-md-6 col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h3 class="card-title text-center mb-4">Register</h3>
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+          
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" formControlName="username" 
+                   [ngClass]="{ 'is-invalid': username?.invalid && (username?.dirty || username?.touched) }">
+            <div *ngIf="username?.invalid && (username?.dirty || username?.touched)" class="invalid-feedback">
+              <div *ngIf="username?.errors?.['required']">Username is required.</div>
+              <div *ngIf="username?.errors?.['minlength']">Username must be at least 4 characters long.</div>
+              <div *ngIf="username?.errors?.['pattern']">Username can only contain letters and numbers.</div>
             </div>
-            <div class="mb-3">
-              <label for="email" class="form-label">Email</label>
-              <input type="email" class="form-control" id="email" [(ngModel)]="registerData.email" name="email" required>
-            </div>
-            <div class="mb-3">
-              <label for="password" class="form-label">Password</label>
-              <input type="password" class="form-control" id="password" [(ngModel)]="registerData.password" name="password" required>
-            </div>
-            <div class="d-grid">
-              <button type="submit" class="btn btn-primary">Register</button>
-            </div>
-          </form>
-           <div class="text-center mt-3">
-            <small>Already have an account? <a routerLink="/login">Login here</a></small>
           </div>
+
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" formControlName="email"
+                   [ngClass]="{ 'is-invalid': email?.invalid && (email?.dirty || email?.touched) }">
+            <div *ngIf="email?.invalid && (email?.dirty || email?.touched)" class="invalid-feedback">
+              <div *ngIf="email?.errors?.['required']">Email is required.</div>
+              <div *ngIf="email?.errors?.['email']">Please enter a valid email address.</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" formControlName="password"
+                   [ngClass]="{ 'is-invalid': password?.invalid && (password?.dirty || password?.touched) }">
+            <div *ngIf="password?.invalid && (password?.dirty || password?.touched)" class="invalid-feedback">
+              <div *ngIf="password?.errors?.['required']">Password is required.</div>
+              <div *ngIf="password?.errors?.['minlength']">Password must be at least 8 characters long.</div>
+              <div *ngIf="password?.errors?.['pattern']">Must include uppercase, lowercase, number, and special character.</div>
+            </div>
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary" [disabled]="registerForm.invalid">Register</button>
+          </div>
+        </form>
+         <div class="text-center mt-3">
+          <small>Already have an account? <a routerLink="/login">Login here</a></small>
         </div>
       </div>
     </div>
   </div>
+</div>

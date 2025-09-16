@@ -18,14 +18,12 @@ export class NotificationService {
   private timeoutId: any;
 
   show(message: string, type: NotificationType = 'info', duration: number = 4000): void {
-    // Clear any existing timeout
     if (this.timeoutId) {
       clearTimeout(this.timeoutId);
     }
 
     this.notification.next({ message, type });
 
-    // Automatically hide the notification after the duration
     this.timeoutId = setTimeout(() => {
       this.hide();
     }, duration);
