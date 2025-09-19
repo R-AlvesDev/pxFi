@@ -5,31 +5,66 @@ import java.util.List;
 public class EndUserAgreementResponse {
     private String id;
     private String created;
-    private int max_historical_days;
-    private int access_valid_for_days;
-    private List<String> access_scope;
+    private int maxHistoricalDays;
+    private int accessValidForDays;
+    private List<String> accessScope;
     private String accepted;
-    private String institution_id;
+    private String institutionId;
 
     // Getters and setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getId() {
+        return id;
+    }
 
-    public String getCreated() { return created; }
-    public void setCreated(String created) { this.created = created; }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public int getMax_historical_days() { return max_historical_days; }
-    public void setMax_historical_days(int max_historical_days) { this.max_historical_days = max_historical_days; }
+    public String getCreated() {
+        return created;
+    }
 
-    public int getAccess_valid_for_days() { return access_valid_for_days; }
-    public void setAccess_valid_for_days(int access_valid_for_days) { this.access_valid_for_days = access_valid_for_days; }
+    public void setCreated(String created) {
+        this.created = created;
+    }
 
-    public List<String> getAccess_scope() { return access_scope; }
-    public void setAccess_scope(List<String> access_scope) { this.access_scope = access_scope; }
+    public int getMaxHistoricalDays() {
+        return maxHistoricalDays;
+    }
 
-    public String getAccepted() { return accepted; }
-    public void setAccepted(String accepted) { this.accepted = accepted; }
+    public void setMaxHistoricalDays(int maxHistoricalDays) {
+        this.maxHistoricalDays = maxHistoricalDays;
+    }
 
-    public String getInstitution_id() { return institution_id; }
-    public void setInstitution_id(String institution_id) { this.institution_id = institution_id; }
+    public int getAccessValidForDays() {
+        return accessValidForDays;
+    }
+
+    public void setAccessValidForDays(int accessValidForDays) {
+        this.accessValidForDays = accessValidForDays;
+    }
+
+    public List<String> getAccessScope() {
+        return accessScope;
+    }
+
+    public void setAccessScope(List<String> accessScope) {
+        this.accessScope = accessScope;
+    }
+
+    public String getAccepted() {
+        return accepted;
+    }
+
+    public void setAccepted(String accepted) {
+        this.accepted = accepted;
+    }
+
+    public String getInstitutionId() {
+        return institutionId;
+    }
+
+    public void setInstitutionId(String institutionId) {
+        this.institutionId = institutionId;
+    }
 }

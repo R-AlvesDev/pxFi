@@ -20,8 +20,12 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final CategoryService categoryService;
 
-
-    public AuthenticationService(UserRepository repository, PasswordEncoder passwordEncoder, JwtService jwtService, AuthenticationManager authenticationManager, @Lazy CategoryService categoryService) {
+    public AuthenticationService(
+            UserRepository repository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            AuthenticationManager authenticationManager,
+            @Lazy CategoryService categoryService) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -43,12 +47,10 @@ public class AuthenticationService {
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                )
-        );
-        var user = repository.findByUsername(request.getUsername())
-                .orElseThrow(); // User should exist at this point
+                        request.getUsername(), request.getPassword()));
+        var user = repository
+                .findByUsername(request.getUsername())
+                .orElseThrow();
         var jwtToken = jwtService.generateToken(user);
         return new AuthenticationResponse(jwtToken);
     }

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ApiService, AuthResponse } from '../api.service';
 import { Router } from '@angular/router';
@@ -8,14 +8,12 @@ import { AccountStateService } from '../account-state.service';
   providedIn: 'root'
 })
 export class AuthService {
+  private api = inject(ApiService);
+  private router = inject(Router);
+  private accountState = inject(AccountStateService);
+
   private loggedIn = new BehaviorSubject<boolean>(this.hasToken());
   public loggedIn$ = this.loggedIn.asObservable();
-
-  constructor(
-    private api: ApiService,
-    private router: Router,
-    private accountState: AccountStateService
-  ) {}
 
   private hasToken(): boolean {
     return !!localStorage.getItem('accessToken');
@@ -24,7 +22,7 @@ export class AuthService {
   public checkLoginStatus(): void {
     this.loggedIn.next(this.hasToken());
   }
-  
+
   register(registerData: any): Observable<AuthResponse> {
     return this.api.register(registerData).pipe(
       tap(response => {

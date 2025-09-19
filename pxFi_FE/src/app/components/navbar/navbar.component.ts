@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { AccountStateService } from '../../services/account-state.service';
@@ -13,12 +13,17 @@ import { AuthService } from '../../services/auth/auth.service';
   styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent {
+  private accountState = inject(AccountStateService);
+  private authService = inject(AuthService);
+
   currentAccountId$: Observable<string | null>;
   isLoggedIn$: Observable<boolean>;
 
   @ViewChild('navbarCollapse') navbarCollapse!: ElementRef;
 
-  constructor(private accountState: AccountStateService, private authService: AuthService) {
+
+
+  constructor() {
     this.currentAccountId$ = this.accountState.currentAccountId$;
     this.isLoggedIn$ = this.authService.loggedIn$;
   }

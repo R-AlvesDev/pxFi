@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ApiService, CategorizationRule, TestRuleResponse } from './api.service';
 
@@ -6,16 +6,17 @@ import { ApiService, CategorizationRule, TestRuleResponse } from './api.service'
   providedIn: 'root'
 })
 export class RuleService {
+  private api = inject(ApiService);
+
   private rules = new BehaviorSubject<CategorizationRule[]>([]);
   public rules$ = this.rules.asObservable();
 
-  constructor(private api: ApiService) {}
 
-  getAllRules( ): Observable<CategorizationRule[]> {
+  getAllRules(): Observable<CategorizationRule[]> {
     return this.api.getAllRules().pipe(
       tap(rules => this.rules.next(rules))
     );
-}
+  }
 
   createRule(rule: Partial<CategorizationRule>): Observable<CategorizationRule> {
     return this.api.createRule(rule).pipe(
@@ -27,7 +28,7 @@ export class RuleService {
     return this.api.applyAllRules();
   }
 
-  deleteRule( id: string): Observable<void> {
+  deleteRule(id: string): Observable<void> {
     return this.api.deleteRule(id).pipe(
       tap(() => this.getAllRules().subscribe())
     );

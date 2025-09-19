@@ -9,7 +9,8 @@ import org.springframework.data.mongodb.core.mapping.Field;
 public class Transaction {
     @Id
     private String id;
-    private ObjectId userId; 
+    private ObjectId userId;
+
     public ObjectId getUserId() {
         return userId;
     }
@@ -27,7 +28,7 @@ public class Transaction {
     private String valueDate;
     private String remittanceInformationUnstructured;
     private String bankTransactionCode;
-    private boolean ignored = false; 
+    private boolean ignored = false;
     private String categoryId;
     private String subCategoryId;
     private String categoryName;
@@ -61,7 +62,7 @@ public class Transaction {
     public void setSubCategoryId(String subCategoryId) {
         this.subCategoryId = subCategoryId;
     }
-    
+
     public String getCategoryName() {
         return categoryName;
     }
@@ -77,9 +78,6 @@ public class Transaction {
     public void setSubCategoryName(String subCategoryName) {
         this.subCategoryName = subCategoryName;
     }
-
-
-    // --- Existing getters and setters below ---
 
     public String getTransactionId() {
         return transactionId;
@@ -176,5 +174,4 @@ public class Transaction {
     public void setInternalTransactionId(String internalTransactionId) {
         this.internalTransactionId = internalTransactionId;
     }
-
 }

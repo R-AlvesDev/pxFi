@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService, DashboardSummary } from '../../services/api.service';
 import { AccountStateService } from '../../services/account-state.service';
@@ -14,21 +14,19 @@ import { RouterLink } from '@angular/router';
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
+  private api = inject(ApiService);
+  private accountState = inject(AccountStateService);
+  private notificationService = inject(NotificationService);
+
   summary: DashboardSummary | null = null;
   loading = true;
   currentAccountId: string | null = null;
-
-  constructor(
-    private api: ApiService,
-    private accountState: AccountStateService,
-    private notificationService: NotificationService
-  ) {}
 
   ngOnInit(): void {
 
     this.accountState.currentAccountId$.pipe(
       tap(() => {
-        this.loading = true; 
+        this.loading = true;
         this.summary = null;
       }),
       switchMap(accountId => {
@@ -36,14 +34,14 @@ export class DashboardComponent implements OnInit {
           this.currentAccountId = accountId;
           return this.api.getDashboardSummary(accountId);
         }
-        return of(null); 
+        return of(null);
       })
     ).subscribe({
       next: (summaryData) => {
         this.summary = summaryData;
         this.loading = false;
       },
-      error: (err) => {
+      error: () => {
         this.notificationService.show('Failed to load dashboard summary.', 'error');
         this.loading = false;
       }

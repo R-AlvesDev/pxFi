@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
@@ -14,6 +14,9 @@ import { AccountStateService } from '../../services/account-state.service';
   styleUrls: ['./statistics.component.scss']
 })
 export class StatisticsComponent implements OnInit {
+  private api = inject(ApiService);
+  private accountState = inject(AccountStateService);
+
   // Authentication and account state
   currentAccountId: string | null = null;
   // View control
@@ -37,7 +40,7 @@ export class StatisticsComponent implements OnInit {
   yearlyStats: YearlyStatisticsResponse | null = null;
   loading = false;
   error: string | null = null;
-  showChart = false; // Flag to control chart rendering
+  showChart = false;
 
   // Doughnut Chart (Monthly)
   public doughnutChartData: ChartData<'doughnut'> = { labels: [], datasets: [{ data: [] }] };
@@ -55,7 +58,9 @@ export class StatisticsComponent implements OnInit {
   public barChartType: ChartType = 'bar';
   public barChartOptions: ChartConfiguration['options'] = { responsive: true, maintainAspectRatio: false };
 
-  constructor(private api: ApiService, private accountState: AccountStateService) {
+
+
+  constructor() {
     Chart.register(...registerables);
   }
 
@@ -94,11 +99,9 @@ export class StatisticsComponent implements OnInit {
   }
 
   private handleMonthlyResponse(response: StatisticsResponse): void {
-    // Log the raw response to the browser's developer console for debugging
-    console.log('Received Monthly API Response:', response);
-    
+
     this.monthlyStats = response;
-    
+
     this.doughnutChartData = {
       labels: response.expensesByCategory.map(item => item.categoryName || 'Uncategorized'),
       datasets: [
@@ -109,7 +112,6 @@ export class StatisticsComponent implements OnInit {
     };
 
     this.loading = false;
-    // Use a timeout to ensure Angular processes data changes before re-creating the chart
     setTimeout(() => { this.showChart = true; }, 0);
   }
 
@@ -117,19 +119,19 @@ export class StatisticsComponent implements OnInit {
     this.yearlyStats = response;
 
     this.barChartData = {
-        ...this.barChartData,
-        datasets: [
-            { 
-                ...this.barChartData.datasets[0],
-                data: response.monthlyBreakdowns.map(m => m.income) 
-            },
-            { 
-                ...this.barChartData.datasets[1],
-                data: response.monthlyBreakdowns.map(m => m.expenses) 
-            }
-        ]
+      ...this.barChartData,
+      datasets: [
+        {
+          ...this.barChartData.datasets[0],
+          data: response.monthlyBreakdowns.map(m => m.income)
+        },
+        {
+          ...this.barChartData.datasets[1],
+          data: response.monthlyBreakdowns.map(m => m.expenses)
+        }
+      ]
     };
-    
+
     this.loading = false;
     setTimeout(() => { this.showChart = true; }, 0);
   }
@@ -137,6 +139,6 @@ export class StatisticsComponent implements OnInit {
   private handleError(err: any): void {
     this.error = 'Failed to load statistics: ' + err.message;
     this.loading = false;
-    this.showChart = false; // Ensure chart stays hidden on error
+    this.showChart = false;
   }
 }

@@ -3,49 +3,53 @@ package com.pxfi.model;
 import java.util.List;
 
 public class EndUserAgreementRequest {
-    private String institution_id;
-    private String max_historical_days;
-    private String access_valid_for_days;
-    private List<String> access_scope;
+    private String institutionId;
+    private String maxHistoricalDays;
+    private String accessValidForDays;
+    private List<String> accessScope;
 
     public EndUserAgreementRequest() {}
 
-    public EndUserAgreementRequest(String institution_id, String max_historical_days, String access_valid_for_days, List<String> access_scope) {
-        this.institution_id = institution_id;
-        this.max_historical_days = max_historical_days;
-        this.access_valid_for_days = access_valid_for_days;
-        this.access_scope = access_scope;
+    public EndUserAgreementRequest(
+            String institutionId,
+            String maxHistoricalDays,
+            String accessValidForDays,
+            List<String> accessScope) {
+        this.institutionId = institutionId;
+        this.maxHistoricalDays = maxHistoricalDays;
+        this.accessValidForDays = accessValidForDays;
+        this.accessScope = accessScope;
     }
 
-    public String getInstitution_id() {
-        return institution_id;
+    public String getInstitutionId() {
+        return institutionId;
     }
 
-    public void setInstitution_id(String institution_id) {
-        this.institution_id = institution_id;
+    public void setInstitutionId(String institutionId) {
+        this.institutionId = institutionId;
     }
 
-    public String getMax_historical_days() {
-        return max_historical_days;
+    public String getMaxHistoricalDays() {
+        return maxHistoricalDays;
     }
 
-    public void setMax_historical_days(String max_historical_days) {
-        this.max_historical_days = max_historical_days;
+    public void setMaxHistoricalDays(String maxHistoricalDays) {
+        this.maxHistoricalDays = maxHistoricalDays;
     }
 
-    public String getAccess_valid_for_days() {
-        return access_valid_for_days;
+    public String getAccessValidForDays() {
+        return accessValidForDays;
     }
 
-    public void setAccess_valid_for_days(String access_valid_for_days) {
-        this.access_valid_for_days = access_valid_for_days;
+    public void setAccessValidForDays(String accessValidForDays) {
+        this.accessValidForDays = accessValidForDays;
     }
 
-    public List<String> getAccess_scope() {
-        return access_scope;
+    public List<String> getAccessScope() {
+        return accessScope;
     }
 
-    public void setAccess_scope(List<String> access_scope) {
-        this.access_scope = access_scope;
+    public void setAccessScope(List<String> accessScope) {
+        this.accessScope = accessScope;
     }
 }

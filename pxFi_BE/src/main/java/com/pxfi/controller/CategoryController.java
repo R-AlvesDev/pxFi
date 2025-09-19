@@ -1,8 +1,9 @@
 package com.pxfi.controller;
 
+import com.pxfi.model.Category;
+import com.pxfi.service.CategoryService;
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,9 +13,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.pxfi.model.Category;
-import com.pxfi.service.CategoryService;
 
 @RestController
 @RequestMapping("/api/categories")
@@ -37,10 +35,12 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Category> updateCategory(@PathVariable String id, @RequestBody Category categoryDetails) {
+    public ResponseEntity<Category> updateCategory(
+            @PathVariable String id, @RequestBody Category categoryDetails) {
         Optional<Category> updatedCategory = categoryService.updateCategory(id, categoryDetails);
-        return updatedCategory.map(ResponseEntity::ok)
-                              .orElseGet(() -> ResponseEntity.notFound().build());
+        return updatedCategory
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")

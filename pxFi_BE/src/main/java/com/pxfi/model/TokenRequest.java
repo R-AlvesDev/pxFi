@@ -1,29 +1,29 @@
 package com.pxfi.model;
 
 public class TokenRequest {
-    private String secret_id;
-    private String secret_key;
+    private String secretId;
+    private String secretKey;
 
     public TokenRequest() {}
 
-    public TokenRequest(String secret_id, String secret_key) {
-        this.secret_id = secret_id;
-        this.secret_key = secret_key;
+    public TokenRequest(String secretId, String secretKey) {
+        this.secretId = secretId;
+        this.secretKey = secretKey;
     }
 
-    public String getSecret_id() {
-        return secret_id;
+    public String getSecretId() {
+        return secretId;
     }
 
-    public void setSecret_id(String secret_id) {
-        this.secret_id = secret_id;
+    public void setSecretId(String secretId) {
+        this.secretId = secretId;
     }
 
-    public String getSecret_key() {
-        return secret_key;
+    public String getSecretKey() {
+        return secretKey;
     }
 
-    public void setSecret_key(String secret_key) {
-        this.secret_key = secret_key;
+    public void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
     }
 }

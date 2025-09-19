@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpEvent, HttpInterceptor, HttpHandler, HttpRequest, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -6,12 +6,11 @@ import { Router } from '@angular/router';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-
-  constructor(private router: Router) {}
+  private router = inject(Router);
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = localStorage.getItem('accessToken');
-    let authReq = req; // Start with the original request
+    let authReq = req;
 
     if (token) {
       authReq = req.clone({
@@ -19,17 +18,14 @@ export class AuthInterceptor implements HttpInterceptor {
       });
     }
 
-    // We pass the (potentially cloned) request to the next handler
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
         if (error.status === 401) {
-          // Token is invalid or expired, clear local storage
           console.error('Unauthorized request - redirecting to login page');
           localStorage.removeItem('accessToken');
           localStorage.removeItem('requisitionId');
           localStorage.removeItem('selectedAccountId');
-          
-          // Redirect to the login page instead of the connect page
+
           this.router.navigate(['/login']);
         }
         return throwError(() => error);

@@ -4,14 +4,12 @@ import com.pxfi.crypto.EncryptionService;
 import com.pxfi.model.Account;
 import com.pxfi.repository.AccountRepository;
 import com.pxfi.repository.TransactionRepository;
-
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Optional; 
-import java.util.stream.Collectors;
 
 @Service
 public class AccountService {
@@ -20,21 +18,22 @@ public class AccountService {
     private final EncryptionService encryptionService;
     private final TransactionRepository transactionRepository;
 
-    public AccountService(AccountRepository accountRepository, EncryptionService encryptionService, TransactionRepository transactionRepository) {
+    public AccountService(
+            AccountRepository accountRepository,
+            EncryptionService encryptionService,
+            TransactionRepository transactionRepository) {
         this.accountRepository = accountRepository;
         this.encryptionService = encryptionService;
         this.transactionRepository = transactionRepository;
     }
 
     public List<Account> getAccountsByUserId(ObjectId userId) {
-        return accountRepository.findByUserId(userId)
-                .stream()
+        return accountRepository.findByUserId(userId).stream()
                 .map(this::decryptAccount)
                 .collect(Collectors.toList());
     }
 
     public Account saveAccount(Account account) {
-        // Encrypt before saving
         return accountRepository.save(encryptAccount(account));
     }
 
@@ -51,17 +50,14 @@ public class AccountService {
             throw new SecurityException("User does not have permission to update this account.");
         }
 
-        // Set the new name (it will be encrypted before saving)
         account.setAccountName(newName);
 
-        // Encrypt and save the updated account
         Account updatedAccount = accountRepository.save(encryptAccount(account));
 
-        // Decrypt for the response
         return decryptAccount(updatedAccount);
     }
 
-    @Transactional 
+    @Transactional
     public void deleteAccount(String accountId, ObjectId currentUserId) {
         // First, verify the user owns this account
         Optional<Account> optionalAccount = accountRepository.findById(accountId);
@@ -80,13 +76,17 @@ public class AccountService {
     }
 
     public Account encryptAccount(Account acc) {
-        if (acc == null) return null;
+        if (acc == null) {
+            return null;
+        }
         acc.setAccountName(encryptionService.encrypt(acc.getAccountName()));
         return acc;
     }
 
     public Account decryptAccount(Account acc) {
-        if (acc == null) return null;
+        if (acc == null) {
+            return null;
+        }
         acc.setAccountName(encryptionService.decrypt(acc.getAccountName()));
         return acc;
     }

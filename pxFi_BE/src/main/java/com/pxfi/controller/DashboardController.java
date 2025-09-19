@@ -19,7 +19,8 @@ public class DashboardController {
     }
 
     @GetMapping("/summary/{accountId}")
-    public ResponseEntity<DashboardSummaryResponse> getDashboardSummary(@PathVariable String accountId) {
+    public ResponseEntity<DashboardSummaryResponse> getDashboardSummary(
+            @PathVariable String accountId) {
         DashboardSummaryResponse summary = dashboardService.getDashboardSummary(accountId);
         return ResponseEntity.ok(summary);
     }

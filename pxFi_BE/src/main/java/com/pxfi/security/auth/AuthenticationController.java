@@ -1,7 +1,7 @@
 package com.pxfi.security.auth;
 
 import com.pxfi.security.AuthenticationService;
-import jakarta.validation.Valid; // Make sure to import this
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,13 +19,14 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthenticationResponse> register(
+            @Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(service.register(request));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
+    public ResponseEntity<AuthenticationResponse> authenticate(
+            @RequestBody AuthenticationRequest request) {
         return ResponseEntity.ok(service.authenticate(request));
     }
-
 }

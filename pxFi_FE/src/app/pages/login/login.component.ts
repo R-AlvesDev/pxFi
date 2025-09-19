@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -12,24 +12,22 @@ import { NotificationService } from '../../services/notification.service';
   templateUrl: './login.component.html',
 })
 export class LoginComponent {
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private notificationService = inject(NotificationService);
+
   credentials = {
     username: '',
     password: ''
   };
 
-  constructor(
-    private authService: AuthService,
-    private router: Router,
-    private notificationService: NotificationService
-  ) {}
-
   onLogin(): void {
     this.authService.login(this.credentials).subscribe({
       next: () => {
-        this.router.navigate(['/accounts']); 
+        this.router.navigate(['/accounts']);
         this.notificationService.show('Login successful!', 'success');
       },
-      error: (err) => {
+      error: () => {
         this.notificationService.show('Login failed. Please check your credentials.', 'error');
       }
     });

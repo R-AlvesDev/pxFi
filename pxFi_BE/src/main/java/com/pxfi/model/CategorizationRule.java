@@ -17,40 +17,74 @@ public class CategorizationRule {
         EQUALS,
         STARTS_WITH,
         ENDS_WITH,
-        AMOUNT_EQUALS,      
+        AMOUNT_EQUALS,
         AMOUNT_GREATER_THAN,
-        AMOUNT_LESS_THAN 
+        AMOUNT_LESS_THAN
     }
 
-    @Id
-    private String id;
-    private ObjectId userId; 
+    @Id private String id;
+    private ObjectId userId;
 
-    private RuleField fieldToMatch; 
-    private RuleOperator operator;   
-    private String valueToMatch;     
-    
+    private RuleField fieldToMatch;
+    private RuleOperator operator;
+    private String valueToMatch;
+
     private String categoryId;
     private String subCategoryId; // Can be null
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getId() {
+        return id;
+    }
 
-    public ObjectId getUserId() { return userId; }
-    public void setUserId(ObjectId userId) { this.userId = userId; }
-    
-    public RuleField getFieldToMatch() { return fieldToMatch; }
-    public void setFieldToMatch(RuleField fieldToMatch) { this.fieldToMatch = fieldToMatch; }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public RuleOperator getOperator() { return operator; }
-    public void setOperator(RuleOperator operator) { this.operator = operator; }
+    public ObjectId getUserId() {
+        return userId;
+    }
 
-    public String getValueToMatch() { return valueToMatch; }
-    public void setValueToMatch(String valueToMatch) { this.valueToMatch = valueToMatch; }
+    public void setUserId(ObjectId userId) {
+        this.userId = userId;
+    }
 
-    public String getCategoryId() { return categoryId; }
-    public void setCategoryId(String categoryId) { this.categoryId = categoryId; }
+    public RuleField getFieldToMatch() {
+        return fieldToMatch;
+    }
 
-    public String getSubCategoryId() { return subCategoryId; }
-    public void setSubCategoryId(String subCategoryId) { this.subCategoryId = subCategoryId; }
+    public void setFieldToMatch(RuleField fieldToMatch) {
+        this.fieldToMatch = fieldToMatch;
+    }
+
+    public RuleOperator getOperator() {
+        return operator;
+    }
+
+    public void setOperator(RuleOperator operator) {
+        this.operator = operator;
+    }
+
+    public String getValueToMatch() {
+        return valueToMatch;
+    }
+
+    public void setValueToMatch(String valueToMatch) {
+        this.valueToMatch = valueToMatch;
+    }
+
+    public String getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(String categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public String getSubCategoryId() {
+        return subCategoryId;
+    }
+
+    public void setSubCategoryId(String subCategoryId) {
+        this.subCategoryId = subCategoryId;
+    }
 }

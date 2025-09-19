@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ApiService, RequisitionResponse } from '../../services/api.service';
+import { ApiService } from '../../services/api.service';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth/auth.service';
-import { NotificationService } from '../../services/notification.service'; // Import NotificationService
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-bank-connection',
@@ -14,6 +14,11 @@ import { NotificationService } from '../../services/notification.service'; // Im
   styleUrls: ['./bank-connection.component.scss']
 })
 export class BankConnectionComponent implements OnInit {
+  private api = inject(ApiService);
+  private router = inject(Router);
+  private authService = inject(AuthService);
+  private notificationService = inject(NotificationService);
+
   countries = [
     { code: 'pt', name: 'Portugal' },
     { code: 'gb', name: 'United Kingdom' },
@@ -33,19 +38,11 @@ export class BankConnectionComponent implements OnInit {
 
   accessToken: string | null = null;
 
-  constructor(
-    private api: ApiService, 
-    private router: Router, 
-    private authService: AuthService,
-    private notificationService: NotificationService // Inject NotificationService
-  ) {}
-
   ngOnInit() {
-    // This component is for logged-in users, so we can get a temporary token.
     this.api.getAccessToken().subscribe({
       next: (tokenObj) => {
         this.accessToken = tokenObj.accessToken;
-        
+
         this.countryControl.valueChanges.subscribe((countryCode: string | null) => {
           this.banks = [];
           this.bankControl.reset('');
@@ -77,7 +74,7 @@ export class BankConnectionComponent implements OnInit {
       return;
     }
     if (!this.accessToken) {
-        this.notificationService.show('Access token is missing. Please try again.', 'error');
+      this.notificationService.show('Access token is missing. Please try again.', 'error');
       return;
     }
 
@@ -90,7 +87,6 @@ export class BankConnectionComponent implements OnInit {
             this.loadingConnection = false;
             if (requisitionResponse.id && requisitionResponse.link) {
               localStorage.setItem('requisitionId', requisitionResponse.id);
-              // Store the gocardless token, not the user's JWT
               localStorage.setItem('gocardlessToken', this.accessToken!);
 
               window.location.href = requisitionResponse.link;

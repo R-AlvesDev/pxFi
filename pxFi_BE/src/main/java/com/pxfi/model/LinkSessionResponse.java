@@ -2,7 +2,7 @@ package com.pxfi.model;
 
 public class LinkSessionResponse {
     private String redirectUrl;
-    private String accessToken; 
+    private String accessToken;
 
     public LinkSessionResponse() {}
 
@@ -27,4 +27,3 @@ public class LinkSessionResponse {
         this.accessToken = accessToken;
     }
 }
-

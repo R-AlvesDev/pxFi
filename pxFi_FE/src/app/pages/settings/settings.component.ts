@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CategoryService } from '../../services/category.service';
@@ -17,14 +17,19 @@ import { Modal } from 'bootstrap';
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent implements OnInit {
+  categoryService = inject(CategoryService);
+  ruleService = inject(RuleService);
+  private notificationService = inject(NotificationService);
+  private accountState = inject(AccountStateService);
+
   // Properties
   categories$: Observable<Category[]>;
   mainCategories: Category[] = [];
-  newCategoryName: string = '';
+  newCategoryName = '';
   newCategoryParentId: string | null = null;
   expandedCategoryIds = new Set<string>();
   isApplyingRules = false;
-  
+
   rules$: Observable<CategorizationRule[]>;
   newRule: Partial<CategorizationRule> = {
     fieldToMatch: RuleField.REMITTANCE_INFO,
@@ -38,12 +43,9 @@ export class SettingsComponent implements OnInit {
   private currentAccountId: string | null = null;
   private testRuleModal: Modal | undefined;
 
-  constructor(
-    public categoryService: CategoryService,
-    public ruleService: RuleService,
-    private notificationService: NotificationService,
-    private accountState: AccountStateService
-  ) {
+
+
+  constructor() {
     this.categories$ = this.categoryService.categories$;
     this.rules$ = this.ruleService.rules$;
   }
@@ -82,20 +84,20 @@ export class SettingsComponent implements OnInit {
   addCategory(): void {
     if (!this.newCategoryName.trim()) return;
     this.categoryService.createCategory(this.newCategoryName, this.newCategoryParentId).subscribe({
-        next: () => {
-            this.notificationService.show('Category added successfully!', 'success');
-            this.newCategoryName = '';
-            this.newCategoryParentId = null;
-        },
-        error: (err) => this.notificationService.show('Error adding category: ' + err.message, 'error')
+      next: () => {
+        this.notificationService.show('Category added successfully!', 'success');
+        this.newCategoryName = '';
+        this.newCategoryParentId = null;
+      },
+      error: (err) => this.notificationService.show('Error adding category: ' + err.message, 'error')
     });
   }
 
   deleteCategory(id: string): void {
     if (confirm('Are you sure you want to delete this category? This cannot be undone.')) {
       this.categoryService.deleteCategory(id).subscribe({
-          next: () => this.notificationService.show('Category deleted.', 'success'),
-          error: (err) => this.notificationService.show('Error deleting category: ' + err.message, 'error')
+        next: () => this.notificationService.show('Category deleted.', 'success'),
+        error: (err) => this.notificationService.show('Error deleting category: ' + err.message, 'error')
       });
     }
   }
@@ -114,14 +116,14 @@ export class SettingsComponent implements OnInit {
       return;
     }
     this.ruleService.createRule(this.newRule).subscribe({
-        next: () => {
-            this.notificationService.show('Rule created successfully!', 'success');
-            this.newRule = {
-                fieldToMatch: RuleField.REMITTANCE_INFO,
-                operator: RuleOperator.CONTAINS
-            };
-        },
-        error: (err) => this.notificationService.show('Error creating rule: ' + err.message, 'error')
+      next: () => {
+        this.notificationService.show('Rule created successfully!', 'success');
+        this.newRule = {
+          fieldToMatch: RuleField.REMITTANCE_INFO,
+          operator: RuleOperator.CONTAINS
+        };
+      },
+      error: (err) => this.notificationService.show('Error creating rule: ' + err.message, 'error')
     });
   }
 
@@ -141,14 +143,14 @@ export class SettingsComponent implements OnInit {
   }
 
   getCategoryName(id: string): string {
-    return this.categoryService.getCategoryName(id); 
+    return this.categoryService.getCategoryName(id);
   }
 
   deleteRule(id: string): void {
     if (confirm('Are you sure you want to delete this rule?')) {
       this.ruleService.deleteRule(id).subscribe({
-          next: () => this.notificationService.show('Rule deleted.', 'success'),
-          error: (err) => this.notificationService.show('Error deleting rule: ' + err.message, 'error')
+        next: () => this.notificationService.show('Rule deleted.', 'success'),
+        error: (err) => this.notificationService.show('Error deleting rule: ' + err.message, 'error')
       });
     }
   }

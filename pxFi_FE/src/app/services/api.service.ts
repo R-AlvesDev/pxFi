@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -54,12 +54,12 @@ export interface DebtorAccount {
 }
 
 export interface TransactionAmount {
-  amount: string;      
+  amount: string;
   currency: string;
 }
 
 export interface Transaction {
-  id: string; // This is the MongoDB ID
+  id: string;
   transactionId: string;
   debtorName: string;
   internalTransactionId: string;
@@ -163,9 +163,9 @@ export interface DashboardSummary {
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = environment.apiUrl;
+  private http = inject(HttpClient);
 
-  constructor(private http: HttpClient) {}
+  private baseUrl = environment.apiUrl;
 
   // --- Auth & Public GoCardless ---
 
@@ -214,11 +214,11 @@ export class ApiService {
   }
 
   // --- Account & Transaction Management (User JWT is added by interceptor) ---
-  
+
   saveAccount(accountData: any): Observable<Account> {
     return this.http.post<Account>(`${this.baseUrl}/accounts`, accountData);
   }
-  
+
   getAccounts(): Observable<Account[]> {
     return this.http.get<Account[]>(`${this.baseUrl}/accounts`);
   }
@@ -231,7 +231,7 @@ export class ApiService {
   deleteAccount(accountId: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/accounts/${accountId}`);
   }
-  
+
   getAccountTransactions(accountId: string, startDate?: string, endDate?: string): Observable<Transaction[]> {
     let params = new HttpParams();
     if (startDate) params = params.set('startDate', startDate);
@@ -246,12 +246,12 @@ export class ApiService {
   toggleTransactionIgnore(transactionId: string): Observable<Transaction> {
     return this.http.post<Transaction>(`${this.baseUrl}/transactions/${transactionId}/toggle-ignore`, {});
   }
-  
+
   updateTransactionCategory(transactionId: string, categoryId: string, subCategoryId: string | null): Observable<Transaction> {
     const payload = { categoryId, subCategoryId };
     return this.http.post<Transaction>(`${this.baseUrl}/transactions/${transactionId}/category`, payload);
   }
-  
+
   categorizeSimilarTransactions(remittanceInfo: string, categoryId: string, subCategoryId: string | null, isAddingSubcategory: boolean): Observable<Transaction[]> {
     const payload = { remittanceInfo, categoryId, subCategoryId, isAddingSubcategory };
     return this.http.post<Transaction[]>(`${this.baseUrl}/transactions/categorize-similar`, payload);
@@ -267,7 +267,7 @@ export class ApiService {
   getAllCategories(): Observable<Category[]> {
     return this.http.get<Category[]>(`${this.baseUrl}/categories`);
   }
-  
+
   createCategory(category: { name: string, parentId: string | null }): Observable<Category> {
     return this.http.post<Category>(`${this.baseUrl}/categories`, category);
   }
@@ -287,15 +287,15 @@ export class ApiService {
   createRule(rule: Partial<CategorizationRule>): Observable<CategorizationRule> {
     return this.http.post<CategorizationRule>(`${this.baseUrl}/rules`, rule);
   }
-  
+
   applyAllRules(): Observable<{ updatedCount: number }> {
     return this.http.post<{ updatedCount: number }>(`${this.baseUrl}/rules/apply-all`, {});
   }
-  
+
   deleteRule(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/rules/${id}`);
   }
-  
+
   testRule(rule: Partial<CategorizationRule>, accountId: string): Observable<TestRuleResponse> {
     const payload = { rule, accountId };
     return this.http.post<TestRuleResponse>(`${this.baseUrl}/rules/test`, payload);

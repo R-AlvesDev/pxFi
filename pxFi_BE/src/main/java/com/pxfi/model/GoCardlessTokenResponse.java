@@ -19,7 +19,8 @@ public class GoCardlessTokenResponse {
     // Constructors
     public GoCardlessTokenResponse() {}
 
-    public GoCardlessTokenResponse(String accessToken, long accessExpiresIn, String refreshToken, long refreshExpiresIn) {
+    public GoCardlessTokenResponse(
+            String accessToken, long accessExpiresIn, String refreshToken, long refreshExpiresIn) {
         this.accessToken = accessToken;
         this.accessExpiresIn = accessExpiresIn;
         this.refreshToken = refreshToken;

@@ -1,11 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService, Account } from '../../services/api.service';
 import { AccountStateService } from '../../services/account-state.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { NotificationService } from '../../services/notification.service';
-import { FormsModule } from '@angular/forms'; 
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-accounts',
@@ -15,19 +15,17 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./accounts.component.scss']
 })
 export class AccountsComponent implements OnInit {
-  accounts: Account[] = []; 
+  private api = inject(ApiService);
+  private authService = inject(AuthService);
+  private accountState = inject(AccountStateService);
+  private router = inject(Router);
+  private notificationService = inject(NotificationService);
+
+  accounts: Account[] = [];
   loading = true;
 
   editingAccountId: string | null = null;
-  originalAccountName: string = '';
-
-  constructor(
-    private api: ApiService,
-    private authService: AuthService,
-    private accountState: AccountStateService,
-    private router: Router,
-    private notificationService: NotificationService
-  ) {}
+  originalAccountName = '';
 
   ngOnInit(): void {
     this.loadAccounts();
@@ -40,7 +38,7 @@ export class AccountsComponent implements OnInit {
         this.accounts = data;
         this.loading = false;
       },
-      error: (err) => {
+      error: () => {
         this.notificationService.show('Failed to load accounts.', 'error');
         this.loading = false;
       }
@@ -55,7 +53,7 @@ export class AccountsComponent implements OnInit {
   }
 
   startEditing(account: Account, event: MouseEvent): void {
-    event.stopPropagation(); 
+    event.stopPropagation();
     this.editingAccountId = account.id;
     this.originalAccountName = account.accountName;
   }
@@ -70,7 +68,7 @@ export class AccountsComponent implements OnInit {
     event.stopPropagation();
     if (!account.accountName || account.accountName.trim() === '') {
       this.notificationService.show('Account name cannot be empty.', 'error');
-      account.accountName = this.originalAccountName; 
+      account.accountName = this.originalAccountName;
       return;
     }
 
@@ -81,9 +79,9 @@ export class AccountsComponent implements OnInit {
           this.accounts[index] = updatedAccount;
         }
         this.notificationService.show('Account name updated!', 'success');
-        this.editingAccountId = null; 
+        this.editingAccountId = null;
       },
-      error: (err) => {
+      error: () => {
         this.notificationService.show('Failed to update name.', 'error');
         account.accountName = this.originalAccountName;
       }
@@ -92,14 +90,14 @@ export class AccountsComponent implements OnInit {
 
   deleteAccount(accountId: string, event: Event): void {
     event.stopPropagation();
-    
+
     if (confirm('Are you sure you want to delete this account? This will also delete all of its transactions.')) {
       this.api.deleteAccount(accountId).subscribe({
         next: () => {
           this.notificationService.show('Account deleted successfully!', 'success');
-          this.loadAccounts(); // Refresh the account list
+          this.loadAccounts();
         },
-        error: (err) => {
+        error: () => {
           this.notificationService.show('Failed to delete account.', 'error');
         }
       });

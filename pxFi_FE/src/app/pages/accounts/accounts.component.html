@@ -4,54 +4,54 @@
   </div>
 
   @if (loading) {
-    <div class="text-center p-5">
-      <div class="spinner-border text-primary" role="status"></div>
-    </div>
+  <div class="text-center p-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
   }
 
   @if (!loading && accounts) {
-    <div class="row g-4">
-      @for (account of accounts; track account.id) {
-        <div class="col-md-4">
-          <div class="card account-card h-100 shadow-sm" (click)="selectAccount(account)">
-            
-            <div class="card-actions">
-              <button class="btn btn-sm btn-link text-secondary" (click)="startEditing(account, $event)" title="Edit name">
-                <i class="fas fa-pencil-alt"></i>
-              </button>
-              <button class="btn btn-sm btn-link text-danger" (click)="deleteAccount(account.id, $event)" title="Delete account">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </div>
-            <div class="card-body text-center d-flex flex-column justify-content-center">
-              <i class="fas fa-university fa-3x mb-3 text-primary"></i>
-              
-              @if (editingAccountId === account.id) {
-                <div class="input-group">
-                  <input type="text" class="form-control" [(ngModel)]="account.accountName" 
-                         (click)="$event.stopPropagation()"
-                         (keydown.enter)="saveAccountName(account, $event)"
-                         (keydown.escape)="cancelEditing(account, $event)">
-                  <button class="btn btn-outline-success" type="button" (click)="saveAccountName(account, $event)">✓</button>
-                  <button class="btn btn-outline-secondary" type="button" (click)="cancelEditing(account, $event)">×</button>
-                </div>
-              } @else {
-                <h5 class="card-title d-inline-flex align-items-center">
-                  {{ account.accountName }}
-                </h5>
-              }
-            </div>
-          </div>
+  <div class="row g-4">
+    @for (account of accounts; track account.id) {
+    <div class="col-md-4">
+      <div class="card account-card h-100 shadow-sm" (click)="selectAccount(account)"
+        (keydown.enter)="selectAccount(account)" tabindex="0">
+
+        <div class="card-actions">
+          <button class="btn btn-sm btn-link text-secondary" (click)="startEditing(account, $event)" title="Edit name">
+            <i class="fas fa-pencil-alt"></i>
+          </button>
+          <button class="btn btn-sm btn-link text-danger" (click)="deleteAccount(account.id, $event)"
+            title="Delete account">
+            <i class="fas fa-trash-alt"></i>
+          </button>
         </div>
-      }
-      <div class="col-md-4">
-        <div class="card account-card add-new h-100 shadow-sm" routerLink="/connect">
-          <div class="card-body text-center d-flex flex-column justify-content-center">
-            <i class="fas fa-plus fa-3x mb-3 text-muted"></i>
-            <h5 class="card-title text-muted">Add New Account</h5>
+        <div class="card-body text-center d-flex flex-column justify-content-center">
+          <i class="fas fa-university fa-3x mb-3 text-primary"></i>
+
+          @if (editingAccountId === account.id) {
+          <div class="input-group">
+            <input type="text" class="form-control" [(ngModel)]="account.accountName" (click)="$event.stopPropagation()"
+              (keydown.enter)="saveAccountName(account, $event)" (keydown.escape)="cancelEditing(account, $event)">
+            <button class="btn btn-outline-success" type="button" (click)="saveAccountName(account, $event)">✓</button>
+            <button class="btn btn-outline-secondary" type="button" (click)="cancelEditing(account, $event)">×</button>
           </div>
+          } @else {
+          <h5 class="card-title d-inline-flex align-items-center">
+            {{ account.accountName }}
+          </h5>
+          }
         </div>
       </div>
     </div>
+    }
+    <div class="col-md-4">
+      <div class="card account-card add-new h-100 shadow-sm" routerLink="/connect">
+        <div class="card-body text-center d-flex flex-column justify-content-center">
+          <i class="fas fa-plus fa-3x mb-3 text-muted"></i>
+          <h5 class="card-title text-muted">Add New Account</h5>
+        </div>
+      </div>
+    </div>
+  </div>
   }
 </div>

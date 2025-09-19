@@ -22,7 +22,7 @@ export const routes: Routes = [
   {
     path: '',
     component: MainLayoutComponent,
-    canActivate: [AuthGuard], // This guard protects all child routes
+    canActivate: [AuthGuard],
     children: [
       { path: 'accounts', component: AccountsComponent },
       { path: 'dashboard/:accountId', component: DashboardComponent },

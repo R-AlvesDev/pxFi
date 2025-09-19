@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AsyncPipe, NgClass } from '@angular/common';
 import { Observable } from 'rxjs';
 import { Notification, NotificationService } from '../../services/notification.service';
@@ -11,9 +11,13 @@ import { Notification, NotificationService } from '../../services/notification.s
   styleUrls: ['./notification.component.scss']
 })
 export class NotificationComponent {
+  notificationService = inject(NotificationService);
+
   notification$: Observable<Notification | null>;
 
-  constructor(public notificationService: NotificationService) {
+
+
+  constructor() {
     this.notification$ = this.notificationService.notification$;
   }
 }

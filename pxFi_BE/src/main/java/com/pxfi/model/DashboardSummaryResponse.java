@@ -14,30 +14,39 @@ public class DashboardSummaryResponse {
     public BigDecimal getCurrentMonthIncome() {
         return currentMonthIncome;
     }
+
     public void setCurrentMonthIncome(BigDecimal currentMonthIncome) {
         this.currentMonthIncome = currentMonthIncome;
     }
+
     public BigDecimal getCurrentMonthExpenses() {
         return currentMonthExpenses;
     }
+
     public void setCurrentMonthExpenses(BigDecimal currentMonthExpenses) {
         this.currentMonthExpenses = currentMonthExpenses;
     }
+
     public BigDecimal getNetBalance() {
         return netBalance;
     }
+
     public void setNetBalance(BigDecimal netBalance) {
         this.netBalance = netBalance;
     }
+
     public List<CategorySpending> getTopSpendingCategories() {
         return topSpendingCategories;
     }
+
     public void setTopSpendingCategories(List<CategorySpending> topSpendingCategories) {
         this.topSpendingCategories = topSpendingCategories;
     }
+
     public List<Transaction> getRecentTransactions() {
         return recentTransactions;
     }
+
     public void setRecentTransactions(List<Transaction> recentTransactions) {
         this.recentTransactions = recentTransactions;
     }

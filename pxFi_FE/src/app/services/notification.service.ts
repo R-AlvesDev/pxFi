@@ -17,7 +17,7 @@ export class NotificationService {
 
   private timeoutId: any;
 
-  show(message: string, type: NotificationType = 'info', duration: number = 4000): void {
+  show(message: string, type: NotificationType = 'info', duration = 4000): void {
     if (this.timeoutId) {
       clearTimeout(this.timeoutId);
     }

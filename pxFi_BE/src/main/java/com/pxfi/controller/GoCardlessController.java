@@ -1,19 +1,5 @@
 package com.pxfi.controller;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.pxfi.model.CategorizeSimilarRequest;
 import com.pxfi.model.EndUserAgreementRequest;
 import com.pxfi.model.EndUserAgreementResponse;
@@ -25,6 +11,18 @@ import com.pxfi.model.TransactionsResponse;
 import com.pxfi.model.UpdateCategoryRequest;
 import com.pxfi.service.GoCardlessService;
 import com.pxfi.service.TransactionService;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api")
@@ -33,7 +31,8 @@ public class GoCardlessController {
     private final GoCardlessService goCardlessService;
     private final TransactionService transactionService;
 
-    public GoCardlessController(GoCardlessService goCardlessService, TransactionService transactionService) {
+    public GoCardlessController(
+            GoCardlessService goCardlessService, TransactionService transactionService) {
         this.goCardlessService = goCardlessService;
         this.transactionService = transactionService;
     }
@@ -48,8 +47,7 @@ public class GoCardlessController {
 
     @GetMapping("/institutions")
     public ResponseEntity<List<Map<String, Object>>> listInstitutions(
-            @RequestParam String accessToken,
-            @RequestParam String countryCode) {
+            @RequestParam String accessToken, @RequestParam String countryCode) {
 
         List<Map<String, Object>> institutions = goCardlessService.getInstitutions(accessToken, countryCode);
         return ResponseEntity.ok(institutions);
@@ -57,17 +55,18 @@ public class GoCardlessController {
 
     @PostMapping("/agreements/enduser")
     public ResponseEntity<EndUserAgreementResponse> createEndUserAgreement(
-            @RequestBody EndUserAgreementRequest request,
-            @RequestParam String gocardlessToken) throws Exception { 
-        
-        EndUserAgreementResponse response = goCardlessService.createEndUserAgreement(request.getInstitution_id(), gocardlessToken);
+            @RequestBody EndUserAgreementRequest request, @RequestParam String gocardlessToken)
+            throws Exception {
+
+        EndUserAgreementResponse response = goCardlessService.createEndUserAgreement(
+                request.getInstitutionId(), gocardlessToken);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/requisitions/create")
     public ResponseEntity<RequisitionResponse> createRequisition(
-            @RequestBody Map<String, String> payload,
-            @RequestParam String gocardlessToken) throws Exception {
+            @RequestBody Map<String, String> payload, @RequestParam String gocardlessToken)
+            throws Exception {
 
         String institutionId = payload.get("institutionId");
         String agreementId = payload.get("agreementId");
@@ -78,8 +77,8 @@ public class GoCardlessController {
 
     @GetMapping("/requisitions/details")
     public ResponseEntity<RequisitionDetailsResponse> getRequisitionDetails(
-            @RequestParam String gocardlessToken,
-            @RequestParam String requisitionId) throws Exception {
+            @RequestParam String gocardlessToken, @RequestParam String requisitionId)
+            throws Exception {
 
         RequisitionDetailsResponse response = goCardlessService.getRequisitionDetails(gocardlessToken, requisitionId);
         return ResponseEntity.ok(response);
@@ -90,19 +89,16 @@ public class GoCardlessController {
             @PathVariable String accountId,
             @RequestParam Optional<String> startDate,
             @RequestParam Optional<String> endDate) {
-    
+
         List<Transaction> cachedTransactions = transactionService.getTransactionsByAccountId(
-            accountId, 
-            startDate.orElse(null), 
-            endDate.orElse(null)
-        );
-        
+                accountId, startDate.orElse(null), endDate.orElse(null));
+
         return ResponseEntity.ok(cachedTransactions);
     }
 
     @PostMapping("/accounts/{accountId}/transactions/refresh")
-    public ResponseEntity<List<Transaction>> refreshTransactions(@PathVariable String accountId) throws Exception {
-        // The backend will now fetch the GoCardless token itself.
+    public ResponseEntity<List<Transaction>> refreshTransactions(@PathVariable String accountId)
+            throws Exception {
         String gocardlessToken = goCardlessService.fetchAccessToken();
         TransactionsResponse freshData = goCardlessService.getAccountTransactions(gocardlessToken, accountId);
         transactionService.saveTransactions(accountId, freshData);
@@ -123,11 +119,9 @@ public class GoCardlessController {
 
     @PostMapping("/transactions/{id}/category")
     public ResponseEntity<Transaction> updateTransactionCategory(
-            @PathVariable String id,
-            @RequestBody UpdateCategoryRequest request) {
+            @PathVariable String id, @RequestBody UpdateCategoryRequest request) {
         Transaction updatedTransaction = transactionService.updateTransactionCategory(
-            id, request.getCategoryId(), request.getSubCategoryId()
-        );
+                id, request.getCategoryId(), request.getSubCategoryId());
         if (updatedTransaction != null) {
             return ResponseEntity.ok(updatedTransaction);
         }
@@ -135,22 +129,23 @@ public class GoCardlessController {
     }
 
     @PostMapping("/transactions/categorize-similar")
-    public ResponseEntity<List<Transaction>> categorizeSimilarTransactions(@RequestBody CategorizeSimilarRequest request) {
+    public ResponseEntity<List<Transaction>> categorizeSimilarTransactions(
+            @RequestBody CategorizeSimilarRequest request) {
         List<Transaction> updatedTransactions = transactionService.categorizeSimilarTransactions(
-            request.getRemittanceInfo(),
-            request.getCategoryId(),
-            request.getSubCategoryId(),
-            request.isAddingSubcategory()
-        );
+                request.getRemittanceInfo(),
+                request.getCategoryId(),
+                request.getSubCategoryId(),
+                request.isAddingSubcategory());
         return ResponseEntity.ok(updatedTransactions);
     }
-    
+
     @PostMapping("/transactions/{id}/toggle-ignore")
     public ResponseEntity<Transaction> toggleIgnore(@PathVariable String id) {
-        return transactionService.toggleTransactionIgnoreStatus(id)
+        return transactionService
+                .toggleTransactionIgnoreStatus(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
-    }    
+    }
 
     @PostMapping("/transactions/link")
     public ResponseEntity<Void> linkTransactions(@RequestBody LinkTransactionsRequest request) {

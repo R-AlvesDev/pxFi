@@ -31,21 +31,26 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthFilter, AuthenticationProvider authenticationProvider) throws Exception {
-        http
-            .csrf().disable()
-            .authorizeHttpRequests()
-            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-            .requestMatchers("/api/auth/**", "/api/access-token", "/api/institutions", "/error")
-            .permitAll()
-            .anyRequest()
-            .authenticated()
-            .and()
-            .sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
-            .authenticationProvider(authenticationProvider) 
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            JwtAuthenticationFilter jwtAuthFilter,
+            AuthenticationProvider authenticationProvider)
+            throws Exception {
+        http.csrf()
+                .disable()
+                .authorizeHttpRequests()
+                .requestMatchers(HttpMethod.OPTIONS, "/**")
+                .permitAll()
+                .requestMatchers("/api/auth/**", "/api/access-token", "/api/institutions", "/error")
+                .permitAll()
+                .anyRequest()
+                .authenticated()
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authenticationProvider(authenticationProvider)
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -55,13 +60,13 @@ public class SecurityConfiguration {
         if (principal instanceof User) {
             return (User) principal;
         }
-        // Return null or throw an exception if the principal is not the expected User type
-        return null; 
+        return null;
     }
-    
+
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> userRepository.findByUsername(username)
+        return username -> userRepository
+                .findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
@@ -74,7 +79,8 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+            throws Exception {
         return config.getAuthenticationManager();
     }
 

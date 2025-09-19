@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService, Transaction as ApiTransaction, Category } from '../../services/api.service';
 import { CommonModule } from '@angular/common';
@@ -21,6 +21,12 @@ interface Transaction extends ApiTransaction {
   styleUrls: ['./transactions.component.scss']
 })
 export class TransactionsComponent implements OnInit, OnDestroy {
+  private route = inject(ActivatedRoute);
+  private api = inject(ApiService);
+  private accountState = inject(AccountStateService);
+  categoryService = inject(CategoryService);
+  private notificationService = inject(NotificationService);
+
   selectedAccountId: string | null = null;
   transactions: Transaction[] = [];
   originalTransactions: Transaction[] = []; // Store the original state
@@ -28,25 +34,17 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   error: string | null = null;
   loading = false;
   mainCategories: Category[] = [];
-  selectedCategoryFilter: string = 'all';
+  selectedCategoryFilter = 'all';
   isLinkingMode = false;
   selectedExpenseId: string | null = null;
   selectedIncomeId: string | null = null;
-  currentPage: number = 1;
-  itemsPerPage: number = 10;
+  currentPage = 1;
+  itemsPerPage = 10;
   itemsPerPageOptions: number[] = [10, 25, 50, 100];
-  startDate: string = '';
-  endDate: string = '';
+  startDate = '';
+  endDate = '';
 
   private accountSub: Subscription | undefined;
-
-  constructor(
-    private route: ActivatedRoute,
-    private api: ApiService,
-    private accountState: AccountStateService,
-    public categoryService: CategoryService,
-    private notificationService: NotificationService
-  ) {}
 
   ngOnInit(): void {
     this.categoryService.categories$.subscribe(() => {
@@ -69,8 +67,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
 
   private setTransactions(data: Transaction[]): void {
     this.transactions = data.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime())
-                          .map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
-    // Create a deep copy of the pristine data for comparison later
+      .map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
     this.originalTransactions = JSON.parse(JSON.stringify(this.transactions));
     this.applyFilters(true);
     this.loading = false;
@@ -110,11 +107,11 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  applyFilters(resetPage: boolean = true): void {
+  applyFilters(resetPage = true): void {
     if (resetPage) {
       this.currentPage = 1;
     }
-    
+
     if (this.selectedCategoryFilter === 'all') {
       this.filteredTransactions = [...this.transactions];
     } else if (this.selectedCategoryFilter === 'uncategorized') {
@@ -135,35 +132,35 @@ export class TransactionsComponent implements OnInit, OnDestroy {
 
   saveCategory(transaction: Transaction): void {
     if (!transaction.categoryId) {
-        this.notificationService.show('Please select a main category first.', 'error');
-        return;
+      this.notificationService.show('Please select a main category first.', 'error');
+      return;
     }
 
     const originalTransactionBeforeAnyChange = this.originalTransactions.find(t => t.id === transaction.id);
     const wasAlreadyCategorized = !!originalTransactionBeforeAnyChange?.categoryId;
 
     this.api.updateTransactionCategory(transaction.id, transaction.categoryId, transaction.subCategoryId || null).subscribe({
-        next: updatedTx => {
-            const index = this.transactions.findIndex(t => t.id === updatedTx.id);
-            if (index !== -1) {
-                const wasExpanded = this.transactions[index].expanded;
-                this.transactions[index] = { ...updatedTx, expanded: wasExpanded, categoryDirty: false };
-                
-                this.originalTransactions[index] = { ...this.transactions[index] };
+      next: updatedTx => {
+        const index = this.transactions.findIndex(t => t.id === updatedTx.id);
+        if (index !== -1) {
+          const wasExpanded = this.transactions[index].expanded;
+          this.transactions[index] = { ...updatedTx, expanded: wasExpanded, categoryDirty: false };
 
-                this.applyFilters(false);
-            }
-            this.notificationService.show('Category saved!', 'success');
-            this.promptToCategorizeSimilar(updatedTx, wasAlreadyCategorized);
-        },
-        error: err => {
-            console.error('Failed to update category', err);
-            this.notificationService.show('Failed to save category.', 'error');
+          this.originalTransactions[index] = { ...this.transactions[index] };
+
+          this.applyFilters(false);
         }
+        this.notificationService.show('Category saved!', 'success');
+        this.promptToCategorizeSimilar(updatedTx, wasAlreadyCategorized);
+      },
+      error: err => {
+        console.error('Failed to update category', err);
+        this.notificationService.show('Failed to save category.', 'error');
+      }
     });
-}
+  }
 
-private promptToCategorizeSimilar(updatedTx: Transaction, wasAlreadyCategorized: boolean): void {
+  private promptToCategorizeSimilar(updatedTx: Transaction, wasAlreadyCategorized: boolean): void {
     const remittanceInfo = updatedTx.remittanceInformationUnstructured;
     if (!remittanceInfo) return;
 
@@ -173,31 +170,31 @@ private promptToCategorizeSimilar(updatedTx: Transaction, wasAlreadyCategorized:
     const isNewCategorization = !wasAlreadyCategorized && !!updatedTx.categoryId;
 
     if (isNewCategorization) {
-        similarCount = this.transactions.filter(t => {
-            const currentRemittance = t.remittanceInformationUnstructured?.trim().replace(/\s+/g, ' ') || '';
-            return t.id !== updatedTx.id &&
-                   currentRemittance === normalizedRemittanceInfo &&
-                   !t.categoryId;
-        }).length;
+      similarCount = this.transactions.filter(t => {
+        const currentRemittance = t.remittanceInformationUnstructured?.trim().replace(/\s+/g, ' ') || '';
+        return t.id !== updatedTx.id &&
+          currentRemittance === normalizedRemittanceInfo &&
+          !t.categoryId;
+      }).length;
     }
 
     if (similarCount > 0) {
-        const message = `Found ${similarCount} other uncategorized transaction(s) with the same description. Apply this category to them all?`;
+      const message = `Found ${similarCount} other uncategorized transaction(s) with the same description. Apply this category to them all?`;
 
-        if (confirm(message)) {
-            this.api.categorizeSimilarTransactions(remittanceInfo, updatedTx.categoryId!, updatedTx.subCategoryId || null, false).subscribe({
-                next: () => {
-                    this.notificationService.show(`Applied category to ${similarCount} similar transaction(s).`, 'success');
-                    this.loadCachedTransactions();
-                },
-                error: (err) => {
-                    console.error('Failed to categorize similar transactions', err);
-                    this.notificationService.show('Failed to categorize similar transactions.', 'error');
-                }
-            });
-        }
+      if (confirm(message)) {
+        this.api.categorizeSimilarTransactions(remittanceInfo, updatedTx.categoryId!, updatedTx.subCategoryId || null, false).subscribe({
+          next: () => {
+            this.notificationService.show(`Applied category to ${similarCount} similar transaction(s).`, 'success');
+            this.loadCachedTransactions();
+          },
+          error: (err) => {
+            console.error('Failed to categorize similar transactions', err);
+            this.notificationService.show('Failed to categorize similar transactions.', 'error');
+          }
+        });
+      }
     }
-}
+  }
 
   toggleIgnore(transaction: Transaction): void {
     this.api.toggleTransactionIgnore(transaction.id).subscribe({
@@ -257,7 +254,7 @@ private promptToCategorizeSimilar(updatedTx: Transaction, wasAlreadyCategorized:
       }
     });
   }
-  
+
   get paginatedTransactions(): Transaction[] {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     return this.filteredTransactions.slice(startIndex, startIndex + this.itemsPerPage);
@@ -266,7 +263,7 @@ private promptToCategorizeSimilar(updatedTx: Transaction, wasAlreadyCategorized:
   get totalPages(): number {
     return Math.ceil(this.filteredTransactions.length / this.itemsPerPage);
   }
-  
+
   get pages(): (number | string)[] {
     const total = this.totalPages;
     const current = this.currentPage;
@@ -297,7 +294,7 @@ private promptToCategorizeSimilar(updatedTx: Transaction, wasAlreadyCategorized:
   onItemsPerPageChange(): void {
     this.currentPage = 1;
   }
-  
+
   isNumber(value: any): value is number {
     return typeof value === 'number';
   }

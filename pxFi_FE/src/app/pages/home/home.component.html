@@ -1,5 +1,5 @@
 <div class="container py-5">
-  <div *ngIf="!(isLoggedIn$ | async)" class="text-center">
+  <div *ngIf="(isLoggedIn$ | async) === false" class="text-center">
     <h1 class="display-4">Welcome to pxFi</h1>
     <p class="lead text-muted">Your personal finance intelligence tool.</p>
     <hr class="my-4">
@@ -8,7 +8,7 @@
   </div>
 
   <div *ngIf="isLoggedIn$ | async" class="text-center p-5">
-      <div class="spinner-border text-primary" role="status"></div>
-      <p class="mt-2">Loading your accounts...</p>
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2">Loading your accounts...</p>
   </div>
 </div>

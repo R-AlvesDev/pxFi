@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth/auth.service';
@@ -12,14 +12,16 @@ import { CommonModule } from '@angular/common';
   templateUrl: './register.component.html',
 })
 export class RegisterComponent {
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private notificationService = inject(NotificationService);
+
   registerForm: FormGroup;
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router,
-    private notificationService: NotificationService
-  ) {
+
+
+  constructor() {
     this.registerForm = this.fb.group({
       username: ['', [
         Validators.required,
@@ -30,31 +32,28 @@ export class RegisterComponent {
       password: ['', [
         Validators.required,
         Validators.minLength(8),
-        // This regex checks for at least one uppercase, one lowercase, one number, and one special character
         Validators.pattern('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$')
       ]]
     });
   }
 
-  // Getters for easy access in the template
   get username() { return this.registerForm.get('username'); }
   get email() { return this.registerForm.get('email'); }
   get password() { return this.registerForm.get('password'); }
 
   onSubmit(): void {
     if (this.registerForm.invalid) {
-      this.registerForm.markAllAsTouched(); // Mark all fields as touched to show validation errors
+      this.registerForm.markAllAsTouched();
       return;
     }
 
     this.authService.register(this.registerForm.value).subscribe({
       next: () => {
-        this.router.navigate(['/login']); 
+        this.router.navigate(['/login']);
         this.notificationService.show('Registration successful! Please log in.', 'success');
       },
       error: (err) => {
         let message = 'Registration failed. Please try again.';
-        // Attempt to parse a specific error message from the backend response
         if (err.status === 400 && err.error && Array.isArray(err.error.errors)) {
           message = err.error.errors[0].defaultMessage;
         } else if (err.error && err.error.message) {

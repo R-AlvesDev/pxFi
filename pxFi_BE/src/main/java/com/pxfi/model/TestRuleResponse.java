@@ -15,12 +15,15 @@ public class TestRuleResponse {
     public List<Transaction> getMatchedTransactions() {
         return matchedTransactions;
     }
+
     public void setMatchedTransactions(List<Transaction> matchedTransactions) {
         this.matchedTransactions = matchedTransactions;
     }
+
     public int getMatchCount() {
         return matchCount;
     }
+
     public void setMatchCount(int matchCount) {
         this.matchCount = matchCount;
     }

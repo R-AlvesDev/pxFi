@@ -8,12 +8,15 @@ public class TestRuleRequest {
     public CategorizationRule getRule() {
         return rule;
     }
+
     public void setRule(CategorizationRule rule) {
         this.rule = rule;
     }
+
     public String getAccountId() {
         return accountId;
     }
+
     public void setAccountId(String accountId) {
         this.accountId = accountId;
     }

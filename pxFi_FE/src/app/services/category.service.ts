@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ApiService, Category } from './api.service';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 
@@ -6,11 +6,11 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
   providedIn: 'root'
 })
 export class CategoryService {
+  private api = inject(ApiService);
+
   private categories = new BehaviorSubject<Category[]>([]);
   public categories$ = this.categories.asObservable();
 
-  constructor(private api: ApiService) {
-  }
 
   getMainCategories(): Category[] {
     return this.categories.getValue().filter(c => c.parentId === null);
