@@ -76,15 +76,13 @@ This document outlines the features and implementation plan for the first fully 
     * [X] **Backend**: Add validation for username (e.g., minimum length, no special characters) and ensure email is a valid format.
     * [X] **Frontend**: Update the registration form to provide real-time feedback on these new requirements.
 
-* [ ] **Task: General UI/UX Improvements**
+* [X] **Task: General UI/UX Improvements**
     * [X] **Account Naming**: Allow users to edit the name of their connected bank accounts.
     * [X] **Empty States**: Improve the messages and guidance shown on pages with no data (e.g., a new user's transaction page).
-    * [ ] **Accessibility Review**: Do a quick pass to ensure all interactive elements have proper labels for screen readers.
+    * [X] **Accessibility Review**: Do a quick pass to ensure all interactive elements have proper labels for screen readers.
     * [X] **Mobile Responsiveness**: Test and refine the layout on various screen sizes to ensure a good mobile experience.
 
-* [ ] **Task: Final Code Cleanup**
-    * [ ] **Linting**: Run a linter (like ESLint for frontend, and a static analyzer for Java) across the entire codebase to enforce consistent style.
-    * [ ] **Refactoring**: Remove any redundant code, commented-out blocks, and unused imports.
-    * [ ] **Logging**: Remove all temporary `console.log` and `System.out.println` statements used for debugging.
-
----
+* [X] **Task: Final Code Cleanup**
+    * [X] **Linting**: Run a linter (like ESLint for frontend, and a static analyzer for Java) across the entire codebase to enforce consistent style.
+    * [X] **Refactoring**: Remove any redundant code, commented-out blocks, and unused imports.
+    * [X] **Logging**: Remove all temporary `console.log` and `System.out.println` statements used for debugging.
