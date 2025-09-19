@@ -13,7 +13,6 @@ import { AuthService } from '../../services/auth/auth.service';
   styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent {
-  // Create an observable for the account ID
   currentAccountId$: Observable<string | null>;
   isLoggedIn$: Observable<boolean>;
 
@@ -25,8 +24,12 @@ export class NavbarComponent {
   }
 
   logout(): void {
-    this.closeMenu(); // Also close menu on logout
+    this.closeMenu();
     this.authService.logout();
+  }
+
+  toggleMenu(): void {
+    this.navbarCollapse.nativeElement.classList.toggle('show');
   }
 
   closeMenu(): void {

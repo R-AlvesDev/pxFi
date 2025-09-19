@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 @Service
 public class TransactionService {
 
-    private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
     final TransactionRepository transactionRepository;
     private final CategorizationRuleRepository ruleRepository;
     private final RuleEngineService ruleEngineService;
@@ -132,7 +131,12 @@ public class TransactionService {
 
         return transactionRepository.findByIdAndUserId(transactionId, currentUser.getId()).map(transaction -> {
             transaction.setIgnored(!transaction.isIgnored());
-            return transactionRepository.save(transaction);
+            Transaction savedTransaction = transactionRepository.save(transaction);
+            
+            Transaction decryptedTx = decryptTransaction(savedTransaction);
+            Map<String, Category> categoryMap = categoryRepository.findByUserId(currentUser.getId()).stream()
+                .collect(Collectors.toMap(Category::getId, Function.identity()));
+            return enrichTransactionWithCategoryNames(decryptedTx, categoryMap);
         });
     }
 
@@ -159,7 +163,7 @@ public class TransactionService {
             return new ArrayList<>();
         }
         
-        List<Transaction> allUserTransactions = this.getAllTransactions(); // Gets decrypted transactions
+        List<Transaction> allUserTransactions = this.getAllTransactions(); 
         
         String normalizedRemittanceInfo = remittanceInfo.trim().replaceAll("\\s+", " ");
 
@@ -188,12 +192,11 @@ public class TransactionService {
                 tx.setCategoryId(categoryId);
                 tx.setSubCategoryId(subCategoryId);
                 enrichTransactionWithCategoryNames(tx, categoryMap);
-                encryptTransaction(tx); // Re-encrypt before saving
+                encryptTransaction(tx); 
             });
             transactionRepository.saveAll(transactionsToUpdate);
         }
         
-        // Return the updated transactions, but decrypted for the frontend.
         return transactionsToUpdate.stream()
             .map(this::decryptTransaction)
             .collect(Collectors.toList());
