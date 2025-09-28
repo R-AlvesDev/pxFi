@@ -70,7 +70,7 @@ public class RuleEngineService {
     }
 
     private String getTargetValue(Transaction tx, RuleField field) {
-        if (tx == null) {
+        if (tx == null || field == null) {
             return null;
         }
         switch (field) {

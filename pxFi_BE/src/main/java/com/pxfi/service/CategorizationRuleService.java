@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.bson.types.ObjectId; // Import ObjectId if it's not already there
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -55,6 +56,9 @@ public class CategorizationRuleService {
         if (currentUser == null) {
             throw new IllegalStateException("Cannot create rule without a logged in user.");
         }
+        if (rule.getFieldToMatch() == null || rule.getOperator() == null) {
+            throw new IllegalArgumentException("Rule must have a field and operator.");
+        }
         rule.setUserId(currentUser.getId());
         return ruleRepository.save(encryptRule(rule));
     }
@@ -88,13 +92,13 @@ public class CategorizationRuleService {
             transactionsToUpdate.forEach(
                     tx -> {
                         if (tx.getCategoryId() != null) {
-                            Category mainCat = categoryMap.get(tx.getCategoryId());
+                            Category mainCat = categoryMap.get(tx.getCategoryId().toString());
                             if (mainCat != null) {
                                 tx.setCategoryName(mainCat.getName());
                             }
                         }
                         if (tx.getSubCategoryId() != null) {
-                            Category subCat = categoryMap.get(tx.getSubCategoryId());
+                            Category subCat = categoryMap.get(tx.getSubCategoryId().toString());
                             if (subCat != null) {
                                 tx.setSubCategoryName(subCat.getName());
                             }
@@ -104,7 +108,7 @@ public class CategorizationRuleService {
                         transactionService.encryptTransaction(tx);
                     });
 
-            transactionService.transactionRepository.saveAll(transactionsToUpdate);
+            transactionService.saveAllTransactions(transactionsToUpdate);
         }
 
         return transactionsToUpdate.size();

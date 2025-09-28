@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class TransactionService {
 
-    final TransactionRepository transactionRepository;
+    private final TransactionRepository transactionRepository;
     private final CategorizationRuleRepository ruleRepository;
     private final RuleEngineService ruleEngineService;
     private final CategoryRepository categoryRepository;
