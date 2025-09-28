@@ -1,10 +1,13 @@
 package com.pxfi.repository;
 
-import com.pxfi.model.User;
 import java.util.Optional;
+
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface UserRepository extends MongoRepository<User, String> {
+import com.pxfi.model.User;
+
+public interface UserRepository extends MongoRepository<User, ObjectId> {
 
     Optional<User> findByUsername(String username);
 }

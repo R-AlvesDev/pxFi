@@ -27,7 +27,7 @@ WORKDIR /app
 
 # Copy the built JAR file from the 'build' stage
 # The name of the JAR is taken from the pom.xml file
-COPY --from=build /app/target/pxFi-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/pxFi-0.1.0-SNAPSHOT.jar app.jar
 
 # Expose the port the application runs on
 EXPOSE 8080
