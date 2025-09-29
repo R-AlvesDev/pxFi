@@ -19,33 +19,28 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
 
     boolean existsByTransactionIdAndAccountId(String transactionId, String accountId);
 
-    @Query(
-            value =
-                    "{ 'accountId': ?0, 'bookingDate': ?1, 'transactionAmount.amount': ?2, 'remittanceInformationUnstructured': ?3 }",
-            exists = true)
+    @Query(value = "{ 'accountId': ?0, 'bookingDate': ?1, 'transactionAmount.amount': ?2, 'remittanceInformationUnstructured': ?3 }", exists = true)
     Boolean existsDuplicate(String accountId, String bookingDate, String amount, String remittance);
 
-    @Query(
-            "{ 'accountId': ?0, 'bookingDate': ?1, 'transactionAmount.amount': ?2, 'remittanceInformationUnstructured': ?3, 'transactionId': null }")
+    @Query("{ 'accountId': ?0, 'bookingDate': ?1, 'transactionAmount.amount': ?2, 'remittanceInformationUnstructured': ?3, 'transactionId': null }")
     Optional<Transaction> findPotentialDuplicate(
             String accountId, String bookingDate, String amount, String remittance);
 
-    @Aggregation(
-            pipeline = {
-                "{ '$match': { "
-                        + "'userId': ObjectId('?0'), "
-                        + "'accountId': ?1, "
-                        + "'bookingDate': { '$gte': ?2, '$lte': ?3 }, "
-                        + "'transactionAmount.amount': { '$lt': '0' }, "
-                        + "'ignored': false, "
-                        + "'categoryId': { '$ne': null } "
-                        + "} }",
-                "{ '$lookup': { 'from': 'categories', 'localField': 'categoryId', 'foreignField': '_id', 'as': 'categoryInfo' } }",
-                "{ '$unwind': '$categoryInfo' }",
-                "{ '$match': { 'categoryInfo.isAssetTransfer': false } }",
-                "{ '$group': { '_id': '$categoryName', 'total': { '$sum': { '$toDouble': '$transactionAmount.amount' } } } }",
-                "{ '$project': { 'categoryName': '$_id', 'total': { '$abs': '$total' }, '_id': 0 } }"
-            })
+    @Aggregation(pipeline = {
+            "{ '$match': { "
+                    + "'userId': ObjectId('?0'), "
+                    + "'accountId': ?1, "
+                    + "'bookingDate': { '$gte': ?2, '$lte': ?3 }, "
+                    + "'transactionAmount.amount': { '$lt': '0' }, "
+                    + "'ignored': false, "
+                    + "'categoryId': { '$ne': null } "
+                    + "} }",
+            "{ '$lookup': { 'from': 'categories', 'localField': 'categoryId', 'foreignField': '_id', 'as': 'categoryInfo' } }",
+            "{ '$unwind': '$categoryInfo' }",
+            "{ '$match': { 'categoryInfo.isAssetTransfer': false } }",
+            "{ '$group': { '_id': '$categoryName', 'total': { '$sum': { '$toDouble': '$transactionAmount.amount' } } } }",
+            "{ '$project': { 'categoryName': '$_id', 'total': { '$abs': '$total' }, '_id': 0 } }"
+    })
     List<CategorySpending> findSpendingByCategory(
             ObjectId userId, String accountId, String startDate, String endDate);
 
@@ -56,6 +51,14 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
 
     List<Transaction> findByRemittanceInformationUnstructuredAndCategoryIdAndSubCategoryIdIsNull(
             String remittanceInfo, String categoryId);
+
+    @Query("{'accountId': ?0, 'userId': ObjectId('?1'), 'bookingDate': {'$gte': ?2}}")
+    List<Transaction> findByAccountIdAndUserIdAndBookingDateAfterOrderByBookingDateDesc(
+            String accountId, ObjectId userId, String startDate);
+
+    @Query("{'accountId': ?0, 'userId': ObjectId('?1'), 'bookingDate': {'$lte': ?2}}")
+    List<Transaction> findByAccountIdAndUserIdAndBookingDateBeforeOrderByBookingDateDesc(
+            String accountId, ObjectId userId, String endDate);
 
     @Query("{'_id': ?0, 'userId': ObjectId('?1')}")
     Optional<Transaction> findByIdAndUserId(String id, ObjectId userId);

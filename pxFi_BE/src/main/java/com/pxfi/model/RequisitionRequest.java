@@ -1,8 +1,13 @@
 package com.pxfi.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class RequisitionRequest {
     private String redirect;
+
+    @JsonProperty("institution_id") 
     private String institutionId;
+
     private String agreement;
     private String reference;
 
@@ -16,7 +21,7 @@ public class RequisitionRequest {
         this.reference = reference;
     }
 
-    // Getters and Setters
+    // Getters and Setters remain the same
     public String getRedirect() {
         return redirect;
     }

@@ -1,19 +1,27 @@
 package com.pxfi.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public class EndUserAgreementRequest {
+    @JsonProperty("institution_id")
     private String institutionId;
-    private String maxHistoricalDays;
-    private String accessValidForDays;
+
+    @JsonProperty("max_historical_days")
+    private int maxHistoricalDays;
+
+    @JsonProperty("access_valid_for_days")
+    private int accessValidForDays;
+
+    @JsonProperty("access_scope")
     private List<String> accessScope;
 
     public EndUserAgreementRequest() {}
 
     public EndUserAgreementRequest(
             String institutionId,
-            String maxHistoricalDays,
-            String accessValidForDays,
+            int maxHistoricalDays,
+            int accessValidForDays,
             List<String> accessScope) {
         this.institutionId = institutionId;
         this.maxHistoricalDays = maxHistoricalDays;
@@ -21,6 +29,7 @@ public class EndUserAgreementRequest {
         this.accessScope = accessScope;
     }
 
+    // Getters and setters remain the same
     public String getInstitutionId() {
         return institutionId;
     }
@@ -29,19 +38,19 @@ public class EndUserAgreementRequest {
         this.institutionId = institutionId;
     }
 
-    public String getMaxHistoricalDays() {
+    public int getMaxHistoricalDays() {
         return maxHistoricalDays;
     }
 
-    public void setMaxHistoricalDays(String maxHistoricalDays) {
+    public void setMaxHistoricalDays(int maxHistoricalDays) {
         this.maxHistoricalDays = maxHistoricalDays;
     }
 
-    public String getAccessValidForDays() {
+    public int getAccessValidForDays() {
         return accessValidForDays;
     }
 
-    public void setAccessValidForDays(String accessValidForDays) {
+    public void setAccessValidForDays(int accessValidForDays) {
         this.accessValidForDays = accessValidForDays;
     }
 

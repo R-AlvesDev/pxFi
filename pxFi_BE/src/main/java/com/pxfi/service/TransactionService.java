@@ -52,12 +52,29 @@ public class TransactionService {
         }
         ObjectId userId = currentUser.getId();
 
+        // Helper booleans to check if dates are provided
+        boolean hasStartDate = startDate != null && !startDate.isEmpty();
+        boolean hasEndDate = endDate != null && !endDate.isEmpty();
+
         List<Transaction> transactions;
-        if (startDate != null && endDate != null && !startDate.isEmpty() && !endDate.isEmpty()) {
+
+        if (hasStartDate && hasEndDate) {
+            // Case 1: Both start and end dates are provided
             transactions = transactionRepository
                     .findByAccountIdAndUserIdAndBookingDateBetweenOrderByBookingDateDesc(
                             accountId, userId, startDate, endDate);
+        } else if (hasStartDate) {
+            // Case 2: Only start date is provided
+            transactions = transactionRepository
+                    .findByAccountIdAndUserIdAndBookingDateAfterOrderByBookingDateDesc(
+                            accountId, userId, startDate);
+        } else if (hasEndDate) {
+            // Case 3: Only end date is provided
+            transactions = transactionRepository
+                    .findByAccountIdAndUserIdAndBookingDateBeforeOrderByBookingDateDesc(
+                            accountId, userId, endDate);
         } else {
+            // Case 4: No dates are provided
             transactions = transactionRepository.findByAccountIdAndUserIdOrderByBookingDateDesc(
                     accountId, userId);
         }

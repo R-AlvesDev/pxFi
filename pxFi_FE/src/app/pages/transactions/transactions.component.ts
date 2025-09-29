@@ -29,7 +29,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
 
   selectedAccountId: string | null = null;
   transactions: Transaction[] = [];
-  originalTransactions: Transaction[] = []; // Store the original state
+  originalTransactions: Transaction[] = [];
   filteredTransactions: Transaction[] = [];
   error: string | null = null;
   loading = false;
@@ -43,6 +43,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   itemsPerPageOptions: number[] = [10, 25, 50, 100];
   startDate = '';
   endDate = '';
+  searchTerm: string = ''; // <<< ADDED: Property for the search input
 
   private accountSub: Subscription | undefined;
 
@@ -112,12 +113,29 @@ export class TransactionsComponent implements OnInit, OnDestroy {
       this.currentPage = 1;
     }
 
-    if (this.selectedCategoryFilter === 'all') {
-      this.filteredTransactions = [...this.transactions];
-    } else if (this.selectedCategoryFilter === 'uncategorized') {
-      this.filteredTransactions = this.transactions.filter(tx => !tx.categoryId);
-    } else {
-      this.filteredTransactions = this.transactions.filter(tx => tx.categoryId === this.selectedCategoryFilter);
+    let tempTransactions = [...this.transactions];
+
+    if (this.selectedCategoryFilter === 'uncategorized') {
+      tempTransactions = tempTransactions.filter(tx => !tx.categoryId);
+    } else if (this.selectedCategoryFilter !== 'all') {
+      tempTransactions = tempTransactions.filter(tx => tx.categoryId === this.selectedCategoryFilter);
+    }
+
+    if (this.searchTerm && this.searchTerm.trim() !== '') {
+      const lowerCaseSearch = this.searchTerm.toLowerCase();
+      tempTransactions = tempTransactions.filter(tx =>
+        tx.remittanceInformationUnstructured &&
+        tx.remittanceInformationUnstructured.toLowerCase().includes(lowerCaseSearch)
+      );
+    }
+
+    this.filteredTransactions = tempTransactions;
+  }
+  
+  clearSearch(): void {
+    if (this.searchTerm) {
+      this.searchTerm = '';
+      this.applyFilters();
     }
   }
 
@@ -145,9 +163,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
         if (index !== -1) {
           const wasExpanded = this.transactions[index].expanded;
           this.transactions[index] = { ...updatedTx, expanded: wasExpanded, categoryDirty: false };
-
           this.originalTransactions[index] = { ...this.transactions[index] };
-
           this.applyFilters(false);
         }
         this.notificationService.show('Category saved!', 'success');
@@ -163,12 +179,9 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   private promptToCategorizeSimilar(updatedTx: Transaction, wasAlreadyCategorized: boolean): void {
     const remittanceInfo = updatedTx.remittanceInformationUnstructured;
     if (!remittanceInfo) return;
-
     const normalizedRemittanceInfo = remittanceInfo.trim().replace(/\s+/g, ' ');
     let similarCount = 0;
-
     const isNewCategorization = !wasAlreadyCategorized && !!updatedTx.categoryId;
-
     if (isNewCategorization) {
       similarCount = this.transactions.filter(t => {
         const currentRemittance = t.remittanceInformationUnstructured?.trim().replace(/\s+/g, ' ') || '';
@@ -177,10 +190,8 @@ export class TransactionsComponent implements OnInit, OnDestroy {
           !t.categoryId;
       }).length;
     }
-
     if (similarCount > 0) {
       const message = `Found ${similarCount} other uncategorized transaction(s) with the same description. Apply this category to them all?`;
-
       if (confirm(message)) {
         this.api.categorizeSimilarTransactions(remittanceInfo, updatedTx.categoryId!, updatedTx.subCategoryId || null, false).subscribe({
           next: () => {
@@ -246,7 +257,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
         this.selectedExpenseId = null;
         this.selectedIncomeId = null;
         this.notificationService.show('Transactions linked successfully!', 'success');
-        this.loadCachedTransactions(); // Okay to go to page 1 after a major action like linking.
+        this.loadCachedTransactions();
       },
       error: (err) => {
         console.error('Failed to link transactions', err);

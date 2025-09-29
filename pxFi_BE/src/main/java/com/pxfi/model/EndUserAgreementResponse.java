@@ -1,17 +1,27 @@
 package com.pxfi.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public class EndUserAgreementResponse {
     private String id;
     private String created;
+
+    @JsonProperty("max_historical_days")
     private int maxHistoricalDays;
+
+    @JsonProperty("access_valid_for_days")
     private int accessValidForDays;
+
+    @JsonProperty("access_scope")
     private List<String> accessScope;
+
     private String accepted;
+
+    @JsonProperty("institution_id")
     private String institutionId;
 
-    // Getters and setters
+    // Getters and setters remain the same
     public String getId() {
         return id;
     }

@@ -35,6 +35,14 @@
       <button class="btn btn-secondary btn-sm" (click)="applyDateFilter()">Filter</button>
       <button class="btn btn-link btn-sm text-decoration-none" (click)="clearDateFilter()">Clear</button>
     </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <label for="searchFilter" class="form-label mb-0 text-nowrap">Search:</label>
+      <input type="text" id="searchFilter" class="form-control" placeholder="Filter by description..." 
+             [(ngModel)]="searchTerm" (input)="applyFilters()" style="width: auto;">
+      <button class="btn btn-link btn-sm text-decoration-none" (click)="clearSearch()">Clear</button>
+    </div>
+    
   </div>
 
   @if (isLinkingMode) {

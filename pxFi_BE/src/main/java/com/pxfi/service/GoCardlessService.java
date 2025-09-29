@@ -95,7 +95,7 @@ public class GoCardlessService {
 
         EndUserAgreementRequest request =
                 new EndUserAgreementRequest(
-                        institutionId, "90", "30", List.of("balances", "details", "transactions"));
+                        institutionId, 90, 30, List.of("balances", "details", "transactions"));
 
         HttpEntity<EndUserAgreementRequest> entity = new HttpEntity<>(request, headers);
 
