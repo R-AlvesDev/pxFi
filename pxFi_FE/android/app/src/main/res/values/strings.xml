@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">pxFi</string>
+    <string name="title_activity_main">pxFi</string>
+    <string name="package_name">dev.ralves.pxfi</string>
+    <string name="custom_url_scheme">dev.ralves.pxfi</string>
+</resources>
