@@ -48,4 +48,12 @@ export class CategoryService {
     const category = this.categories.getValue().find(c => c.id === id);
     return category ? category.name : 'N/A';
   }
+
+  getSubCategoryName(parentId: string, subId: string): string {
+    const parentCategory = this.categories.getValue().find(c => c.id === parentId);
+    if (!parentCategory) return 'N/A';
+
+    const subCategory = this.getSubCategories(parentId).find(sc => sc.id === subId);
+    return subCategory ? subCategory.name : 'N/A';
+  }
 }

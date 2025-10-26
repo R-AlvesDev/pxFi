@@ -1,12 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { IonApp } from '@ionic/angular/standalone';
 import { AuthService } from './services/auth/auth.service';
 import { CategoryService } from './services/category.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, IonApp],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })

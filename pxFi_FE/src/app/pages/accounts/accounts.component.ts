@@ -6,11 +6,12 @@ import { AccountStateService } from '../../services/account-state.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { FormsModule } from '@angular/forms';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonSpinner, IonButton, IonIcon } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'app-accounts',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, IonHeader, IonToolbar, IonTitle, IonContent, IonSpinner, IonButton, IonIcon],
   templateUrl: './accounts.component.html',
   styleUrls: ['./accounts.component.scss']
 })

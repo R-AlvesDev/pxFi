@@ -1,71 +1,164 @@
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-    <h2 class="mb-0">Statistics</h2>
-    <div class="d-flex align-items-center gap-3">
-      <div class="btn-group">
-        <button type="button" class="btn" [ngClass]="viewMode === 'monthly' ? 'btn-primary' : 'btn-outline-secondary'" (click)="viewMode = 'monthly'; loadStatistics()">Monthly</button>
-        <button type="button" class="btn" [ngClass]="viewMode === 'yearly' ? 'btn-primary' : 'btn-outline-secondary'" (click)="viewMode = 'yearly'; loadStatistics()">Yearly</button>
-      </div>
-      <div class="d-flex gap-2">
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Statistics</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-grid>
+    <ion-row class="ion-align-items-center ion-justify-content-between">
+      <ion-col size="auto">
+        <ion-segment [value]="viewMode" (ionChange)="onViewModeChange($event)">
+          <ion-segment-button value="monthly">
+            <ion-label>Monthly</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="yearly">
+            <ion-label>Yearly</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+      </ion-col>
+      <ion-col size="auto">
         @if (viewMode === 'monthly') {
-          <select class="form-select" [(ngModel)]="currentMonth" (ngModelChange)="loadStatistics()">
-            @for (month of months; track month) {
-              <option [value]="month.value">{{ month.name }}</option>
-            }
-          </select>
+          <ion-item>
+            <ion-select [(ngModel)]="currentMonth" (ionChange)="loadStatistics()">
+              @for (month of months; track month) {
+                <ion-select-option [value]="month.value">{{ month.name }}</ion-select-option>
+              }
+            </ion-select>
+          </ion-item>
         }
-        <select class="form-select" [(ngModel)]="currentYear" (ngModelChange)="loadStatistics()">
-          @for (year of years; track year) {
-            <option [value]="year">{{ year }}</option>
-          }
-        </select>
+        <ion-item>
+          <ion-select [(ngModel)]="currentYear" (ionChange)="loadStatistics()">
+            @for (year of years; track year) {
+              <ion-select-option [value]="year">{{ year }}</ion-select-option>
+            }
+          </ion-select>
+        </ion-item>
+      </ion-col>
+    </ion-row>
+
+    @if (loading) {
+      <div class="ion-text-center ion-padding">
+        <ion-spinner></ion-spinner>
       </div>
-    </div>
-  </div>
-
-  @if (loading) {
-    <div class="text-center p-5"><div class="spinner-border text-primary"></div></div>
-  }
-  @if (error) {
-    <div class="alert alert-danger">{{ error }}</div>
-  }
-
-  @if (viewMode === 'monthly' && monthlyStats && !loading) {
-    <div>
-      <div class="row g-4">
-        <div class="col-md-4"><div class="card text-center h-100 bg-success-subtle border-success"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Total Income</h6><p class="card-text fs-2 fw-bold">{{ monthlyStats.totalIncome | currency:'EUR' }}</p></div></div></div>
-        <div class="col-md-4"><div class="card text-center h-100 bg-danger-subtle border-danger"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Total Expenses</h6><p class="card-text fs-2 fw-bold">{{ monthlyStats.totalExpenses | currency:'EUR' }}</p></div></div></div>
-        <div class="col-md-4"><div class="card text-center h-100" [ngClass]="(monthlyStats.totalIncome - monthlyStats.totalExpenses >= 0) ? 'bg-primary-subtle border-primary' : 'bg-warning-subtle border-warning'"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Net Balance</h6><p class="card-text fs-2 fw-bold">{{ (monthlyStats.totalIncome - monthlyStats.totalExpenses) | currency:'EUR' }}</p></div></div></div>
-        <div class="col-md-7"><div class="card h-100"><div class="card-body"><h5 class="card-title">Expenses by Category</h5>@if (showChart) {
-        <div style="height: 350px;">
-          <canvas baseChart [data]="doughnutChartData" [type]="doughnutChartType" [options]="doughnutChartOptions"></canvas>
-        </div>
-      }</div></div></div>
-      <div class="col-md-5"><div class="card h-100"><div class="card-body"><h5 class="card-title">Breakdown</h5><ul class="list-group list-group-flush">@for (item of monthlyStats.expensesByCategory; track item) {
-      <li class="list-group-item d-flex justify-content-between align-items-center">{{ item.categoryName || 'Uncategorized' }} <span class="badge bg-primary rounded-pill">{{ item.total | currency:'EUR' }}</span></li>
-    }</ul></div></div></div>
-  </div>
-</div>
-}
-
-@if (viewMode === 'yearly' && yearlyStats && !loading) {
-  <div>
-    <div class="row g-4">
-      <div class="col-md-3"><div class="card text-center h-100 bg-success-subtle border-success"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Total Income</h6><p class="fs-4 fw-bold">{{ yearlyStats.totalIncome | currency:'EUR' }}</p></div></div></div>
-      <div class="col-md-3"><div class="card text-center h-100 bg-danger-subtle border-danger"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Total Expenses</h6><p class="fs-4 fw-bold">{{ yearlyStats.totalExpenses | currency:'EUR' }}</p></div></div></div>
-      <div class="col-md-3"><div class="card text-center h-100 bg-info-subtle border-info"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Avg. Monthly Income</h6><p class="fs-4 fw-bold">{{ yearlyStats.averageMonthlyIncome | currency:'EUR' }}</p></div></div></div>
-      <div class="col-md-3"><div class="card text-center h-100 bg-warning-subtle border-warning"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Avg. Monthly Expenses</h6><p class="fs-4 fw-bold">{{ yearlyStats.averageMonthlyExpenses | currency:'EUR' }}</p></div></div></div>
-      <div class="col-12">
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">Monthly Breakdown for {{ currentYear }}</h5>
-            <div style="height: 400px;">
-              <canvas baseChart [data]="barChartData" [type]="barChartType" [options]="barChartOptions"></canvas>
-            </div>
-          </div>
-        </div>
+    }
+    @if (error) {
+      <div class="ion-padding">
+        <ion-text color="danger">{{ error }}</ion-text>
       </div>
-    </div>
-  </div>
-}
-</div>
+    }
+
+    @if (viewMode === 'monthly' && monthlyStats && !loading) {
+      <div>
+        <ion-row>
+          <ion-col size="12" size-md="4">
+            <ion-card color="success">
+              <ion-card-header>
+                <ion-card-subtitle>Total Income</ion-card-subtitle>
+                <ion-card-title>{{ monthlyStats.totalIncome | currency:'EUR' }}</ion-card-title>
+              </ion-card-header>
+            </ion-card>
+          </ion-col>
+          <ion-col size="12" size-md="4">
+            <ion-card color="danger">
+              <ion-card-header>
+                <ion-card-subtitle>Total Expenses</ion-card-subtitle>
+                <ion-card-title>{{ monthlyStats.totalExpenses | currency:'EUR' }}</ion-card-title>
+              </ion-card-header>
+            </ion-card>
+          </ion-col>
+          <ion-col size="12" size-md="4">
+            <ion-card [color]="(monthlyStats.totalIncome - monthlyStats.totalExpenses >= 0) ? 'primary' : 'warning'">
+              <ion-card-header>
+                <ion-card-subtitle>Net Balance</ion-card-subtitle>
+                <ion-card-title>{{ (monthlyStats.totalIncome - monthlyStats.totalExpenses) | currency:'EUR' }}</ion-card-title>
+              </ion-card-header>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col size="12" size-md="7">
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>Expenses by Category</ion-card-title>
+              </ion-card-header>
+              @if (showChart) {
+                <ion-card-content>
+                  <canvas baseChart [data]="doughnutChartData" [type]="doughnutChartType" [options]="doughnutChartOptions"></canvas>
+                </ion-card-content>
+              }
+            </ion-card>
+          </ion-col>
+          <ion-col size="12" size-md="5">
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>Breakdown</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <ion-list>
+                  @for (item of monthlyStats.expensesByCategory; track item) {
+                    <ion-item>
+                      <ion-label>{{ item.categoryName || 'Uncategorized' }}</ion-label>
+                      <ion-text slot="end">{{ item.total | currency:'EUR' }}</ion-text>
+                    </ion-item>
+                  }
+                </ion-list>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </div>
+    }
+
+    @if (viewMode === 'yearly' && yearlyStats && !loading) {
+      <div>
+        <ion-row>
+          <ion-col size="12" size-md="3">
+            <ion-card color="success">
+              <ion-card-header>
+                <ion-card-subtitle>Total Income</ion-card-subtitle>
+                <ion-card-title>{{ yearlyStats.totalIncome | currency:'EUR' }}</ion-card-title>
+              </ion-card-header>
+            </ion-card>
+          </ion-col>
+          <ion-col size="12" size-md="3">
+            <ion-card color="danger">
+              <ion-card-header>
+                <ion-card-subtitle>Total Expenses</ion-card-subtitle>
+                <ion-card-title>{{ yearlyStats.totalExpenses | currency:'EUR' }}</ion-card-title>
+              </ion-card-header>
+            </ion-card>
+          </ion-col>
+          <ion-col size="12" size-md="3">
+            <ion-card color="tertiary">
+              <ion-card-header>
+                <ion-card-subtitle>Avg. Monthly Income</ion-card-subtitle>
+                <ion-card-title>{{ yearlyStats.averageMonthlyIncome | currency:'EUR' }}</ion-card-title>
+              </ion-card-header>
+            </ion-card>
+          </ion-col>
+          <ion-col size="12" size-md="3">
+            <ion-card color="warning">
+              <ion-card-header>
+                <ion-card-subtitle>Avg. Monthly Expenses</ion-card-subtitle>
+                <ion-card-title>{{ yearlyStats.averageMonthlyExpenses | currency:'EUR' }}</ion-card-title>
+              </ion-card-header>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col size="12">
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>Monthly Breakdown for {{ currentYear }}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <canvas baseChart [data]="barChartData" [type]="barChartType" [options]="barChartOptions"></canvas>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </div>
+    }
+  </ion-grid>
+</ion-content>

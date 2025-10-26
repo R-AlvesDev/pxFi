@@ -7,6 +7,29 @@ import { AccountStateService } from '../../services/account-state.service';
 import { CategoryService } from '../../services/category.service';
 import { NotificationService } from '../../services/notification.service';
 import { Subscription } from 'rxjs';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon, ModalController, IonSpinner, IonSelect, IonSelectOption, IonButton, IonInfiniteScroll, IonInfiniteScrollContent } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { link, refresh, funnel, cashOutline, briefcaseOutline, trendingUpOutline, cartOutline, homeOutline, waterOutline, carSportOutline, restaurantOutline, filmOutline, medkitOutline, pricetagsOutline, airplaneOutline } from 'ionicons/icons';
+import { FilterModalComponent } from '../../components/modals/filter-modal/filter-modal.component';
+import { IconService } from '../../services/icon.service';
+
+addIcons({
+  link,
+  refresh,
+  funnel,
+  'cash-outline': cashOutline,
+  'briefcase-outline': briefcaseOutline,
+  'trending-up-outline': trendingUpOutline,
+  'cart-outline': cartOutline,
+  'home-outline': homeOutline,
+  'water-outline': waterOutline,
+  'car-sport-outline': carSportOutline,
+  'restaurant-outline': restaurantOutline,
+  'film-outline': filmOutline,
+  'medkit-outline': medkitOutline,
+  'pricetags-outline': pricetagsOutline,
+  'airplane-outline': airplaneOutline,
+});
 
 interface Transaction extends ApiTransaction {
   expanded?: boolean;
@@ -16,7 +39,7 @@ interface Transaction extends ApiTransaction {
 @Component({
   selector: 'app-transactions',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon, FilterModalComponent, IonSpinner, IonSelect, IonSelectOption, IonButton, IonInfiniteScroll, IonInfiniteScrollContent],
   templateUrl: './transactions.component.html',
   styleUrls: ['./transactions.component.scss']
 })
@@ -26,11 +49,14 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   private accountState = inject(AccountStateService);
   categoryService = inject(CategoryService);
   private notificationService = inject(NotificationService);
+  private modalCtrl = inject(ModalController);
+  iconService = inject(IconService);
 
   selectedAccountId: string | null = null;
   transactions: Transaction[] = [];
   originalTransactions: Transaction[] = [];
   filteredTransactions: Transaction[] = [];
+  displayedTransactions: Transaction[] = [];
   error: string | null = null;
   loading = false;
   mainCategories: Category[] = [];
@@ -38,12 +64,11 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   isLinkingMode = false;
   selectedExpenseId: string | null = null;
   selectedIncomeId: string | null = null;
-  currentPage = 1;
-  itemsPerPage = 10;
-  itemsPerPageOptions: number[] = [10, 25, 50, 100];
+  private scrollPage = 0;
+  private readonly transactionsPerPage = 25;
   startDate = '';
   endDate = '';
-  searchTerm: string = ''; // <<< ADDED: Property for the search input
+  searchTerm: string = '';
 
   private accountSub: Subscription | undefined;
 
@@ -66,11 +91,38 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     this.accountSub?.unsubscribe();
   }
 
+  async openFilterModal() {
+    const modal = await this.modalCtrl.create({
+      component: FilterModalComponent,
+      componentProps: {
+        selectedCategoryFilter: this.selectedCategoryFilter,
+        mainCategories: this.mainCategories,
+        startDate: this.startDate,
+        endDate: this.endDate,
+        searchTerm: this.searchTerm
+      }
+    });
+    await modal.present();
+
+    const { data, role } = await modal.onWillDismiss();
+
+    if (role === 'confirm') {
+      this.selectedCategoryFilter = data.selectedCategoryFilter;
+      this.startDate = data.startDate;
+      this.endDate = data.endDate;
+      this.searchTerm = data.searchTerm;
+      this.applyFilters();
+      if (this.startDate && this.endDate) {
+        this.loadCachedTransactions();
+      }
+    }
+  }
+
   private setTransactions(data: Transaction[]): void {
     this.transactions = data.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime())
       .map(tx => ({ ...tx, expanded: false, categoryDirty: false }));
     this.originalTransactions = JSON.parse(JSON.stringify(this.transactions));
-    this.applyFilters(true);
+    this.applyFilters();
     this.loading = false;
   }
 
@@ -108,11 +160,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  applyFilters(resetPage = true): void {
-    if (resetPage) {
-      this.currentPage = 1;
-    }
-
+  applyFilters(): void {
     let tempTransactions = [...this.transactions];
 
     if (this.selectedCategoryFilter === 'uncategorized') {
@@ -130,6 +178,34 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     }
 
     this.filteredTransactions = tempTransactions;
+    this.resetAndLoadDisplayedTransactions();
+  }
+
+  private resetAndLoadDisplayedTransactions(): void {
+    this.scrollPage = 0;
+    this.displayedTransactions = [];
+    this.loadMoreTransactions();
+  }
+
+  loadMore(event: any): void {
+    this.loadMoreTransactions(() => {
+      event.target.complete();
+      if (this.displayedTransactions.length >= this.filteredTransactions.length) {
+        event.target.disabled = true;
+      }
+    });
+  }
+
+  private loadMoreTransactions(onComplete?: () => void): void {
+    const startIndex = this.scrollPage * this.transactionsPerPage;
+    const endIndex = startIndex + this.transactionsPerPage;
+
+    // Using a timeout to allow the UI to update before adding more items, which can feel smoother.
+    setTimeout(() => {
+      this.displayedTransactions.push(...this.filteredTransactions.slice(startIndex, endIndex));
+      this.scrollPage++;
+      onComplete?.();
+    }, 100);
   }
   
   clearSearch(): void {
@@ -164,7 +240,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
           const wasExpanded = this.transactions[index].expanded;
           this.transactions[index] = { ...updatedTx, expanded: wasExpanded, categoryDirty: false };
           this.originalTransactions[index] = { ...this.transactions[index] };
-          this.applyFilters(false);
+          this.applyFilters();
         }
         this.notificationService.show('Category saved!', 'success');
         this.promptToCategorizeSimilar(updatedTx, wasAlreadyCategorized);
@@ -214,7 +290,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
         if (index !== -1) {
           const wasExpanded = this.transactions[index].expanded;
           this.transactions[index] = { ...updatedTx, expanded: wasExpanded };
-          this.applyFilters(false);
+          this.applyFilters();
         }
         this.notificationService.show(`Transaction ignore status updated.`, 'success');
       },
@@ -264,50 +340,6 @@ export class TransactionsComponent implements OnInit, OnDestroy {
         this.notificationService.show('An error occurred while linking.', 'error');
       }
     });
-  }
-
-  get paginatedTransactions(): Transaction[] {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    return this.filteredTransactions.slice(startIndex, startIndex + this.itemsPerPage);
-  }
-
-  get totalPages(): number {
-    return Math.ceil(this.filteredTransactions.length / this.itemsPerPage);
-  }
-
-  get pages(): (number | string)[] {
-    const total = this.totalPages;
-    const current = this.currentPage;
-    const delta = 2;
-    const range = [];
-    range.push(1);
-    if (current > delta + 2) {
-      range.push('...');
-    }
-    for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
-      range.push(i);
-    }
-    if (current < total - delta - 1) {
-      range.push('...');
-    }
-    if (total > 1) {
-      range.push(total);
-    }
-    return range;
-  }
-
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-    }
-  }
-
-  onItemsPerPageChange(): void {
-    this.currentPage = 1;
-  }
-
-  isNumber(value: any): value is number {
-    return typeof value === 'number';
   }
 
   applyDateFilter(): void {

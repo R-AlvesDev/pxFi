@@ -1,0 +1,74 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/settings"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Manage Automation Rules</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <form (ngSubmit)="createRule()" class="mb-4">
+    <ion-list>
+      <ion-item>
+        <ion-label>IF</ion-label>
+        <ion-select [(ngModel)]="newRule.fieldToMatch" name="fieldToMatch" (ionChange)="onFieldToMatchChange()">
+          @for (field of ruleFields; track field) {
+            <ion-select-option [value]="field">{{ field }}</ion-select-option>
+          }
+        </ion-select>
+        <ion-select [(ngModel)]="newRule.operator" name="operator">
+          @for (op of availableOperators; track op) {
+            <ion-select-option [value]="op">{{ op }}</ion-select-option>
+          }
+        </ion-select>
+        <ion-input type="text" placeholder="Value..." [(ngModel)]="newRule.valueToMatch" name="valueToMatch"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label>THEN</ion-label>
+        <ion-select [(ngModel)]="newRule.categoryId" name="categoryId">
+          <ion-select-option [value]="undefined">Select Category</ion-select-option>
+          @for (cat of mainCategories; track cat) {
+            <ion-select-option [value]="cat.id">{{ cat.name }}</ion-select-option>
+          }
+        </ion-select>
+        @if (newRule.categoryId) {
+          <ion-select [(ngModel)]="newRule.subCategoryId" name="subCategoryId">
+            <ion-select-option [value]="null">No Subcategory</ion-select-option>
+            @for (sub of categoryService.getSubCategories(newRule.categoryId!); track sub) {
+              <ion-select-option [value]="sub.id">{{ sub.name }}</ion-select-option>
+            }
+          </ion-select>
+        }
+      </ion-item>
+    </ion-list>
+    <div class="ion-padding-horizontal">
+        <ion-button type="button" expand="block" fill="outline" (click)="testRule()">Test Rule</ion-button>
+        <ion-button type="submit" expand="block" class="ion-margin-top">Add Rule</ion-button>
+    </div>
+  </form>
+
+  <ion-button expand="block" (click)="applyAllRules()" [disabled]="isApplyingRules">
+    @if (isApplyingRules) {
+      <ion-spinner></ion-spinner>
+    } @else {
+      <span>Apply All Rules to Existing Transactions</span>
+    }
+  </ion-button>
+
+  <ion-list>
+    @for (rule of rules$ | async; track rule) {
+      <ion-item>
+        <ion-label>
+          <p>IF {{ rule.fieldToMatch }} {{ rule.operator }} "{{ rule.valueToMatch }}"</p>
+          <h3>THEN ➞ {{ getCategoryName(rule.categoryId) }} @if (rule.subCategoryId) {
+            <span>/ {{ getCategoryName(rule.subCategoryId) }}</span>
+          }</h3>
+        </ion-label>
+        <ion-button slot="end" fill="clear" color="danger" (click)="deleteRule(rule.id)">
+          <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </ion-item>
+    }
+  </ion-list>
+</ion-content>

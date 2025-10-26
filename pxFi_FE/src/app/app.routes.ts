@@ -24,13 +24,52 @@ export const routes: Routes = [
     component: MainLayoutComponent,
     canActivate: [AuthGuard],
     children: [
-      { path: 'accounts', component: AccountsComponent },
-      { path: 'dashboard/:accountId', component: DashboardComponent },
-      { path: 'connect', component: BankConnectionComponent },
-      { path: 'callback', component: CallbackComponent },
-      { path: 'transactions/:accountId', component: TransactionsComponent },
-      { path: 'statistics', component: StatisticsComponent },
-      { path: 'settings', component: SettingsComponent },
+      {
+        path: 'dashboard/:accountId',
+        component: DashboardComponent,
+      },
+      {
+        path: 'transactions/:accountId',
+        component: TransactionsComponent,
+      },
+      {
+        path: 'statistics',
+        component: StatisticsComponent,
+      },
+      {
+        path: 'settings',
+        children: [
+          {
+            path: '',
+            component: SettingsComponent,
+          },
+          {
+            path: 'categories',
+            loadComponent: () => import('./pages/settings/manage-categories/manage-categories.component').then(m => m.ManageCategoriesComponent)
+          },
+          {
+            path: 'rules',
+            loadComponent: () => import('./pages/settings/manage-rules/manage-rules.component').then(m => m.ManageRulesComponent)
+          }
+        ]
+      },
+      {
+        path: 'accounts',
+        component: AccountsComponent
+      },
+      {
+        path: 'connect',
+        component: BankConnectionComponent
+      },
+      {
+        path: 'callback',
+        component: CallbackComponent
+      },
+      {
+        path: '',
+        redirectTo: 'accounts',
+        pathMatch: 'full',
+      },
     ]
   }
 ];

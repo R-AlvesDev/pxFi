@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonList, IonItem, IonLabel, IonSelect, IonSelectOption, IonSegment, IonSegmentButton, IonSpinner, IonText } from '@ionic/angular/standalone';
 import { Chart, ChartConfiguration, ChartData, ChartType, registerables } from 'chart.js';
 import { ApiService, StatisticsResponse, YearlyStatisticsResponse } from '../../services/api.service';
 import { AccountStateService } from '../../services/account-state.service';
@@ -9,7 +10,7 @@ import { AccountStateService } from '../../services/account-state.service';
 @Component({
   selector: 'app-statistics',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective],
+  imports: [CommonModule, FormsModule, BaseChartDirective, IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonList, IonItem, IonLabel, IonSelect, IonSelectOption, IonSegment, IonSegmentButton, IonSpinner, IonText],
   templateUrl: './statistics.component.html',
   styleUrls: ['./statistics.component.scss']
 })
@@ -95,6 +96,14 @@ export class StatisticsComponent implements OnInit {
         next: this.handleYearlyResponse.bind(this),
         error: this.handleError.bind(this)
       });
+    }
+  }
+
+  onViewModeChange(event: any): void {
+    const newMode = event.detail.value;
+    if (newMode === 'monthly' || newMode === 'yearly') {
+      this.viewMode = newMode;
+      this.loadStatistics();
     }
   }
 
