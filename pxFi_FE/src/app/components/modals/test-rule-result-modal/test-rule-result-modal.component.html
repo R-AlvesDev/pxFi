@@ -1,0 +1,30 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Test Rule Results</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (testResults) {
+    <h2>Matched Transactions ({{ testResults.matchCount }})</h2>
+    @if (testResults.matchedTransactions.length > 0) {
+      <ion-list>
+        @for (tx of testResults.matchedTransactions; track tx.id) {
+          <ion-item>
+            <ion-label>
+              <p>{{ tx.remittanceInformationUnstructured }}</p>
+              <p>{{ tx.transactionAmount.amount }} {{ tx.transactionAmount.currency }}</p>
+            </ion-label>
+          </ion-item>
+        }
+      </ion-list>
+    } @else {
+      <p>No transactions matched the rule.</p>
+    }
+  } @else {
+    <p>No test results available.</p>
+  }
+</ion-content>

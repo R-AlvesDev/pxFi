@@ -44,6 +44,7 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     border-radius: 10px;
     margin-bottom: 10px;
+    margin-left: 72px;
     overflow: hidden;
   }
 
@@ -51,14 +52,9 @@
     background-color: #f9f9f9;
   }
 
-  ion-fab {
+  ion-fab.custom-fab {
+    margin-bottom: 65px;
+    margin-left: 16px;
     z-index: 100;
-  }
-
-  .fab-container {
-    position: fixed;
-    bottom: 65px; /* Adjust this value based on the tab bar height */
-    width: 100%;
-    z-index: 101;
   }
 }

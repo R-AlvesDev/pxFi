@@ -7,9 +7,9 @@ import { AccountStateService } from '../../services/account-state.service';
 import { CategoryService } from '../../services/category.service';
 import { NotificationService } from '../../services/notification.service';
 import { Subscription } from 'rxjs';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon, ModalController, IonSpinner, IonSelect, IonSelectOption, IonButton, IonInfiniteScroll, IonInfiniteScrollContent } from '@ionic/angular/standalone';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon, ModalController, IonSpinner, IonSelect, IonSelectOption, IonButton, IonInfiniteScroll, IonInfiniteScrollContent, IonFabList } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { link, refresh, funnel, cashOutline, briefcaseOutline, trendingUpOutline, cartOutline, homeOutline, waterOutline, carSportOutline, restaurantOutline, filmOutline, medkitOutline, pricetagsOutline, airplaneOutline } from 'ionicons/icons';
+import { link, refresh, funnel, add, cashOutline, briefcaseOutline, trendingUpOutline, cartOutline, homeOutline, waterOutline, carSportOutline, restaurantOutline, filmOutline, medkitOutline, pricetagsOutline, airplaneOutline } from 'ionicons/icons';
 import { FilterModalComponent } from '../../components/modals/filter-modal/filter-modal.component';
 import { IconService } from '../../services/icon.service';
 
@@ -17,6 +17,7 @@ addIcons({
   link,
   refresh,
   funnel,
+  add,
   'cash-outline': cashOutline,
   'briefcase-outline': briefcaseOutline,
   'trending-up-outline': trendingUpOutline,
@@ -39,7 +40,7 @@ interface Transaction extends ApiTransaction {
 @Component({
   selector: 'app-transactions',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon, FilterModalComponent, IonSpinner, IonSelect, IonSelectOption, IonButton, IonInfiniteScroll, IonInfiniteScrollContent],
+  imports: [CommonModule, FormsModule, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonFab, IonFabButton, IonIcon, FilterModalComponent, IonSpinner, IonSelect, IonSelectOption, IonButton, IonInfiniteScroll, IonInfiniteScrollContent, IonFabList],
   templateUrl: './transactions.component.html',
   styleUrls: ['./transactions.component.scss']
 })

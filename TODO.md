@@ -86,3 +86,41 @@ This document outlines the features and implementation plan for the first fully 
     * [X] **Linting**: Run a linter (like ESLint for frontend, and a static analyzer for Java) across the entire codebase to enforce consistent style.
     * [X] **Refactoring**: Remove any redundant code, commented-out blocks, and unused imports.
     * [X] **Logging**: Remove all temporary `console.log` and `System.out.println` statements used for debugging.
+
+---
+
+## Post-v1.0 Feature Roadmap
+
+This section outlines the next major features planned for development.
+
+### Feature: Budgets
+
+*   **Goal**: Allow users to set monthly or yearly spending goals for specific categories.
+*   **Backend**:
+    *   [ ] Create a new database table (`budgets`) to store budget name, amount, category, and period.
+    *   [ ] Develop API endpoints for full CRUD (Create, Read, Update, Delete) operations on budgets.
+    *   [ ] Create a summary endpoint to calculate and return current spending against each budget.
+*   **Frontend**:
+    *   [ ] Create a new "Budgets" page to list all budgets and visualize progress (e.g., with progress bars).
+    *   [ ] Implement a form (modal or separate page) for creating and editing budgets.
+    *   [ ] Integrate a budget summary card into the main dashboard for at-a-glance tracking.
+
+### Feature: Savings Tracking
+
+*   **Goal**: Allow users to track their savings by setting a total and marking relevant transactions.
+*   **Backend**:
+    *   [ ] Create a new table to store the user's manually-entered savings amount.
+    *   [ ] Update transaction logic to identify and sum all transactions categorized as "Savings".
+*   **Frontend**:
+    *   [ ] Create a default "Savings" category for users to assign transactions to.
+    *   [ ] Design and implement a "Savings" section or page.
+    *   [ ] Allow the user to input and edit their total savings amount directly.
+    *   [ ] Display a total savings amount, calculated as the sum of the user-entered value plus all transactions marked as "Savings".
+
+### Advanced Feature: Investment Tracking (Future Release)
+
+*   **Goal**: Provide tools for users to track their investment portfolio.
+*   **Implementation Ideas**:
+    *   [ ] Allow manual entry of investment holdings (stocks, funds, etc.).
+    *   [ ] Explore integration with financial data providers to track portfolio performance automatically.
+    *   [ ] Display key metrics like asset allocation, total value, and performance over time.

@@ -16,6 +16,17 @@ This allows for powerful features like year-over-year spending comparisons, long
 
 The project has reached its version 1.0 milestone and is now feature-complete. All core functionality, from user authentication and end-to-end data encryption to data visualization, has been implemented and is ready for a comprehensive testing phase before public release.
 
+### Update Summary (Post-v1.0)
+
+Following the v1.0 release, development has continued to introduce new features and refine the user experience. Key updates include:
+
+*   **Advanced Rule Conditions**: The automation engine now supports more complex rules, allowing users to create conditions based on transaction `amount` (e.g., "if amount is greater than 100").
+*   **Rule Testing**: A "Test Rule" feature has been added, which provides a preview of which existing transactions a new rule would apply to, allowing users to verify their rules before saving them.
+*   **UI/UX Enhancements**:
+    *   A floating action button (FAB) has been added to the transactions page for quick access to common actions like refreshing transactions or filtering.
+    *   The transaction filtering experience has been improved with a dedicated modal.
+    *   General styling and layout improvements have been made for a cleaner and more intuitive user experience.
+
 ### Key Features Implemented
 * **Full-Stack Architecture**: A robust and modern stack featuring an Angular frontend and a Java Spring Boot backend.
 * **Secure User Authentication**: Complete user registration and login system using Spring Security and JWTs, ensuring all user data is private and strictly scoped to the logged-in user.

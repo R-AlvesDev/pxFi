@@ -47,7 +47,7 @@
                 &middot; {{ tx.bookingDate | date:'shortDate' }}
               </div>
             </ion-label>
-            <div slot="end" class="transaction-amount" [class.positive]="'+tx.transactionAmount.amount > 0'" [class.negative]="'+tx.transactionAmount.amount < 0'">
+            <div slot="end" class="transaction-amount" [class.positive]="+tx.transactionAmount.amount > 0" [class.negative]="+tx.transactionAmount.amount < 0">
               {{ tx.transactionAmount.amount | currency:tx.transactionAmount.currency }}
             </div>
           </ion-item>
@@ -97,21 +97,21 @@
     </div>
   }
 
-  <div class="fab-container">
-    <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-      <ion-fab-button (click)="openFilterModal()">
+  <ion-fab slot="fixed" vertical="bottom" horizontal="start" class="custom-fab">
+    <ion-fab-button>
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+    <ion-fab-list side="end">
+      <ion-fab-button (click)="openFilterModal()" color="light" data-desc="Filter">
         <ion-icon name="funnel"></ion-icon>
       </ion-fab-button>
-    </ion-fab>
-  
-    <ion-fab slot="fixed" vertical="bottom" horizontal="start">
-      <ion-fab-button (click)="toggleLinkingMode()" color="light">
-        <ion-icon name="link"></ion-icon>
-      </ion-fab-button>
-      <ion-fab-button (click)="refreshTransactions()" color="light">
+      <ion-fab-button (click)="refreshTransactions()" color="light" data-desc="Refresh">
         <ion-icon name="refresh"></ion-icon>
       </ion-fab-button>
-    </ion-fab>
-  </div>
+      <ion-fab-button (click)="toggleLinkingMode()" color="light" data-desc="Split Bill">
+        <ion-icon name="link"></ion-icon>
+      </ion-fab-button>
+    </ion-fab-list>
+  </ion-fab>
 
 </ion-content>

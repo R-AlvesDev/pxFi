@@ -13,7 +13,7 @@
 <ion-content class="ion-padding">
   <ion-list>
     <ion-item>
-      <ion-label>Category</ion-label>
+      <ion-label>Category: </ion-label>
       <ion-select [(ngModel)]="selectedCategoryFilter" interface="popover">
         <ion-select-option value="all">All Categories</ion-select-option>
         <ion-select-option value="uncategorized">** Uncategorized **</ion-select-option>
@@ -24,17 +24,17 @@
     </ion-item>
 
     <ion-item>
-      <ion-label>From</ion-label>
+      <ion-label>From: </ion-label>
       <ion-input type="date" [(ngModel)]="startDate"></ion-input>
     </ion-item>
 
     <ion-item>
-      <ion-label>To</ion-label>
+      <ion-label>To: </ion-label>
       <ion-input type="date" [(ngModel)]="endDate"></ion-input>
     </ion-item>
 
     <ion-item>
-      <ion-label>Search</ion-label>
+      <ion-label>Search: </ion-label>
       <ion-input type="text" placeholder="Filter by description..." [(ngModel)]="searchTerm"></ion-input>
     </ion-item>
   </ion-list>

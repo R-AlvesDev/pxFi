@@ -7,15 +7,15 @@ import { CategorizationRule, RuleField, RuleOperator, TestRuleResponse, Category
 import { Observable } from 'rxjs';
 import { NotificationService } from '../../../services/notification.service';
 import { AccountStateService } from '../../../services/account-state.service';
-import { Modal } from 'bootstrap';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, IonButton, IonButtons, IonBackButton, IonSpinner, IonIcon } from '@ionic/angular/standalone';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, IonButton, IonButtons, IonBackButton, IonSpinner, IonIcon, ModalController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { trashOutline } from 'ionicons/icons';
+import { TestRuleResultModalComponent } from '../../../components/modals/test-rule-result-modal/test-rule-result-modal.component';
 
 @Component({
   selector: 'app-manage-rules',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, IonButton, IonButtons, IonBackButton, IonSpinner, IonIcon],
+  imports: [CommonModule, FormsModule, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, IonButton, IonButtons, IonBackButton, IonSpinner, IonIcon, TestRuleResultModalComponent],
   templateUrl: './manage-rules.component.html',
   styleUrls: ['./manage-rules.component.scss']
 })
@@ -24,6 +24,7 @@ export class ManageRulesComponent implements OnInit {
   categoryService = inject(CategoryService);
   private notificationService = inject(NotificationService);
   private accountState = inject(AccountStateService);
+  private modalCtrl = inject(ModalController);
 
   isApplyingRules = false;
   rules$: Observable<CategorizationRule[]>;
@@ -37,7 +38,6 @@ export class ManageRulesComponent implements OnInit {
   mainCategories: Category[] = [];
   testResults: TestRuleResponse | null = null;
   private currentAccountId: string | null = null;
-  private testRuleModal: Modal | undefined;
 
   constructor() {
     this.rules$ = this.ruleService.rules$;
@@ -109,20 +109,22 @@ export class ManageRulesComponent implements OnInit {
     }
   }
 
-  testRule(): void {
+  async testRule(): Promise<void> {
     if (!this.newRule.valueToMatch || !this.currentAccountId) {
       this.notificationService.show('Please select an account and fill out the rule value.', 'error');
       return;
     }
 
     this.ruleService.testRule(this.newRule, this.currentAccountId).subscribe({
-      next: (response) => {
+      next: async (response) => {
         this.testResults = response;
-        const modalElement = document.getElementById('testRuleModal');
-        if (modalElement) {
-          this.testRuleModal = new Modal(modalElement);
-          this.testRuleModal.show();
-        }
+        const modal = await this.modalCtrl.create({
+          component: TestRuleResultModalComponent,
+          componentProps: {
+            testResults: this.testResults
+          }
+        });
+        await modal.present();
       },
       error: (err) => this.notificationService.show('Error testing rule: ' + err.message, 'error')
     });
