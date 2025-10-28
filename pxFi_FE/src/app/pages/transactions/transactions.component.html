@@ -1,16 +1,10 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Transactions</ion-title>
-  </ion-toolbar>
-</ion-header>
-
-<ion-content class="ion-padding" [fullscreen]="true">
-  <!-- Filter section will be moved to a modal -->
-  <!--
-  <div class="d-flex flex-wrap justify-content-start align-items-center gap-4 mb-3 p-3 border rounded bg-light">
-    ...
-  </div>
-  -->
+<ion-content>
+  
+  <ion-header>
+    <ion-toolbar>
+      <ion-title>Transactions</ion-title>
+    </ion-toolbar>
+  </ion-header>
 
   @if (isLinkingMode) {
     <div class="alert alert-info">
@@ -113,5 +107,4 @@
       </ion-fab-button>
     </ion-fab-list>
   </ion-fab>
-
 </ion-content>

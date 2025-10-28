@@ -17,8 +17,9 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: '', component: HomeComponent, pathMatch: 'full' },
+  { path: 'callback', component: CallbackComponent },
 
-  // Protected routes (everything inside MainLayout)
+  // Protected routes with main layout
   {
     path: '',
     component: MainLayoutComponent,
@@ -55,20 +56,11 @@ export const routes: Routes = [
       },
       {
         path: 'accounts',
-        component: AccountsComponent
+        component: AccountsComponent,
       },
       {
         path: 'connect',
-        component: BankConnectionComponent
-      },
-      {
-        path: 'callback',
-        component: CallbackComponent
-      },
-      {
-        path: '',
-        redirectTo: 'accounts',
-        pathMatch: 'full',
+        component: BankConnectionComponent,
       },
     ]
   }

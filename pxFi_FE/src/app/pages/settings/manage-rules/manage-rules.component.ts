@@ -111,7 +111,7 @@ export class ManageRulesComponent implements OnInit {
 
   async testRule(): Promise<void> {
     if (!this.newRule.valueToMatch || !this.currentAccountId) {
-      this.notificationService.show('Please select an account and fill out the rule value.', 'error');
+      this.notificationService.show('Please fill out the field values first.', 'error');
       return;
     }
 

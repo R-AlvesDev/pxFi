@@ -1,14 +1,25 @@
-:host(.main-layout-host) {
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.main-container {
   display: flex;
   flex-direction: column;
   height: 100%;
-  width: 100%;
-  overflow: hidden;
 }
 
 .content-wrapper {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto; /* This will make the content scrollable */
+}
+
+.footer-wrapper {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  background: var(--ion-color-light);
 }
 
 .tab-bar {
@@ -17,7 +28,6 @@
   align-items: center;
   width: 100%;
   height: 60px;
-  background: var(--ion-color-light);
 }
 
 .tab-button {

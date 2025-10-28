@@ -6,10 +6,12 @@ import { NotificationService } from '../../services/notification.service';
 import { switchMap, of, tap } from 'rxjs';
 import { RouterLink } from '@angular/router';
 
+import { IonContent, IonSpinner } from '@ionic/angular/standalone';
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, IonContent, IonSpinner],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })

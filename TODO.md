@@ -81,6 +81,7 @@ This document outlines the features and implementation plan for the first fully 
     * [X] **Empty States**: Improve the messages and guidance shown on pages with no data (e.g., a new user's transaction page).
     * [X] **Accessibility Review**: Do a quick pass to ensure all interactive elements have proper labels for screen readers.
     * [X] **Mobile Responsiveness**: Test and refine the layout on various screen sizes to ensure a good mobile experience.
+    * [X] **Mobile Application**: Implementation of Ionic and Capacitor to provide native-like mobile app version.
 
 * [X] **Task: Final Code Cleanup**
     * [X] **Linting**: Run a linter (like ESLint for frontend, and a static analyzer for Java) across the entire codebase to enforce consistent style.

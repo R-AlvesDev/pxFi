@@ -1,98 +1,99 @@
-<div class="container py-4">
-  @if (loading) {
-    <div class="text-center p-5">
-      <div class="spinner-border text-primary" role="status"></div>
-      <p class="mt-2">Loading Dashboard...</p>
-    </div>
-  }
 
-  @if (!loading && summary) {
-    <div>
-      <h2 class="mb-4 border-bottom pb-3">Dashboard Overview</h2>
-      <div class="row g-4 mb-4">
-        <div class="col-md-4">
-          <div class="card text-center h-100 bg-success-subtle border-success shadow-sm">
-            <div class="card-body">
-              <h6 class="card-subtitle mb-2 text-muted">This Month's Income</h6>
-              <p class="card-text fs-2 fw-bold">{{ summary.currentMonthIncome | currency:'EUR' }}</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card text-center h-100 bg-danger-subtle border-danger shadow-sm">
-            <div class="card-body">
-              <h6 class="card-subtitle mb-2 text-muted">This Month's Expenses</h6>
-              <p class="card-text fs-2 fw-bold">{{ summary.currentMonthExpenses | currency:'EUR' }}</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card text-center h-100 shadow-sm" [ngClass]="(summary.netBalance >= 0) ? 'bg-primary-subtle border-primary' : 'bg-warning-subtle border-warning'">
-            <div class="card-body">
-              <h6 class="card-subtitle mb-2 text-muted">Net Balance</h6>
-              <p class="card-text fs-2 fw-bold">{{ summary.netBalance | currency:'EUR' }}</p>
-            </div>
-          </div>
-        </div>
+  <div class="container py-4">
+    @if (loading) {
+      <div class="text-center p-5">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p class="mt-2">Loading Dashboard...</p>
       </div>
-      <div class="row g-4">
-        <div class="col-lg-7">
-          <div class="card h-100 shadow-sm">
-            <div class="card-body">
-              <h5 class="card-title">Top 5 Spending Categories (This Month)</h5>
-              <ul class="list-group list-group-flush">
-                @for (item of summary.topSpendingCategories; track item) {
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ item.categoryName || 'Uncategorized' }}
-                    <span class="badge bg-primary rounded-pill">{{ item.total | currency:'EUR' }}</span>
-                  </li>
-                }
-                @if (summary.topSpendingCategories.length === 0) {
-                  <li class="list-group-item text-muted">
-                    No categorized expenses this month.
-                  </li>
-                }
-              </ul>
+    }
+
+    @if (!loading && summary) {
+      <div>
+        <h2 class="mb-4 border-bottom pb-3">Dashboard Overview</h2>
+        <div class="row g-4 mb-4">
+          <div class="col-md-4">
+            <div class="card text-center h-100 bg-success-subtle border-success shadow-sm">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">This Month's Income</h6>
+                <p class="card-text fs-2 fw-bold">{{ summary.currentMonthIncome | currency:'EUR' }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card text-center h-100 bg-danger-subtle border-danger shadow-sm">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">This Month's Expenses</h6>
+                <p class="card-text fs-2 fw-bold">{{ summary.currentMonthExpenses | currency:'EUR' }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card text-center h-100 shadow-sm" [ngClass]="(summary.netBalance >= 0) ? 'bg-primary-subtle border-primary' : 'bg-warning-subtle border-warning'">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Net Balance</h6>
+                <p class="card-text fs-2 fw-bold">{{ summary.netBalance | currency:'EUR' }}</p>
+              </div>
             </div>
           </div>
         </div>
-        <div class="col-lg-5">
-          <div class="card h-100 shadow-sm">
-            <div class="card-body">
-              <h5 class="card-title">Recent Transactions</h5>
-              <ul class="list-group list-group-flush">
-                @for (tx of summary.recentTransactions; track tx) {
-                  <li class="list-group-item">
-                    <div class="d-flex justify-content-between">
-                      <span>{{ tx.remittanceInformationUnstructured }}</span>
-                      <span [ngClass]="+tx.transactionAmount.amount > 0 ? 'text-success' : 'text-danger'">
-                        {{ tx.transactionAmount.amount | currency:tx.transactionAmount.currency }}
-                      </span>
-                    </div>
-                    <small class="text-muted">{{ tx.bookingDate | date:'mediumDate' }}</small>
-                  </li>
-                }
-                @if (summary.recentTransactions.length === 0) {
-                  <li class="list-group-item text-muted">
-                    No recent transactions found.
-                  </li>
-                }
-              </ul>
-              <div class="d-grid mt-3">
-                <a [routerLink]="['/transactions', currentAccountId]" class="btn btn-outline-primary">View All Transactions</a>
+        <div class="row g-4">
+          <div class="col-lg-7">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title">Top 5 Spending Categories (This Month)</h5>
+                <ul class="list-group list-group-flush">
+                  @for (item of summary.topSpendingCategories; track item) {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      {{ item.categoryName || 'Uncategorized' }}
+                      <span class="badge bg-primary rounded-pill">{{ item.total | currency:'EUR' }}</span>
+                    </li>
+                  }
+                  @if (summary.topSpendingCategories.length === 0) {
+                    <li class="list-group-item text-muted">
+                      No categorized expenses this month.
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-5">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title">Recent Transactions</h5>
+                <ul class="list-group list-group-flush">
+                  @for (tx of summary.recentTransactions; track tx) {
+                    <li class="list-group-item">
+                      <div class="d-flex justify-content-between">
+                        <span>{{ tx.remittanceInformationUnstructured }}</span>
+                        <span [ngClass]="+tx.transactionAmount.amount > 0 ? 'text-success' : 'text-danger'">
+                          {{ tx.transactionAmount.amount | currency:tx.transactionAmount.currency }}
+                        </span>
+                      </div>
+                      <small class="text-muted">{{ tx.bookingDate | date:'mediumDate' }}</small>
+                    </li>
+                  }
+                  @if (summary.recentTransactions.length === 0) {
+                    <li class="list-group-item text-muted">
+                      No recent transactions found.
+                    </li>
+                  }
+                </ul>
+                <div class="d-grid mt-3">
+                  <a [routerLink]="['/transactions', currentAccountId]" class="btn btn-outline-primary">View All Transactions</a>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  }
+    }
 
-  @if (!loading && !summary) {
-    <div>
-      <div class="alert alert-warning text-center">
-        Please select an account to view the dashboard. If you have just connected, you may need to refresh.
+    @if (!loading && !summary) {
+      <div>
+        <div class="alert alert-warning text-center">
+          Please select an account to view the dashboard. If you have just connected, you may need to refresh.
+        </div>
       </div>
-    </div>
-  }
-</div>
+    }
+  </div>

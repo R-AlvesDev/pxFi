@@ -1,13 +1,6 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/settings"></ion-back-button>
-    </ion-buttons>
-    <ion-title>Manage Categories</ion-title>
-  </ion-toolbar>
-</ion-header>
+<div class="container py-4">
+  <h2 class="mb-4">Manage Categories</h2>
 
-<ion-content class="ion-padding">
   <form (ngSubmit)="addCategory()" class="mb-4">
     <ion-list>
       <ion-item>
@@ -19,7 +12,7 @@
         <ion-select [(ngModel)]="newCategoryParentId" name="newCategoryParentId">
           <ion-select-option [value]="null">-- Main Category --</ion-select-option>
           @for (cat of mainCategories; track cat) {
-            <ion-select-option [value]="cat.id">{{ cat.name }}</ion-select-option>
+          <ion-select-option [value]="cat.id">{{ cat.name }}</ion-select-option>
           }
         </ion-select>
       </ion-item>
@@ -29,26 +22,26 @@
 
   <ion-list>
     @for (category of mainCategories; track category) {
-      <ion-item-group>
-        <ion-item-divider (click)="toggleCategory(category.id)">
-          <ion-label>{{ category.name }}</ion-label>
-          <ion-button slot="end" fill="clear" color="danger" (click)="$event.stopPropagation(); deleteCategory(category.id)">
-            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-item-divider>
+    <ion-item-group>
+      <ion-item-divider (click)="toggleCategory(category.id)">
+        <ion-label>{{ category.name }}</ion-label>
+        <ion-button slot="end" fill="clear" color="danger" (click)="$event.stopPropagation(); deleteCategory(category.id)">
+          <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </ion-item-divider>
 
-        @if (expandedCategoryIds.has(category.id)) {
-          @for (sub of categoryService.getSubCategories(category.id); track sub) {
-            <ion-item>
-              <ion-label>{{ sub.name }}</ion-label>
-              <ion-toggle slot="end" [(ngModel)]="sub.isAssetTransfer" (ngModelChange)="onAssetTransferChange(sub)"></ion-toggle>
-              <ion-button slot="end" fill="clear" color="danger" (click)="$event.stopPropagation(); deleteCategory(sub.id)">
-                <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-              </ion-button>
-            </ion-item>
-          }
-        }
-      </ion-item-group>
+      @if (expandedCategoryIds.has(category.id)) {
+      @for (sub of categoryService.getSubCategories(category.id); track sub) {
+      <ion-item>
+        <ion-label>{{ sub.name }}</ion-label>
+        <ion-toggle slot="end" [(ngModel)]="sub.isAssetTransfer" (ngModelChange)="onAssetTransferChange(sub)"></ion-toggle>
+        <ion-button slot="end" fill="clear" color="danger" (click)="$event.stopPropagation(); deleteCategory(sub.id)">
+          <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </ion-item>
+      }
+      }
+    </ion-item-group>
     }
   </ion-list>
-</ion-content>
+</div>

@@ -24,10 +24,10 @@
                             "zone.js"
                         ],
                         "tsConfig": "tsconfig.app.json",
-                        "inlineStyleLanguage": "scss",
                         "assets": [
                             "src/favicon.ico",
-                            "src/assets"
+                            "src/assets",
+                            "src/logo.png"
                         ],
                         "styles": [
                             "node_modules/bootstrap/dist/css/bootstrap.min.css",

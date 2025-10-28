@@ -19,9 +19,10 @@ The project has reached its version 1.0 milestone and is now feature-complete. A
 ### Update Summary (Post-v1.0)
 
 Following the v1.0 release, development has continued to introduce new features and refine the user experience. Key updates include:
+*   **Capacitor/Ionic Framework Integration**:
+    *   Successfully integrated Capacitor and Ionic to start working on "native" mobile version of the application
+    *   Adpated the old UI to reflect these new implementations
 
-*   **Advanced Rule Conditions**: The automation engine now supports more complex rules, allowing users to create conditions based on transaction `amount` (e.g., "if amount is greater than 100").
-*   **Rule Testing**: A "Test Rule" feature has been added, which provides a preview of which existing transactions a new rule would apply to, allowing users to verify their rules before saving them.
 *   **UI/UX Enhancements**:
     *   A floating action button (FAB) has been added to the transactions page for quick access to common actions like refreshing transactions or filtering.
     *   The transaction filtering experience has been improved with a dedicated modal.

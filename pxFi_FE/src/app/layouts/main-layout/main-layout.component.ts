@@ -5,7 +5,7 @@ import { IonContent, IonFooter, IonToolbar, IonIcon, IonLabel } from '@ionic/ang
 import { addIcons } from 'ionicons';
 import { home, list, pieChart, settings, logOutOutline } from 'ionicons/icons';
 import { AccountStateService } from '../../services/account-state.service';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../services/auth/auth.service';
 
@@ -17,11 +17,13 @@ import { AuthService } from '../../services/auth/auth.service';
     RouterLinkActive,
     RouterModule,
     NotificationComponent,
+    IonContent,
     IonFooter,
     IonToolbar,
     IonIcon,
     IonLabel,
-    AsyncPipe
+    AsyncPipe,
+    CommonModule
   ],
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.scss'],
